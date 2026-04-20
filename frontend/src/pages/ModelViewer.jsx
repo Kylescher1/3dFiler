@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { Canvas, useThree, useFrame } from '@react-three/fiber'
+import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls, Grid, Box } from '@react-three/drei'
 import * as THREE from 'three'
 import { ModelRenderer, SUPPORTED_FORMATS } from '../components/ModelRenderer'
@@ -22,7 +22,6 @@ function ClickPlane({ onClick, modelRef }) {
       mouse.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
       raycaster.current.setFromCamera(mouse.current, camera)
 
-      // Try to intersect with the loaded model first, then fall back to ground plane
       const targets = []
       if (modelRef.current) {
         targets.push(modelRef.current)
@@ -62,43 +61,49 @@ function WireframeToggle({ modelRef, wireframe }) {
   return null
 }
 
-function CameraFocus({ controlsRef, targetRef, trigger }) {
+function CameraFocus({ controlsRef, targetRef, trigger, onDone }) {
   const { camera } = useThree()
+  const animating = useRef(false)
 
   useEffect(() => {
-    if (!trigger || !targetRef.current || !controlsRef.current) return
+    if (!trigger || !targetRef.current || !controlsRef.current || animating.current) return
+    animating.current = true
 
     const box = new THREE.Box3().setFromObject(targetRef.current)
     const center = box.getCenter(new THREE.Vector3())
     const size = box.getSize(new THREE.Vector3())
     const maxDim = Math.max(size.x, size.y, size.z)
     const fov = camera.fov * (Math.PI / 180)
-    const distance = Math.abs(maxDim / Math.sin(fov / 2)) * 0.8 + 2
+    const distance = Math.abs(maxDim / Math.sin(fov / 2)) * 0.75 + 1.5
+
+    const endPos = new THREE.Vector3(
+      center.x + distance * 0.7,
+      center.y + distance * 0.5,
+      center.z + distance * 0.7
+    )
 
     const startPos = camera.position.clone()
-    const endPos = new THREE.Vector3(
-      center.x + distance * 0.6,
-      center.y + distance * 0.5,
-      center.z + distance * 0.6
-    )
+    const startTarget = controlsRef.current.target.clone()
 
     let t = 0
     const animate = () => {
-      t += 0.04
+      t += 0.035
       if (t >= 1) {
         camera.position.copy(endPos)
         controlsRef.current.target.copy(center)
         controlsRef.current.update()
+        animating.current = false
+        onDone?.()
         return
       }
       const ease = 1 - Math.pow(1 - t, 3)
       camera.position.lerpVectors(startPos, endPos, ease)
-      controlsRef.current.target.lerp(center, ease)
+      controlsRef.current.target.lerpVectors(startTarget, center, ease)
       controlsRef.current.update()
       requestAnimationFrame(animate)
     }
     animate()
-  }, [trigger, targetRef, controlsRef, camera])
+  }, [trigger, targetRef, controlsRef, camera, onDone])
 
   return null
 }
@@ -116,6 +121,7 @@ function SceneContent({
   autoRotate,
   controlsRef,
   focusTrigger,
+  onFocusDone,
 }) {
   return (
     <>
@@ -130,7 +136,7 @@ function SceneContent({
         enableDamping
         dampingFactor={0.08}
         autoRotate={autoRotate}
-        autoRotateSpeed={1.5}
+        autoRotateSpeed={1.2}
         minDistance={0.5}
         maxDistance={50}
       />
@@ -155,7 +161,7 @@ function SceneContent({
       </group>
 
       <WireframeToggle modelRef={modelRef} wireframe={wireframe} />
-      <CameraFocus controlsRef={controlsRef} targetRef={modelRef} trigger={focusTrigger} />
+      <CameraFocus controlsRef={controlsRef} targetRef={modelRef} trigger={focusTrigger} onDone={onFocusDone} />
 
       {pois.map((poi) => (
         <POIMarker
@@ -184,6 +190,7 @@ function ModelViewer() {
   const [autoRotate, setAutoRotate] = useState(false)
   const [bgDark, setBgDark] = useState(true)
   const [focusTrigger, setFocusTrigger] = useState(0)
+  const [initialFocusDone, setInitialFocusDone] = useState(false)
   const controlsRef = useRef()
   const modelRef = useRef(null)
   const canvasContainerRef = useRef(null)
@@ -206,6 +213,24 @@ function ModelViewer() {
       .catch((err) => setError(err.message))
   }, [id, searchParams, token])
 
+  // Auto-focus once when model loads and is ready
+  useEffect(() => {
+    if (initialFocusDone) return
+    // We need the model to be rendered before we can focus
+    // ModelRenderer calls onReady when the mesh is ready
+    // We'll use a small timeout to let the scene settle, then trigger focus
+    const timer = setTimeout(() => {
+      if (modelRef.current) {
+        setFocusTrigger((n) => n + 1)
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [model, initialFocusDone])
+
+  const handleFocusDone = useCallback(() => {
+    setInitialFocusDone(true)
+  }, [])
+
   const handleAddPoi = useCallback((point) => {
     setAddingPoi({ x: point.x, y: point.y, z: point.z })
   }, [])
@@ -227,7 +252,7 @@ function ModelViewer() {
     })
     const data = await res.json()
     if (res.ok) {
-      setPois([...pois, data])
+      setPois((prev) => [...prev, data])
       setAddingPoi(null)
       setPoiForm({ title: '', content: '', type: 'text' })
     }
@@ -335,6 +360,7 @@ function ModelViewer() {
               autoRotate={autoRotate}
               controlsRef={controlsRef}
               focusTrigger={focusTrigger}
+              onFocusDone={handleFocusDone}
             />
           </Canvas>
 

@@ -1,5 +1,5 @@
 import { useRef, useMemo, Suspense, useEffect } from 'react'
-import { useLoader, useThree } from '@react-three/fiber'
+import { useLoader } from '@react-three/fiber'
 import { useGLTF, Box } from '@react-three/drei'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
@@ -28,33 +28,47 @@ function StlModel({ url, onReady }) {
   const meshRef = useRef()
 
   useEffect(() => {
-    if (meshRef.current) {
-      onReady?.(meshRef.current)
-    }
-  }, [onReady])
+    if (!meshRef.current) return
+    // Compute bounds for auto-fit
+    geometry.computeBoundingBox()
+    const box = geometry.boundingBox
+    const center = new THREE.Vector3()
+    box.getCenter(center)
+    const size = new THREE.Vector3()
+    box.getSize(size)
+    const maxDim = Math.max(size.x, size.y, size.z)
+    const targetSize = 4
+    const scale = maxDim > 0 ? targetSize / maxDim : 1
+
+    meshRef.current.position.set(-center.x * scale, -center.y * scale + (size.y * scale) / 2, -center.z * scale)
+    meshRef.current.scale.setScalar(scale)
+    meshRef.current.rotation.x = -Math.PI / 2
+
+    onReady?.(meshRef.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
-    <mesh ref={meshRef} geometry={geometry} material={material} rotation={[-Math.PI / 2, 0, 0]} />
+    <mesh ref={meshRef} geometry={geometry} material={material} />
   )
 }
 
 function AutoFitModel({ scene, onReady }) {
   const groupRef = useRef()
+  const onReadyRef = useRef(onReady)
+  onReadyRef.current = onReady
 
   useEffect(() => {
     if (!groupRef.current) return
 
-    // Compute bounding box
     const box = new THREE.Box3().setFromObject(groupRef.current)
     const center = box.getCenter(new THREE.Vector3())
     const size = box.getSize(new THREE.Vector3())
     const maxDim = Math.max(size.x, size.y, size.z)
 
-    // Auto-scale to fit in a ~4-unit box
     const targetSize = 4
     const scale = maxDim > 0 ? targetSize / maxDim : 1
 
-    // Center the model
     groupRef.current.position.set(
       -center.x * scale,
       -center.y * scale + (size.y * scale) / 2,
@@ -62,8 +76,9 @@ function AutoFitModel({ scene, onReady }) {
     )
     groupRef.current.scale.setScalar(scale)
 
-    onReady?.(groupRef.current)
-  }, [onReady])
+    onReadyRef.current?.(groupRef.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return <group ref={groupRef}>{scene && <primitive object={scene} />}</group>
 }
