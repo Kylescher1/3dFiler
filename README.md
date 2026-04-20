@@ -1,40 +1,66 @@
 # 3dFiler
 
-Upload 3D models, create points of interest (text or nested 3D models), manage, publish, and share.
+Upload 3D models, create interactive points of interest (text or nested 3D models), manage your library, publish to a global explore page, and share via private links.
 
-## What It Does
+## Tech Stack
 
-- **Upload 3D models** — drag and drop GLTF, GLB, OBJ, FBX, and other common formats.
-- **Create Points of Interest (POIs)** — click anywhere on the model to drop pins that hold:
-  - Text annotations / information cards
-  - Links to nested 3D models (drill-down into detail)
-- **User Accounts** — sign up, log in, manage your model library.
-- **Publish** — push models to a global explore page for discovery.
-- **Share** — generate private share links for controlled access.
-
-## Tech Stack (TBD)
-
-| Layer | Candidates |
+| Layer | Technology |
 |-------|------------|
-| Frontend | React / Vue / Svelte + Three.js / Babylon.js |
-| Backend | Node.js (Express/Nest) or Python (FastAPI) |
-| Database | PostgreSQL + S3-compatible storage for models |
-| Auth | JWT or OAuth (GitHub / Google) |
-| 3D Rendering | Three.js (web-first, huge ecosystem) |
+| Frontend | React 19 + Vite + React Three Fiber (Three.js) |
+| Backend | Node.js + Express |
+| Auth | JWT (in-memory for now, DB ready) |
+| 3D Rendering | Three.js via @react-three/fiber & @react-three/drei |
 
 ## Project Structure
 
 ```
 3dFiler/
-├── frontend/          # Web client
-├── backend/           # API server
-├── docs/              # Architecture & design docs
+├── frontend/          # React client
+│   ├── src/
+│   │   ├── components/
+│   │   ├── contexts/   # AuthContext
+│   │   ├── pages/      # Home, Login, Register, Dashboard, Upload, Explore, ModelViewer
+│   │   └── App.jsx
+│   └── package.json
+├── backend/           # Express API
+│   ├── src/
+│   │   ├── routes/     # auth.js, models.js, pois.js
+│   │   └── index.js
+│   ├── uploads/        # Uploaded 3D files
+│   └── package.json
 └── README.md
 ```
 
-## Getting Started
+## Quick Start
 
-_TBD — instructions will go here once the stack is chosen and scaffolding is in place._
+### Backend
+
+```bash
+cd backend
+cp .env.example .env
+npm run dev
+# API runs on http://localhost:3001
+```
+
+### Frontend
+
+```bash
+cd frontend
+cp .env.example .env
+npm run dev
+# Client runs on http://localhost:5173
+```
+
+## Core Features
+
+- **Model Upload** — Drag/drop GLTF, GLB, OBJ, FBX (up to 100MB)
+- **3D Viewer** — Orbit controls, grid, wireframe fallback
+- **Points of Interest** — Double-click anywhere on the model to drop a pin
+  - Text annotations
+  - Nested model links (drill-down)
+- **Auth** — Register / login with JWT
+- **Dashboard** — Manage your models, publish/unpublish, generate share links
+- **Explore** — Global feed of published models
 
 ## License
 
