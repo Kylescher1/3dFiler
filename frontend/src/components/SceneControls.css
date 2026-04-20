@@ -1,0 +1,64 @@
+.scene-controls {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(15, 15, 15, 0.85);
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 6px;
+  z-index: 10;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.control-divider {
+  height: 1px;
+  background: #2a2a2a;
+  margin: 4px 0;
+}
+
+.scene-controls button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #aaa;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scene-controls button:hover {
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+
+.scene-controls button.active {
+  background: #1e3a4c;
+  color: #4fc3f7;
+}
+
+.screenshot-flash {
+  position: fixed;
+  inset: 0;
+  background: white;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 9999;
+  animation: flashOut 0.3s ease forwards;
+}
+
+@keyframes flashOut {
+  from { opacity: 0.3; }
+  to { opacity: 0; }
+}
