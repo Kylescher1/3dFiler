@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Grid, useGLTF, Box } from '@react-three/drei'
@@ -6,7 +6,7 @@ import * as THREE from 'three'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
-function POIMarker({ position, title, onClick, selected }) {
+function POIMarker({ position, onClick, selected }) {
   const ref = useRef()
   useFrame(({ clock }) => {
     if (ref.current) {
@@ -50,10 +50,12 @@ function ClickPlane({ onClick }) {
   )
 }
 
-function SceneContent({ modelUrl, pois, selectedPoi, onPoiClick, onAddPoi }) {
-  const groupRef = useRef()
-  const { scene } = useGLTF(modelUrl || '/placeholder.glb')
+function LoadedModel({ url }) {
+  const { scene } = useGLTF(url)
+  return <primitive object={scene.clone()} scale={1} />
+}
 
+function SceneContent({ modelUrl, pois, selectedPoi, onPoiClick, onAddPoi, loadError }) {
   return (
     <>
       <ambientLight intensity={0.6} />
@@ -62,15 +64,32 @@ function SceneContent({ modelUrl, pois, selectedPoi, onPoiClick, onAddPoi }) {
       <Grid args={[20, 20]} position={[0, -0.01, 0]} />
       <ClickPlane onClick={onAddPoi} />
 
-      <group ref={groupRef}>
-        {scene ? <primitive object={scene.clone()} scale={1} /> : <Box args={[1, 1, 1]}><meshStandardMaterial color="#333" wireframe /></Box>}
-      </group>
+      {loadError ? (
+        <group>
+          <Box args={[1, 1, 1]} position={[0, 0.5, 0]}>
+            <meshStandardMaterial color="#333" wireframe />
+          </Box>
+        </group>
+      ) : (
+        <Suspense fallback={
+          <group>
+            <Box args={[1, 1, 1]} position={[0, 0.5, 0]}>
+              <meshStandardMaterial color="#444" wireframe />
+            </Box>
+          </group>
+        }>
+          {modelUrl ? <LoadedModel url={modelUrl} /> : (
+            <Box args={[1, 1, 1]} position={[0, 0.5, 0]}>
+              <meshStandardMaterial color="#333" wireframe />
+            </Box>
+          )}
+        </Suspense>
+      )}
 
       {pois.map(poi => (
         <POIMarker
           key={poi.id}
           position={poi.position}
-          title={poi.title}
           selected={selectedPoi?.id === poi.id}
           onClick={(e) => { e.stopPropagation(); onPoiClick(poi) }}
         />
@@ -88,6 +107,7 @@ function ModelViewer() {
   const [addingPoi, setAddingPoi] = useState(null)
   const [poiForm, setPoiForm] = useState({ title: '', content: '', type: 'text' })
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState(false)
   const token = localStorage.getItem('token')
 
   useEffect(() => {
@@ -137,15 +157,25 @@ function ModelViewer() {
   if (error) return <div className="card" style={{ color: '#ef5350', textAlign: 'center', marginTop: '3rem' }}>{error}</div>
   if (!model) return <div className="card" style={{ textAlign: 'center', marginTop: '3rem' }}>Loading...</div>
 
-  const modelUrl = model.filename ? `${API.replace('/api', '')}/uploads/${model.filename}` : null
+  const isGltf = model.originalName?.match(/\.(gltf|glb)$/i)
+  const modelUrl = isGltf && model.filename ? `${API.replace('/api', '')}/uploads/${model.filename}` : null
 
   return (
     <div>
       <h1 className="page-title" style={{ fontSize: '1.5rem' }}>{model.title}</h1>
       <p style={{ color: '#888', marginBottom: '1rem' }}>{model.description}</p>
 
+      {!isGltf && (
+        <div className="card" style={{ marginBottom: '1rem', background: '#3e2723', borderColor: '#5d4037' }}>
+          <p style={{ color: '#ffab91' }}>
+            <strong>Format not supported for viewing yet.</strong> Only GLTF/GLB files can be rendered in the 3D viewer.
+            OBJ and FBX support is coming. You can still add points of interest on the placeholder below.
+          </p>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1rem', height: '600px' }}>
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div className="card" style={{ padding: 0, overflow: 'hidden', position: 'relative' }}>
           <Canvas camera={{ position: [3, 3, 3], fov: 50 }} style={{ width: '100%', height: '100%' }}>
             <SceneContent
               modelUrl={modelUrl}
@@ -153,9 +183,10 @@ function ModelViewer() {
               selectedPoi={selectedPoi}
               onPoiClick={setSelectedPoi}
               onAddPoi={handleAddPoi}
+              loadError={loadError}
             />
           </Canvas>
-          <div style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', color: '#888' }}>
+          <div style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', color: '#888', pointerEvents: 'none' }}>
             Double-click to add a point of interest
           </div>
         </div>

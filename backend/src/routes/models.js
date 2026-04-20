@@ -8,8 +8,17 @@ const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, path.join(__dirname, '../../uploads/')),
+  filename: (_req, file, cb) => {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, unique + ext);
+  }
+});
+
 const upload = multer({
-  dest: path.join(__dirname, '../../uploads/'),
+  storage,
   limits: { fileSize: 100 * 1024 * 1024 } // 100MB
 });
 
