@@ -1,6 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { models, pois } from './models.js';
+import { prisma } from '../lib/prisma.js';
 
 const router = express.Router();
 
@@ -16,48 +16,63 @@ function requireAuth(req, res, next) {
 }
 
 // Create a point of interest on a model
-router.post('/', requireAuth, (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   const { modelId, position, title, content, type, nestedModelId } = req.body;
-  const model = models.find(m => m.id === modelId);
+  const model = await prisma.model.findUnique({ where: { id: modelId } });
 
   if (!model) return res.status(404).json({ error: 'Model not found' });
   if (model.userId !== req.user.userId) return res.status(403).json({ error: 'Forbidden' });
 
-  const poi = {
-    id: crypto.randomUUID(),
-    modelId,
-    position: position || { x: 0, y: 0, z: 0 },
-    title: title || 'Untitled',
-    content: content || '',
-    type: type || 'text', // 'text' | 'nested-model'
-    nestedModelId: nestedModelId || null,
-    createdAt: new Date().toISOString()
-  };
-  pois.push(poi);
+  const poi = await prisma.pOI.create({
+    data: {
+      modelId,
+      title: title || 'Untitled',
+      content: content || '',
+      type: type || 'text',
+      nestedModelId: nestedModelId || null,
+      positionX: position?.x ?? 0,
+      positionY: position?.y ?? 0,
+      positionZ: position?.z ?? 0,
+    }
+  });
   res.status(201).json(poi);
 });
 
 // Update a POI
-router.patch('/:id', requireAuth, (req, res) => {
-  const poi = pois.find(p => p.id === req.params.id);
+router.patch('/:id', requireAuth, async (req, res) => {
+  const poi = await prisma.pOI.findUnique({ where: { id: req.params.id } });
   if (!poi) return res.status(404).json({ error: 'Not found' });
 
-  const model = models.find(m => m.id === poi.modelId);
+  const model = await prisma.model.findUnique({ where: { id: poi.modelId } });
   if (!model || model.userId !== req.user.userId) return res.status(403).json({ error: 'Forbidden' });
 
-  Object.assign(poi, req.body);
-  res.json(poi);
+  const data = {};
+  if (req.body.title !== undefined) data.title = req.body.title;
+  if (req.body.content !== undefined) data.content = req.body.content;
+  if (req.body.type !== undefined) data.type = req.body.type;
+  if (req.body.nestedModelId !== undefined) data.nestedModelId = req.body.nestedModelId;
+  if (req.body.position) {
+    data.positionX = req.body.position.x;
+    data.positionY = req.body.position.y;
+    data.positionZ = req.body.position.z;
+  }
+
+  const updated = await prisma.pOI.update({
+    where: { id: req.params.id },
+    data
+  });
+  res.json(updated);
 });
 
 // Delete a POI
-router.delete('/:id', requireAuth, (req, res) => {
-  const idx = pois.findIndex(p => p.id === req.params.id);
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+router.delete('/:id', requireAuth, async (req, res) => {
+  const poi = await prisma.pOI.findUnique({ where: { id: req.params.id } });
+  if (!poi) return res.status(404).json({ error: 'Not found' });
 
-  const model = models.find(m => m.id === pois[idx].modelId);
+  const model = await prisma.model.findUnique({ where: { id: poi.modelId } });
   if (!model || model.userId !== req.user.userId) return res.status(403).json({ error: 'Forbidden' });
 
-  pois.splice(idx, 1);
+  await prisma.pOI.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 
