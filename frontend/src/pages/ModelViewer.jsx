@@ -1,8 +1,9 @@
-import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Grid, useGLTF, Box } from '@react-three/drei'
+import { OrbitControls, Grid, Box } from '@react-three/drei'
 import * as THREE from 'three'
+import { ModelRenderer, SUPPORTED_FORMATS } from '../components/ModelRenderer'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
@@ -21,7 +22,7 @@ function POIMarker({ position, onClick, selected }) {
   )
 }
 
-function ClickPlane({ onClick }) {
+function ClickPlane({ onClick, targetsRef }) {
   const { camera, gl } = useThree()
   const raycaster = useRef(new THREE.Raycaster())
   const mouse = useRef(new THREE.Vector2())
@@ -33,14 +34,17 @@ function ClickPlane({ onClick }) {
       mouse.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
       mouse.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
       raycaster.current.setFromCamera(mouse.current, camera)
-      const intersects = raycaster.current.intersectObject(planeRef.current)
+
+      // Try to intersect with the loaded model first, then fall back to ground plane
+      const targets = targetsRef.current?.length ? targetsRef.current : [planeRef.current]
+      const intersects = raycaster.current.intersectObjects(targets, true)
       if (intersects.length > 0) {
         onClick(intersects[0].point)
       }
     }
     gl.domElement.addEventListener('dblclick', handler)
     return () => gl.domElement.removeEventListener('dblclick', handler)
-  }, [camera, gl, onClick])
+  }, [camera, gl, onClick, targetsRef])
 
   return (
     <mesh ref={planeRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} visible={false}>
@@ -50,41 +54,25 @@ function ClickPlane({ onClick }) {
   )
 }
 
-function LoadedModel({ url }) {
-  const { scene } = useGLTF(url)
-  return <primitive object={scene.clone()} scale={1} />
-}
-
-function SceneContent({ modelUrl, pois, selectedPoi, onPoiClick, onAddPoi, loadError }) {
+function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAddPoi, modelRef }) {
   return (
     <>
       <ambientLight intensity={0.6} />
       <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
+      <pointLight position={[-5, 5, -5]} intensity={0.4} />
       <OrbitControls makeDefault />
       <Grid args={[20, 20]} position={[0, -0.01, 0]} />
-      <ClickPlane onClick={onAddPoi} />
+      <ClickPlane onClick={onAddPoi} targetsRef={modelRef} />
 
-      {loadError ? (
-        <group>
+      <group ref={modelRef}>
+        {modelUrl ? (
+          <ModelRenderer url={modelUrl} extension={extension} />
+        ) : (
           <Box args={[1, 1, 1]} position={[0, 0.5, 0]}>
             <meshStandardMaterial color="#333" wireframe />
           </Box>
-        </group>
-      ) : (
-        <Suspense fallback={
-          <group>
-            <Box args={[1, 1, 1]} position={[0, 0.5, 0]}>
-              <meshStandardMaterial color="#444" wireframe />
-            </Box>
-          </group>
-        }>
-          {modelUrl ? <LoadedModel url={modelUrl} /> : (
-            <Box args={[1, 1, 1]} position={[0, 0.5, 0]}>
-              <meshStandardMaterial color="#333" wireframe />
-            </Box>
-          )}
-        </Suspense>
-      )}
+        )}
+      </group>
 
       {pois.map(poi => (
         <POIMarker
@@ -107,7 +95,7 @@ function ModelViewer() {
   const [addingPoi, setAddingPoi] = useState(null)
   const [poiForm, setPoiForm] = useState({ title: '', content: '', type: 'text' })
   const [error, setError] = useState('')
-  const [loadError, setLoadError] = useState(false)
+  const modelRef = useRef(null)
   const token = localStorage.getItem('token')
 
   useEffect(() => {
@@ -157,19 +145,22 @@ function ModelViewer() {
   if (error) return <div className="card" style={{ color: '#ef5350', textAlign: 'center', marginTop: '3rem' }}>{error}</div>
   if (!model) return <div className="card" style={{ textAlign: 'center', marginTop: '3rem' }}>Loading...</div>
 
-  const isGltf = model.originalName?.match(/\.(gltf|glb)$/i)
-  const modelUrl = isGltf && model.filename ? `${API.replace('/api', '')}/uploads/${model.filename}` : null
+  const extension = model.originalName?.split('.').pop()
+  const isSupported = SUPPORTED_FORMATS.includes(extension?.toLowerCase())
+  const modelUrl = isSupported && model.filename
+    ? `${API.replace('/api', '')}/uploads/${model.filename}`
+    : null
 
   return (
     <div>
       <h1 className="page-title" style={{ fontSize: '1.5rem' }}>{model.title}</h1>
       <p style={{ color: '#888', marginBottom: '1rem' }}>{model.description}</p>
 
-      {!isGltf && (
+      {!isSupported && (
         <div className="card" style={{ marginBottom: '1rem', background: '#3e2723', borderColor: '#5d4037' }}>
           <p style={{ color: '#ffab91' }}>
-            <strong>Format not supported for viewing yet.</strong> Only GLTF/GLB files can be rendered in the 3D viewer.
-            OBJ and FBX support is coming. You can still add points of interest on the placeholder below.
+            <strong>Format not supported for viewing yet.</strong> Supported formats: GLTF, GLB, OBJ, FBX, STL.
+            You can still add points of interest on the placeholder below.
           </p>
         </div>
       )}
@@ -179,11 +170,12 @@ function ModelViewer() {
           <Canvas camera={{ position: [3, 3, 3], fov: 50 }} style={{ width: '100%', height: '100%' }}>
             <SceneContent
               modelUrl={modelUrl}
+              extension={extension}
               pois={pois}
               selectedPoi={selectedPoi}
               onPoiClick={setSelectedPoi}
               onAddPoi={handleAddPoi}
-              loadError={loadError}
+              modelRef={modelRef}
             />
           </Canvas>
           <div style={{ position: 'absolute', bottom: '10px', left: '10px', background: 'rgba(0,0,0,0.7)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', color: '#888', pointerEvents: 'none' }}>

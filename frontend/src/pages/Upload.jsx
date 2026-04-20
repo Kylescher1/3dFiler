@@ -36,8 +36,8 @@ function Upload() {
       {error && <div className="error">{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label>Model File (.gltf, .glb, .obj, .fbx)</label>
-          <input type="file" accept=".gltf,.glb,.obj,.fbx" onChange={e => setFile(e.target.files[0])} />
+          <label>Model File (.gltf, .glb, .obj, .fbx, .stl)</label>
+          <input type="file" accept=".gltf,.glb,.obj,.fbx,.stl" onChange={e => setFile(e.target.files[0])} />
         </div>
         <div className="form-group">
           <label>Title</label>
