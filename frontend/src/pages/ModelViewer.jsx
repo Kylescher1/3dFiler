@@ -224,7 +224,26 @@ function ModelViewer() {
       .catch((err) => setError(err.message))
   }, [id, searchParams, token])
 
-  // Auto-focus once when model loads and is ready
+  // Escape key cancels POI creation
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'Escape') {
+        setAddingPoi(null)
+        setSelectedPoi(null)
+        setPoiForm({ title: '', content: '', type: 'text' })
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  // Click outside POI list deselects
+  const handleCanvasClick = (e) => {
+    // If click is directly on canvas container (not on a POI or control), deselect
+    if (e.target === canvasContainerRef.current || e.target.tagName === 'CANVAS') {
+      setSelectedPoi(null)
+    }
+  }
   useEffect(() => {
     if (initialFocusDone) return
     // We need the model to be rendered before we can focus
@@ -344,6 +363,7 @@ function ModelViewer() {
       >
         <div
           ref={canvasContainerRef}
+          onClick={handleCanvasClick}
           className="card"
           style={{
             padding: 0,
