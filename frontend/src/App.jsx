@@ -19,8 +19,8 @@ function App() {
           <Route path="register" element={<Register />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="upload" element={<Upload />} />
-          <Route path="model/:id" element={<ModelViewer />} />
         </Route>
+        <Route path="/model/:id" element={<ModelViewer />} />
       </Routes>
     </BrowserRouter>
   )
