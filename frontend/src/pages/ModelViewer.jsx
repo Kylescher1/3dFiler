@@ -116,8 +116,8 @@ function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAd
       </group>
       <WireframeToggle modelRef={modelRef} wireframe={wireframe} />
       <CameraFocus controlsRef={controlsRef} targetRef={modelRef} trigger={focusTrigger} onDone={onFocusDone} />
-      {pois.map((poi) => (
-        <POIMarker key={poi.id} position={poi.position} title={poi.title} selected={selectedPoi?.id === poi.id} onClick={() => onPoiClick(poi)} />
+      {pois.map((poi, idx) => (
+        <POIMarker key={poi.id} index={idx + 1} position={poi.position} title={poi.title} selected={selectedPoi?.id === poi.id} onClick={() => onPoiClick(poi)} />
       ))}
     </>
   )
@@ -187,6 +187,17 @@ function ModelViewer() {
   const token = localStorage.getItem('token')
 
   useEffect(() => {
+    // Reset all viewer state when navigating to a different model
+    setModel(null)
+    setPois([])
+    setSelectedPoi(null)
+    setAddingPoi(null)
+    setEditingPoi(null)
+    setPoiForm({ title: '', content: '', type: 'text' })
+    setInitialFocusDone(false)
+    setFocusTrigger(0)
+    if (modelRef.current) modelRef.current = null
+
     const headers = {}
     if (token) headers.Authorization = `Bearer ${token}`
     const url = `${API}/models/${id}${searchParams.toString() ? '?' + searchParams.toString() : ''}`
@@ -414,11 +425,56 @@ function ModelViewer() {
               <p style={{ color: '#666', fontSize: '0.85rem' }}>No POIs yet. Double-click on the model to add one.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {pois.map((poi) => (
-                  <button key={poi.id} onClick={() => { setSelectedPoi(poi); setEditingPoi(null); setAddingPoi(null) }} style={{ textAlign: 'left', padding: '0.5rem', background: selectedPoi?.id === poi.id ? '#1e3a4c' : '#111', border: '1px solid #2a2a2a', borderRadius: '4px', color: '#ccc', cursor: 'pointer' }}>
-                    <span style={{ color: '#4fc3f7', fontWeight: 600 }}>{poi.title}</span>
-                    <span style={{ color: '#666', fontSize: '0.75rem', marginLeft: '0.5rem' }}>{poi.type}</span>
-                  </button>
+                {pois.map((poi, idx) => (
+                  <div
+                    key={poi.id}
+                    draggable
+                    onDragStart={(e) => { e.dataTransfer.setData('text/plain', idx); e.dataTransfer.effectAllowed = 'move' }}
+                    onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10)
+                      if (fromIdx === idx) return
+                      setPois((prev) => {
+                        const next = [...prev]
+                        const [moved] = next.splice(fromIdx, 1)
+                        next.splice(idx, 0, moved)
+                        return next
+                      })
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem',
+                      background: selectedPoi?.id === poi.id ? '#1e3a4c' : '#111',
+                      border: '1px solid #2a2a2a',
+                      borderRadius: '4px',
+                      cursor: 'grab',
+                      color: '#ccc',
+                    }}
+                  >
+                    <span style={{
+                      background: '#4fc3f7',
+                      color: '#0a0a0a',
+                      width: '18px',
+                      height: '18px',
+                      borderRadius: '50%',
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>{idx + 1}</span>
+                    <button
+                      onClick={() => { setSelectedPoi(poi); setEditingPoi(null); setAddingPoi(null) }}
+                      style={{ textAlign: 'left', background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', flex: 1, padding: 0 }}
+                    >
+                      <span style={{ color: '#4fc3f7', fontWeight: 600 }}>{poi.title}</span>
+                      <span style={{ color: '#666', fontSize: '0.75rem', marginLeft: '0.5rem' }}>{poi.type}</span>
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
