@@ -36,6 +36,17 @@ function Dashboard() {
     alert(`Share link: ${window.location.origin}${data.shareUrl}`)
   }
 
+  const deleteModel = async (id, title) => {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return
+    const res = await fetch(`${API}/models/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    if (res.ok) {
+      setModels(ms => ms.filter(m => m.id !== id))
+    }
+  }
+
   return (
     <div>
       <h1 className="page-title">My Models</h1>
@@ -69,6 +80,7 @@ function Dashboard() {
                   {m.published ? 'Unpublish' : 'Publish'}
                 </button>
                 <button onClick={() => createShare(m.id)} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>Share Link</button>
+                <button onClick={() => deleteModel(m.id, m.title)} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', background: '#3e2723', borderColor: '#5d4037', color: '#ffab91' }}>Delete</button>
               </div>
             </div>
           ))}
