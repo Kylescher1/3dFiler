@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls, Grid, Box } from '@react-three/drei'
 import * as THREE from 'three'
@@ -189,9 +189,11 @@ function SceneContent({
 
 function ModelViewer() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [model, setModel] = useState(null)
   const [pois, setPois] = useState([])
+  const [myModels, setMyModels] = useState([])
   const [selectedPoi, setSelectedPoi] = useState(null)
   const [addingPoi, setAddingPoi] = useState(null)
   const [poiForm, setPoiForm] = useState({ title: '', content: '', type: 'text' })
@@ -222,6 +224,13 @@ function ModelViewer() {
         setPois((data.pois || []).map(normalizePoi))
       })
       .catch((err) => setError(err.message))
+
+    // Fetch user's models for nested model dropdown
+    if (token) {
+      fetch(`${API}/models/mine`, { headers })
+        .then(r => r.json())
+        .then(setMyModels)
+    }
   }, [id, searchParams, token])
 
   // Auto-focus once when model loads and is ready
@@ -442,12 +451,25 @@ function ModelViewer() {
                 </select>
               </div>
               <div className="form-group">
-                <label>{poiForm.type === 'text' ? 'Content' : 'Nested Model ID'}</label>
-                <textarea
-                  rows={poiForm.type === 'text' ? 3 : 1}
-                  value={poiForm.content}
-                  onChange={(e) => setPoiForm({ ...poiForm, content: e.target.value })}
-                />
+                <label>{poiForm.type === 'text' ? 'Content' : 'Linked Model'}</label>
+                {poiForm.type === 'nested-model' ? (
+                  <select
+                    value={poiForm.content}
+                    onChange={(e) => setPoiForm({ ...poiForm, content: e.target.value })}
+                    style={{ width: '100%', padding: '0.5rem', background: '#111', color: '#e0e0e0', border: '1px solid #2a2a2a', borderRadius: '6px' }}
+                  >
+                    <option value="">Select a model...</option>
+                    {myModels.filter(m => m.id !== id).map(m => (
+                      <option key={m.id} value={m.id}>{m.title}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <textarea
+                    rows={3}
+                    value={poiForm.content}
+                    onChange={(e) => setPoiForm({ ...poiForm, content: e.target.value })}
+                  />
+                )}
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button onClick={submitPoi} className="btn" style={{ flex: 1, padding: '0.4rem' }}>
@@ -469,9 +491,18 @@ function ModelViewer() {
               <h3 style={{ color: '#4fc3f7', marginBottom: '0.5rem', fontSize: '1rem' }}>
                 {selectedPoi.title}
               </h3>
-              <p style={{ color: '#ccc', fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>
-                {selectedPoi.content}
-              </p>
+              {selectedPoi.type === 'nested-model' && selectedPoi.content ? (
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <p style={{ color: '#888', fontSize: '0.85rem' }}>Links to nested model</p>
+                  <button onClick={() => navigate(`/model/${selectedPoi.content}`)} className="btn" style={{ marginTop: '0.5rem', padding: '0.3rem 0.8rem', fontSize: '0.85rem' }}>
+                    Open Nested Model
+                  </button>
+                </div>
+              ) : (
+                <p style={{ color: '#ccc', fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>
+                  {selectedPoi.content}
+                </p>
+              )}
               <p style={{ color: '#666', fontSize: '0.75rem', marginTop: '0.5rem' }}>
                 Type: {selectedPoi.type}
               </p>
