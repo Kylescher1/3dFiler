@@ -108,7 +108,7 @@ function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAd
       <ClickPlane onClick={onAddPoi} modelRef={modelRef} />
       <group>
         {modelUrl ? (
-          <ModelRenderer url={modelUrl} extension={extension} onReady={onModelReady} />
+          <ModelRenderer key={modelUrl} url={modelUrl} extension={extension} onReady={onModelReady} />
         ) : (
           <Box args={[1, 1, 1]} position={[0, 0.5, 0]}><meshStandardMaterial color="#333" wireframe /></Box>
         )}

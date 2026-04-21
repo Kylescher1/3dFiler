@@ -1,4 +1,4 @@
-import { useRef, useMemo, Suspense, useEffect } from 'react'
+import { useRef, useMemo, Suspense, useLayoutEffect, useState } from 'react'
 import { useLoader } from '@react-three/fiber'
 import { useGLTF, Box } from '@react-three/drei'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
@@ -9,27 +9,37 @@ import * as THREE from 'three'
 
 function GltfModel({ url, onReady }) {
   const { scene } = useGLTF(url)
-  return <AutoFitModel scene={scene.clone()} onReady={onReady} />
+  const clonedScene = useMemo(() => scene.clone(), [scene])
+  return <AutoFitModel scene={clonedScene} onReady={onReady} />
 }
 
 function ObjModel({ url, onReady }) {
   const obj = useLoader(OBJLoader, url)
-  return <AutoFitModel scene={obj.clone()} onReady={onReady} />
+  const clonedObj = useMemo(() => obj.clone(), [obj])
+  return <AutoFitModel scene={clonedObj} onReady={onReady} />
 }
 
 function FbxModel({ url, onReady }) {
   const fbx = useLoader(FBXLoader, url)
-  return <AutoFitModel scene={fbx.clone()} onReady={onReady} />
+  const clonedFbx = useMemo(() => fbx.clone(), [fbx])
+  return <AutoFitModel scene={clonedFbx} onReady={onReady} />
 }
 
 function StlModel({ url, onReady }) {
   const geometry = useLoader(STLLoader, url)
   const material = useMemo(() => new THREE.MeshStandardMaterial({ color: '#a0a0a0', roughness: 0.3, metalness: 0.1 }), [])
   const meshRef = useRef()
+  const [ready, setReady] = useState(false)
+  const onReadyRef = useRef(onReady)
+  onReadyRef.current = onReady
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!meshRef.current) return
-    // Compute bounds for auto-fit
+    // Reset to ensure clean measurement
+    meshRef.current.position.set(0, 0, 0)
+    meshRef.current.scale.set(1, 1, 1)
+    meshRef.current.rotation.set(0, 0, 0)
+
     geometry.computeBoundingBox()
     const box = geometry.boundingBox
     const center = new THREE.Vector3()
@@ -44,22 +54,27 @@ function StlModel({ url, onReady }) {
     meshRef.current.scale.setScalar(scale)
     meshRef.current.rotation.x = -Math.PI / 2
 
-    onReady?.(meshRef.current)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    setReady(true)
+    onReadyRef.current?.(meshRef.current)
+  }, [geometry])
 
   return (
-    <mesh ref={meshRef} geometry={geometry} material={material} />
+    <mesh ref={meshRef} geometry={geometry} material={material} visible={ready} />
   )
 }
 
 function AutoFitModel({ scene, onReady }) {
   const groupRef = useRef()
+  const [ready, setReady] = useState(false)
   const onReadyRef = useRef(onReady)
   onReadyRef.current = onReady
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!groupRef.current) return
+    // Reset to ensure clean measurement (handles re-runs / Strict Mode)
+    groupRef.current.position.set(0, 0, 0)
+    groupRef.current.scale.set(1, 1, 1)
+    groupRef.current.rotation.set(0, 0, 0)
 
     const box = new THREE.Box3().setFromObject(groupRef.current)
     const center = box.getCenter(new THREE.Vector3())
@@ -76,11 +91,15 @@ function AutoFitModel({ scene, onReady }) {
     )
     groupRef.current.scale.setScalar(scale)
 
+    setReady(true)
     onReadyRef.current?.(groupRef.current)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [scene])
 
-  return <group ref={groupRef}>{scene && <primitive object={scene} />}</group>
+  return (
+    <group ref={groupRef} visible={ready}>
+      {scene && <primitive object={scene} />}
+    </group>
+  )
 }
 
 export function ModelRenderer({ url, extension, onReady }) {
