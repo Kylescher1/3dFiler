@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Html } from '@react-three/drei'
+import { Html, Text } from '@react-three/drei'
 import * as THREE from 'three'
 
-export function POIMarker({ position, title, onClick, selected }) {
+export function POIMarker({ position, title, onClick, selected, index }) {
   const groupRef = useRef()
   const [hovered, setHovered] = useState(false)
   const showLabel = selected || hovered
@@ -41,6 +41,28 @@ export function POIMarker({ position, title, onClick, selected }) {
           metalness={0.3}
         />
       </mesh>
+
+      {/* Numeric index badge */}
+      {index && (
+        <Html distanceFactor={12} center style={{ pointerEvents: 'none', userSelect: 'none' }}>
+          <div style={{
+            background: color,
+            color: '#0a0a0a',
+            width: '18px',
+            height: '18px',
+            borderRadius: '50%',
+            fontSize: '10px',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: 'translate(12px, -12px)',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.5)',
+          }}>
+            {index}
+          </div>
+        </Html>
+      )}
 
       {/* Label tooltip */}
       {showLabel && (
