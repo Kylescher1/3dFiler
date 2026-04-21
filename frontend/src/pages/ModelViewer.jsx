@@ -96,7 +96,7 @@ function CameraFocus({ controlsRef, targetRef, trigger, onDone }) {
   return null
 }
 
-function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAddPoi, modelRef, showGrid, wireframe, autoRotate, controlsRef, focusTrigger, onFocusDone }) {
+function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAddPoi, modelRef, showGrid, wireframe, autoRotate, controlsRef, focusTrigger, onFocusDone, onModelReady }) {
   return (
     <>
       <ambientLight intensity={0.5} />
@@ -106,9 +106,9 @@ function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAd
       <OrbitControls ref={controlsRef} makeDefault enableDamping dampingFactor={0.08} autoRotate={autoRotate} autoRotateSpeed={1.2} minDistance={0.5} maxDistance={50} />
       {showGrid && <Grid args={[20, 20]} position={[0, -0.01, 0]} />}
       <ClickPlane onClick={onAddPoi} modelRef={modelRef} />
-      <group ref={modelRef}>
+      <group>
         {modelUrl ? (
-          <ModelRenderer url={modelUrl} extension={extension} onReady={(obj) => { modelRef.current = obj }} />
+          <ModelRenderer key={modelUrl} url={modelUrl} extension={extension} onReady={onModelReady} />
         ) : (
           <Box args={[1, 1, 1]} position={[0, 0.5, 0]}><meshStandardMaterial color="#333" wireframe /></Box>
         )}
@@ -202,7 +202,7 @@ function ModelViewer() {
   const [autoRotate, setAutoRotate] = useState(false)
   const [bgDark, setBgDark] = useState(true)
   const [focusTrigger, setFocusTrigger] = useState(0)
-  const [initialFocusDone, setInitialFocusDone] = useState(false)
+  const initialFocusPendingRef = useRef(true)
   const [showPoiList, setShowPoiList] = useState(true)
   const [flash, setFlash] = useState(false)
   const controlsRef = useRef()
@@ -217,9 +217,9 @@ function ModelViewer() {
     setAddingPoi(null)
     setEditingPoi(null)
     setPoiForm({ title: '', content: '', type: 'text' })
-    setInitialFocusDone(false)
     setFocusTrigger(0)
-    if (modelRef.current) modelRef.current = null
+    modelRef.current = null
+    initialFocusPendingRef.current = true
 
     const headers = {}
     if (token) headers.Authorization = `Bearer ${token}`
@@ -249,13 +249,15 @@ function ModelViewer() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  useEffect(() => {
-    if (initialFocusDone) return
-    const timer = setTimeout(() => { if (modelRef.current) setFocusTrigger((n) => n + 1) }, 500)
-    return () => clearTimeout(timer)
-  }, [model, initialFocusDone])
+  const handleFocusDone = useCallback(() => {}, [])
 
-  const handleFocusDone = useCallback(() => setInitialFocusDone(true), [])
+  const handleModelReady = useCallback((obj) => {
+    modelRef.current = obj
+    if (initialFocusPendingRef.current) {
+      initialFocusPendingRef.current = false
+      setFocusTrigger((n) => n + 1)
+    }
+  }, [])
 
   const handleAddPoi = useCallback((point) => {
     setAddingPoi({ x: point.x, y: point.y, z: point.z })
@@ -370,7 +372,7 @@ function ModelViewer() {
       <div ref={canvasContainerRef} style={{ position: 'absolute', inset: 0 }}>
         <Canvas camera={{ position: [4, 4, 4], fov: 50 }} style={{ width: '100%', height: '100%' }} gl={{ preserveDrawingBuffer: true }}>
           <color attach="background" args={[bgDark ? '#0a0a0a' : '#e8e8e8']} />
-          <SceneContent modelUrl={modelUrl} extension={extension} pois={pois} selectedPoi={selectedPoi} onPoiClick={handlePoiClick} onAddPoi={handleAddPoi} modelRef={modelRef} showGrid={showGrid} wireframe={wireframe} autoRotate={autoRotate} controlsRef={controlsRef} focusTrigger={focusTrigger} onFocusDone={handleFocusDone} />
+          <SceneContent modelUrl={modelUrl} extension={extension} pois={pois} selectedPoi={selectedPoi} onPoiClick={handlePoiClick} onAddPoi={handleAddPoi} modelRef={modelRef} showGrid={showGrid} wireframe={wireframe} autoRotate={autoRotate} controlsRef={controlsRef} focusTrigger={focusTrigger} onFocusDone={handleFocusDone} onModelReady={handleModelReady} />
         </Canvas>
       </div>
 
