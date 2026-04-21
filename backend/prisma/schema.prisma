@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  models    Model[]
+}
+
+model Model {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  description  String   @default("")
+  originalName String
+  filename     String
+  mimetype     String
+  size         Int
+  published    Boolean  @default(false)
+  shareToken   String?  @unique
+  createdAt    DateTime @default(now())
+  pois         POI[]
+  nestedIn     POI[]   @relation("NestedModel")
+
+  @@index([userId])
+  @@index([published])
+}
+
+model POI {
+  id             String   @id @default(uuid())
+  modelId        String
+  model          Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  title          String
+  content        String   @default("")
+  type           String   @default("text")
+  nestedModelId  String?
+  nestedModel    Model?   @relation("NestedModel", fields: [nestedModelId], references: [id], onDelete: SetNull)
+  positionX      Float    @default(0)
+  positionY      Float    @default(0)
+  positionZ      Float    @default(0)
+  createdAt      DateTime @default(now())
+
+  @@index([modelId])
+}
