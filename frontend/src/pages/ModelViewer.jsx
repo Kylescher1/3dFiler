@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls, Grid, Box } from '@react-three/drei'
 import * as THREE from 'three'
@@ -123,7 +123,7 @@ function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAd
   )
 }
 
-function PoiForm({ title, content, type, onTitleChange, onContentChange, onTypeChange, onSave, onCancel, onDelete, deleteLabel }) {
+function PoiForm({ title, content, type, onTitleChange, onContentChange, onTypeChange, onSave, onCancel, onDelete, deleteLabel, myModels, currentModelId }) {
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
       <h3 style={{ color: '#4fc3f7', marginBottom: '0.75rem', fontSize: '1rem' }}>{title ? 'Edit Point of Interest' : 'New Point of Interest'}</h3>
@@ -135,7 +135,23 @@ function PoiForm({ title, content, type, onTitleChange, onContentChange, onTypeC
           <option value="nested-model">Nested Model</option>
         </select>
       </div>
-      <div className="form-group"><label>{type === 'text' ? 'Content' : 'Nested Model ID'}</label><textarea rows={type === 'text' ? 3 : 1} value={content} onChange={(e) => onContentChange(e.target.value)} /></div>
+      <div className="form-group">
+        <label>{type === 'text' ? 'Content' : 'Linked Model'}</label>
+        {type === 'nested-model' ? (
+          <select
+            value={content}
+            onChange={(e) => onContentChange(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', background: '#111', color: '#e0e0e0', border: '1px solid #2a2a2a', borderRadius: '6px' }}
+          >
+            <option value="">Select a model...</option>
+            {myModels?.filter(m => m.id !== currentModelId).map(m => (
+              <option key={m.id} value={m.id}>{m.title}</option>
+            ))}
+          </select>
+        ) : (
+          <textarea rows={3} value={content} onChange={(e) => onContentChange(e.target.value)} />
+        )}
+      </div>
       <div style={{ display: 'flex', gap: '0.5rem' }}>
         <button onClick={onSave} className="btn" style={{ flex: 1, padding: '0.4rem' }}>Save</button>
         <button onClick={onCancel} className="btn btn-secondary" style={{ flex: 1, padding: '0.4rem' }}>Cancel</button>
@@ -149,9 +165,11 @@ function PoiForm({ title, content, type, onTitleChange, onContentChange, onTypeC
 
 function ModelViewer() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [model, setModel] = useState(null)
   const [pois, setPois] = useState([])
+  const [myModels, setMyModels] = useState([])
   const [selectedPoi, setSelectedPoi] = useState(null)
   const [addingPoi, setAddingPoi] = useState(null)
   const [editingPoi, setEditingPoi] = useState(null)
@@ -176,7 +194,35 @@ function ModelViewer() {
       .then((r) => { if (!r.ok) throw new Error(r.status === 403 ? 'Private model' : 'Not found'); return r.json() })
       .then((data) => { setModel(data); setPois((data.pois || []).map(normalizePoi)) })
       .catch((err) => setError(err.message))
+
+    // Fetch user's models for nested model dropdown
+    if (token) {
+      fetch(`${API}/models/mine`, { headers })
+        .then(r => r.json())
+        .then(setMyModels)
+    }
   }, [id, searchParams, token])
+
+  // Escape key cancels POI creation
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'Escape') {
+        setAddingPoi(null)
+        setEditingPoi(null)
+        setSelectedPoi(null)
+        setPoiForm({ title: '', content: '', type: 'text' })
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  // Click outside POI list deselects
+  const handleCanvasClick = (e) => {
+    if (e.target === canvasContainerRef.current || e.target.tagName === 'CANVAS') {
+      setSelectedPoi(null)
+    }
+  }
 
   useEffect(() => {
     if (initialFocusDone) return
@@ -275,9 +321,30 @@ function ModelViewer() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1rem', height: '600px' }}>
-        <div ref={canvasContainerRef} className="card" style={{ padding: 0, overflow: 'hidden', position: 'relative', background: bgDark ? '#0a0a0a' : '#e8e8e8' }}>
-          <Canvas camera={{ position: [4, 4, 4], fov: 50 }} style={{ width: '100%', height: '100%' }} gl={{ preserveDrawingBuffer: true }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 300px',
+          gap: '1rem',
+          height: '600px',
+        }}
+      >
+        <div
+          ref={canvasContainerRef}
+          onClick={handleCanvasClick}
+          className="card"
+          style={{
+            padding: 0,
+            overflow: 'hidden',
+            position: 'relative',
+            background: bgDark ? '#0a0a0a' : '#e8e8e8',
+          }}
+        >
+          <Canvas
+            camera={{ position: [4, 4, 4], fov: 50 }}
+            style={{ width: '100%', height: '100%' }}
+            gl={{ preserveDrawingBuffer: true }}
+          >
             <color attach="background" args={[bgDark ? '#0a0a0a' : '#e8e8e8']} />
             <SceneContent modelUrl={modelUrl} extension={extension} pois={pois} selectedPoi={selectedPoi} onPoiClick={setSelectedPoi} onAddPoi={handleAddPoi} modelRef={modelRef} showGrid={showGrid} wireframe={wireframe} autoRotate={autoRotate} controlsRef={controlsRef} focusTrigger={focusTrigger} onFocusDone={handleFocusDone} />
           </Canvas>
@@ -287,7 +354,12 @@ function ModelViewer() {
 
         <div>
           {addingPoi && (
-            <PoiForm title={poiForm.title} content={poiForm.content} type={poiForm.type}
+            <PoiForm
+              title={poiForm.title}
+              content={poiForm.content}
+              type={poiForm.type}
+              myModels={myModels}
+              currentModelId={id}
               onTitleChange={(v) => setPoiForm((f) => ({ ...f, title: v }))}
               onContentChange={(v) => setPoiForm((f) => ({ ...f, content: v }))}
               onTypeChange={(v) => setPoiForm((f) => ({ ...f, type: v }))}
@@ -297,7 +369,12 @@ function ModelViewer() {
           )}
 
           {editingPoi && (
-            <PoiForm title={poiForm.title} content={poiForm.content} type={poiForm.type}
+            <PoiForm
+              title={poiForm.title}
+              content={poiForm.content}
+              type={poiForm.type}
+              myModels={myModels}
+              currentModelId={id}
               onTitleChange={(v) => setPoiForm((f) => ({ ...f, title: v }))}
               onContentChange={(v) => setPoiForm((f) => ({ ...f, content: v }))}
               onTypeChange={(v) => setPoiForm((f) => ({ ...f, type: v }))}
@@ -317,7 +394,16 @@ function ModelViewer() {
                   <button onClick={deletePoi} className="btn btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', background: '#3e2723', borderColor: '#5d4037', color: '#ffab91' }}>Delete</button>
                 </div>
               </div>
-              <p style={{ color: '#ccc', fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>{selectedPoi.content}</p>
+              {selectedPoi.type === 'nested-model' && selectedPoi.content ? (
+                <div style={{ marginBottom: '0.5rem' }}>
+                  <p style={{ color: '#888', fontSize: '0.85rem' }}>Links to nested model</p>
+                  <button onClick={() => navigate(`/model/${selectedPoi.content}`)} className="btn" style={{ marginTop: '0.5rem', padding: '0.3rem 0.8rem', fontSize: '0.85rem' }}>
+                    Open Nested Model
+                  </button>
+                </div>
+              ) : (
+                <p style={{ color: '#ccc', fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>{selectedPoi.content}</p>
+              )}
               <p style={{ color: '#666', fontSize: '0.75rem', marginTop: '0.5rem' }}>Type: {selectedPoi.type}</p>
             </div>
           )}
