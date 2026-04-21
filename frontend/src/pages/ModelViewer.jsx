@@ -244,10 +244,27 @@ function ModelViewer() {
         setSelectedPoi(null)
         setPoiForm({ title: '', content: '', type: 'text' })
       }
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+      const key = e.key.toLowerCase()
+      if (key === 'f') { e.preventDefault(); handleFocus() }
+      if (key === 'g') { e.preventDefault(); setShowGrid((v) => !v) }
+      if (key === 'w') { e.preventDefault(); setWireframe((v) => !v) }
+      if (key === 'r') { e.preventDefault(); setAutoRotate((v) => !v) }
+      if (key === 's') { e.preventDefault(); handleScreenshot() }
+      if (key === 'n' && selectedPoi) {
+        e.preventDefault()
+        const idx = pois.findIndex((p) => p.id === selectedPoi.id)
+        if (idx >= 0 && idx < pois.length - 1) setSelectedPoi(pois[idx + 1])
+      }
+      if (key === 'p' && selectedPoi) {
+        e.preventDefault()
+        const idx = pois.findIndex((p) => p.id === selectedPoi.id)
+        if (idx > 0) setSelectedPoi(pois[idx - 1])
+      }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [selectedPoi, pois])
 
   useEffect(() => {
     if (initialFocusDone) return
@@ -255,7 +272,16 @@ function ModelViewer() {
     return () => clearTimeout(timer)
   }, [model, initialFocusDone])
 
-  const handleFocusDone = useCallback(() => setInitialFocusDone(true), [])
+  const [modelBounds, setModelBounds] = useState(null)
+
+  const handleFocusDone = useCallback(() => {
+    setInitialFocusDone(true)
+    if (modelRef.current) {
+      const box = new THREE.Box3().setFromObject(modelRef.current)
+      const size = box.getSize(new THREE.Vector3())
+      setModelBounds({ w: size.x.toFixed(2), h: size.y.toFixed(2), d: size.z.toFixed(2) })
+    }
+  }, [])
 
   const handleAddPoi = useCallback((point) => {
     setAddingPoi({ x: point.x, y: point.y, z: point.z })
@@ -367,7 +393,7 @@ function ModelViewer() {
       )}
 
       {/* Full viewport canvas */}
-      <div ref={canvasContainerRef} style={{ position: 'absolute', inset: 0 }}>
+      <div ref={canvasContainerRef} style={{ position: 'absolute', inset: 0 }} onClick={(e) => { if (e.target === canvasContainerRef.current || e.target.tagName === 'CANVAS') setSelectedPoi(null) }}>
         <Canvas camera={{ position: [4, 4, 4], fov: 50 }} style={{ width: '100%', height: '100%' }} gl={{ preserveDrawingBuffer: true }}>
           <color attach="background" args={[bgDark ? '#0a0a0a' : '#e8e8e8']} />
           <SceneContent modelUrl={modelUrl} extension={extension} pois={pois} selectedPoi={selectedPoi} onPoiClick={handlePoiClick} onAddPoi={handleAddPoi} modelRef={modelRef} showGrid={showGrid} wireframe={wireframe} autoRotate={autoRotate} controlsRef={controlsRef} focusTrigger={focusTrigger} onFocusDone={handleFocusDone} />
@@ -453,6 +479,18 @@ function ModelViewer() {
                         next.splice(idx, 0, moved)
                         return next
                       })
+                      // Persist reorder to backend
+                      const newOrder = [...pois]
+                      const [moved] = newOrder.splice(fromIdx, 1)
+                      newOrder.splice(idx, 0, moved)
+                      fetch(`${API}/pois/reorder`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ modelId: id, poiIds: newOrder.map((p) => p.id) })
+                      }).catch(() => {})
                     }}
                     style={{
                       display: 'flex',
@@ -485,9 +523,25 @@ function ModelViewer() {
         )}
       </div>
 
-      {/* Bottom hint */}
-      <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 20, background: 'rgba(0,0,0,0.65)', padding: '4px 14px', borderRadius: '20px', fontSize: '0.7rem', color: '#777', pointerEvents: 'none', letterSpacing: '0.3px' }}>
-        Double-click to add a point of interest
+      {/* Bottom hint + model info */}
+      <div style={{ position: 'absolute', bottom: 12, left: 12, zIndex: 20, display: 'flex', flexDirection: 'column', gap: '6px', pointerEvents: 'none' }}>
+        <div style={{ background: 'rgba(0,0,0,0.65)', padding: '4px 14px', borderRadius: '20px', fontSize: '0.7rem', color: '#777', letterSpacing: '0.3px' }}>
+          Double-click to add a point of interest
+        </div>
+        {model && (
+          <div style={{ background: 'rgba(0,0,0,0.65)', padding: '6px 14px', borderRadius: '8px', fontSize: '0.7rem', color: '#888', display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <span><strong style={{ color: '#aaa' }}>Format:</strong> {extension?.toUpperCase() || 'Unknown'}</span>
+            <span><strong style={{ color: '#aaa' }}>Size:</strong> {(model.size / 1024 / 1024).toFixed(2)} MB</span>
+            {modelBounds && <span><strong style={{ color: '#aaa' }}>Dimensions:</strong> {modelBounds.w} x {modelBounds.h} x {modelBounds.d}</span>}
+          </div>
+        )}
+      </div>
+
+      {/* Keyboard shortcuts hint */}
+      <div style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 20, background: 'rgba(0,0,0,0.55)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.65rem', color: '#666', pointerEvents: 'none', lineHeight: 1.6 }}>
+        <strong style={{ color: '#888' }}>Shortcuts</strong><br />
+        F Focus &nbsp;G Grid &nbsp;W Wireframe &nbsp;R Rotate &nbsp;S Screenshot<br />
+        N Next POI &nbsp;P Prev POI &nbsp;Esc Close
       </div>
 
       {/* POI Detail Modal */}
@@ -514,9 +568,30 @@ function ModelViewer() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button onClick={() => startEditPoi(selectedPoi)} className="btn btn-secondary" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }}>Edit</button>
-              <button onClick={deletePoi} className="btn btn-secondary" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem', background: '#3e2723', borderColor: '#5d4037', color: '#ffab91' }}>Delete</button>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                {(() => {
+                  const idx = pois.findIndex((p) => p.id === selectedPoi.id)
+                  return (
+                    <>
+                      <button
+                        onClick={() => idx > 0 && setSelectedPoi(pois[idx - 1])}
+                        disabled={idx <= 0}
+                        style={{ padding: '0.4rem 0.7rem', fontSize: '0.8rem', background: idx > 0 ? '#1a1a20' : '#111', border: '1px solid #2a2a2a', borderRadius: '6px', color: idx > 0 ? '#aaa' : '#444', cursor: idx > 0 ? 'pointer' : 'default' }}
+                      >Prev</button>
+                      <button
+                        onClick={() => idx >= 0 && idx < pois.length - 1 && setSelectedPoi(pois[idx + 1])}
+                        disabled={idx < 0 || idx >= pois.length - 1}
+                        style={{ padding: '0.4rem 0.7rem', fontSize: '0.8rem', background: idx >= 0 && idx < pois.length - 1 ? '#1a1a20' : '#111', border: '1px solid #2a2a2a', borderRadius: '6px', color: idx >= 0 && idx < pois.length - 1 ? '#aaa' : '#444', cursor: idx >= 0 && idx < pois.length - 1 ? 'pointer' : 'default' }}
+                      >Next</button>
+                    </>
+                  )
+                })()}
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={() => startEditPoi(selectedPoi)} className="btn btn-secondary" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }}>Edit</button>
+                <button onClick={deletePoi} className="btn btn-secondary" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem', background: '#3e2723', borderColor: '#5d4037', color: '#ffab91' }}>Delete</button>
+              </div>
             </div>
           </div>
         </div>

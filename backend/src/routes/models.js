@@ -75,7 +75,7 @@ router.get('/explore', async (_req, res) => {
 router.get('/:id', async (req, res) => {
   const model = await prisma.model.findUnique({
     where: { id: req.params.id },
-    include: { pois: true }
+    include: { pois: { orderBy: { order: 'asc' } } }
   });
   if (!model) return res.status(404).json({ error: 'Model not found' });
 
