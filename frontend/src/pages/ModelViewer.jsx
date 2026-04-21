@@ -9,6 +9,17 @@ import { SceneControls } from '../components/SceneControls'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
+function normalizePoi(poi) {
+  // Prisma stores positions as positionX/Y/Z, but frontend expects position: {x,y,z}
+  if (poi.positionX !== undefined) {
+    return {
+      ...poi,
+      position: { x: poi.positionX, y: poi.positionY, z: poi.positionZ }
+    }
+  }
+  return poi
+}
+
 function ClickPlane({ onClick, modelRef }) {
   const { camera, gl } = useThree()
   const raycaster = useRef(new THREE.Raycaster())
@@ -208,7 +219,7 @@ function ModelViewer() {
       })
       .then((data) => {
         setModel(data)
-        setPois(data.pois || [])
+        setPois((data.pois || []).map(normalizePoi))
       })
       .catch((err) => setError(err.message))
   }, [id, searchParams, token])
@@ -252,7 +263,7 @@ function ModelViewer() {
     })
     const data = await res.json()
     if (res.ok) {
-      setPois((prev) => [...prev, data])
+      setPois((prev) => [...prev, normalizePoi(data)])
       setAddingPoi(null)
       setPoiForm({ title: '', content: '', type: 'text' })
     }
