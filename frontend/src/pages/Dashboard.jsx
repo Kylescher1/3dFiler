@@ -6,10 +6,16 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
 function Dashboard() {
   const [models, setModels] = useState([])
+  const [query, setQuery] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editForm, setEditForm] = useState({ title: '', description: '' })
   const token = localStorage.getItem('token')
   const { addToast } = useToast()
+
+  const formatColor = (ext) => {
+    const map = { glb: '#4fc3f7', gltf: '#4fc3f7', obj: '#81c784', fbx: '#ffb74d', stl: '#e57373' }
+    return map[ext?.toLowerCase()] || '#888'
+  }
 
   useEffect(() => {
     fetch(`${API}/models/mine`, {
@@ -18,6 +24,12 @@ function Dashboard() {
       .then(r => r.json())
       .then(setModels)
   }, [token])
+
+  const filtered = models.filter(m =>
+    m.title.toLowerCase().includes(query.toLowerCase()) ||
+    (m.description || '').toLowerCase().includes(query.toLowerCase()) ||
+    m.originalName.toLowerCase().includes(query.toLowerCase())
+  )
 
   const togglePublish = async (id, current) => {
     const res = await fetch(`${API}/models/${id}/publish`, {
@@ -100,17 +112,31 @@ function Dashboard() {
   return (
     <div>
       <h1 className="page-title">My Models</h1>
-      <Link to="/upload" className="btn" style={{ marginBottom: '1.5rem' }}>Upload New Model</Link>
+      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+        <Link to="/upload" className="btn">Upload New Model</Link>
+        <input
+          type="text"
+          placeholder="Search models..."
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          style={{ flex: 1, minWidth: '200px', padding: '0.6rem 0.8rem', background: '#111', border: '1px solid #2a2a2a', borderRadius: '6px', color: '#e0e0e0', fontSize: '1rem' }}
+        />
+      </div>
 
-      {models.length === 0 ? (
-        <p style={{ color: '#666' }}>No models yet. Upload your first 3D model!</p>
+      {filtered.length === 0 ? (
+        <p style={{ color: '#666' }}>{query ? 'No models match your search.' : 'No models yet. Upload your first 3D model!'}</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {models.map(m => (
+          {filtered.map(m => (
             <div key={m.id} className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <h3 style={{ color: '#4fc3f7' }}>{m.title}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <h3 style={{ color: '#4fc3f7' }}>{m.title}</h3>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: '4px', background: formatColor(m.originalName?.split('.').pop()), color: '#0a0a0a' }}>
+                      {m.originalName?.split('.').pop()}
+                    </span>
+                  </div>
                   <p style={{ color: '#888', fontSize: '0.9rem' }}>{m.description || 'No description'}</p>
                   <p style={{ color: '#666', fontSize: '0.75rem', marginTop: '0.4rem' }}>
                     {m.originalName} &middot; {formatSize(m.size)} &middot; {formatDate(m.createdAt)}

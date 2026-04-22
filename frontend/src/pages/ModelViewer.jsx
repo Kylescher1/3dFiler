@@ -221,6 +221,7 @@ function ModelViewer() {
   const [showPoiList, setShowPoiList] = useState(true)
   const [flash, setFlash] = useState(false)
   const [showMeta, setShowMeta] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
   const controlsRef = useRef()
   const modelRef = useRef(null)
   const canvasContainerRef = useRef(null)
@@ -242,7 +243,14 @@ function ModelViewer() {
     const url = `${API}/models/${id}${searchParams.toString() ? '?' + searchParams.toString() : ''}`
     fetch(url, { headers })
       .then((r) => { if (!r.ok) throw new Error(r.status === 403 ? 'Private model' : 'Not found'); return r.json() })
-      .then((data) => { setModel(data); setPois((data.pois || []).map(normalizePoi)) })
+      .then((data) => {
+        setModel(data)
+        setPois((data.pois || []).map(normalizePoi))
+        // Track recently viewed
+        const recent = JSON.parse(localStorage.getItem('recentModels') || '[]')
+        const next = [{ id: data.id, title: data.title, extension: data.originalName?.split('.').pop() }, ...recent.filter(m => m.id !== data.id)].slice(0, 6)
+        localStorage.setItem('recentModels', JSON.stringify(next))
+      })
       .catch((err) => setError(err.message))
 
     if (token) {
@@ -254,16 +262,54 @@ function ModelViewer() {
 
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === 'Escape') {
-        setAddingPoi(null)
-        setEditingPoi(null)
-        setSelectedPoi(null)
-        setPoiForm({ title: '', content: '', type: 'text' })
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+      switch (e.key.toLowerCase()) {
+        case 'escape':
+          setAddingPoi(null)
+          setEditingPoi(null)
+          setSelectedPoi(null)
+          setPoiForm({ title: '', content: '', type: 'text' })
+          setShowHelp(false)
+          break
+        case 'f':
+          setFocusTrigger((n) => n + 1)
+          break
+        case 'r':
+          if (controlsRef.current) { controlsRef.current.reset(); controlsRef.current.target.set(0, 0, 0); controlsRef.current.update() }
+          break
+        case 'g':
+          setShowGrid((v) => !v)
+          break
+        case 'w':
+          setWireframe((v) => !v)
+          break
+        case 'a':
+          setAutoRotate((v) => !v)
+          break
+        case 's':
+          handleScreenshot()
+          break
+        case 'b':
+          setBgDark((v) => !v)
+          break
+        case 'h':
+          setShowHelp((v) => !v)
+          break
+        case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+          const idx = parseInt(e.key, 10) - 1
+          if (pois[idx]) {
+            setSelectedPoi(pois[idx])
+            setAddingPoi(null)
+            setEditingPoi(null)
+          }
+          break
+        default:
+          break
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [pois])
 
   const handleFocusDone = useCallback(() => {}, [])
 
@@ -422,11 +468,13 @@ function ModelViewer() {
           ))}
           <div style={{ width: '1px', background: '#2a2a2a', margin: '4px 2px' }} />
           {[
-            { icon: controlIcons.screenshot, onClick: handleScreenshot, title: 'Screenshot' },
+            { icon: controlIcons.screenshot, onClick: handleScreenshot, title: 'Screenshot (S)' },
             { icon: controlIcons.fullscreen, onClick: handleFullscreen, title: 'Fullscreen' },
           ].map((c, i) => (
             <button key={i} onClick={c.onClick} title={c.title} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{c.icon}</button>
           ))}
+          <div style={{ width: '1px', background: '#2a2a2a', margin: '4px 2px' }} />
+          <button onClick={() => setShowHelp(true)} title="Keyboard Shortcuts (H)" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>?</button>
         </div>
       </div>
 
@@ -581,6 +629,35 @@ function ModelViewer() {
               onDelete={editingPoi ? deletePoi : undefined}
               deleteLabel="Delete"
             />
+          </div>
+        </div>
+      )}
+
+      {/* Keyboard Shortcuts Help Modal */}
+      {showHelp && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)' }} onClick={() => setShowHelp(false)}>
+          <div style={{ background: '#141419', border: '1px solid #2a2a2a', borderRadius: '14px', padding: '28px', width: '360px', maxWidth: '90vw', boxShadow: '0 24px 80px rgba(0,0,0,0.7)', position: 'relative' }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowHelp(false)} style={{ position: 'absolute', top: '12px', right: '14px', background: 'none', border: 'none', color: '#666', fontSize: '1.2rem', cursor: 'pointer' }}>&times;</button>
+            <h3 style={{ color: '#4fc3f7', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 600 }}>Keyboard Shortcuts</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {[
+                ['F', 'Focus / Center Camera'],
+                ['R', 'Reset View'],
+                ['G', 'Toggle Grid'],
+                ['W', 'Toggle Wireframe'],
+                ['A', 'Toggle Auto-Rotate'],
+                ['B', 'Toggle Background'],
+                ['S', 'Take Screenshot'],
+                ['1-9', 'Select POI by number'],
+                ['Esc', 'Close panels / modals'],
+                ['H', 'Toggle this help'],
+              ].map(([key, desc]) => (
+                <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                  <span style={{ color: '#ccc' }}>{desc}</span>
+                  <kbd style={{ background: '#222', border: '1px solid #3a3a3a', borderRadius: '4px', padding: '2px 8px', color: '#4fc3f7', fontFamily: 'monospace', fontSize: '0.8rem' }}>{key}</kbd>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
