@@ -24,6 +24,11 @@ export function POIMarker({ position, title, onClick, selected, index }) {
 
   return (
     <group position={[position.x, position.y + 0.05, position.z]}>
+      {/* Pin stem */}
+      <mesh position={[0, -0.025, 0]}>
+        <cylinderGeometry args={[0.01, 0.01, 0.05, 8]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} />
+      </mesh>
       <mesh
         ref={meshRef}
         onClick={(e) => { e.stopPropagation(); onClick() }}

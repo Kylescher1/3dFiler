@@ -132,4 +132,21 @@ router.delete('/:id', requireAuth, async (req, res) => {
   res.status(204).send();
 });
 
+// Update model metadata
+router.patch('/:id', requireAuth, async (req, res) => {
+  const model = await prisma.model.findUnique({ where: { id: req.params.id } });
+  if (!model) return res.status(404).json({ error: 'Not found' });
+  if (model.userId !== req.user.userId) return res.status(403).json({ error: 'Forbidden' });
+
+  const { title, description } = req.body;
+  const updated = await prisma.model.update({
+    where: { id: req.params.id },
+    data: {
+      ...(title !== undefined && { title }),
+      ...(description !== undefined && { description }),
+    }
+  });
+  res.json(updated);
+});
+
 export default router;

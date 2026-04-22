@@ -7,6 +7,7 @@ import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import ModelViewer from './pages/ModelViewer'
 import Upload from './pages/Upload'
+import NotFound from './pages/NotFound'
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="register" element={<Register />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="upload" element={<Upload />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
         <Route path="/model/:id" element={<ModelViewer />} />
       </Routes>
