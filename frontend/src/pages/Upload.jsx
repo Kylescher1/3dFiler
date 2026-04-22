@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useToast } from '../contexts/ToastContext'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
@@ -9,8 +10,10 @@ function Upload() {
   const [description, setDescription] = useState('')
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [progress, setProgress] = useState(0)
   const [dragOver, setDragOver] = useState(false)
   const navigate = useNavigate()
+  const { addToast } = useToast()
 
   const handleFile = (f) => {
     if (!f) return
@@ -47,24 +50,43 @@ function Upload() {
     if (!file) { setError('Select a 3D model file'); return }
 
     setUploading(true)
+    setProgress(0)
     const form = new FormData()
     form.append('model', file)
     form.append('title', title || file.name)
     form.append('description', description)
 
-    try {
-      const res = await fetch(`${API}/models`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: form
-      })
-      const data = await res.json()
-      if (!res.ok) { setError(data.error); setUploading(false); return }
-      navigate(`/model/${data.id}`)
-    } catch (err) {
-      setError('Upload failed. Check your connection.')
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `${API}/models`)
+    xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`)
+
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) {
+        setProgress(Math.round((event.loaded / event.total) * 100))
+      }
+    })
+
+    xhr.addEventListener('load', () => {
       setUploading(false)
-    }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const data = JSON.parse(xhr.responseText)
+        addToast('Upload complete!', 'success')
+        navigate(`/model/${data.id}`)
+      } else {
+        let msg = 'Upload failed'
+        try { msg = JSON.parse(xhr.responseText).error || msg } catch {}
+        setError(msg)
+        addToast(msg, 'error')
+      }
+    })
+
+    xhr.addEventListener('error', () => {
+      setUploading(false)
+      setError('Upload failed. Check your connection.')
+      addToast('Upload failed. Check your connection.', 'error')
+    })
+
+    xhr.send(form)
   }
 
   return (
@@ -114,6 +136,19 @@ function Upload() {
             </div>
           )}
         </div>
+
+        {/* Progress bar */}
+        {uploading && (
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#888', marginBottom: '0.3rem' }}>
+              <span>Uploading...</span>
+              <span>{progress}%</span>
+            </div>
+            <div style={{ width: '100%', height: '6px', background: '#2a2a2a', borderRadius: '3px', overflow: 'hidden' }}>
+              <div style={{ width: `${progress}%`, height: '100%', background: '#4fc3f7', borderRadius: '3px', transition: 'width 0.2s ease' }} />
+            </div>
+          </div>
+        )}
 
         <div className="form-group">
           <label>Title</label>

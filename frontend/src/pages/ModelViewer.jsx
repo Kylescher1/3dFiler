@@ -15,6 +15,21 @@ function normalizePoi(poi) {
   return poi
 }
 
+function formatBytes(bytes) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`
+}
+
+function MetaRow({ label, value }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+      <span style={{ color: '#888' }}>{label}</span>
+      <span style={{ color: '#ccc', fontWeight: 500 }}>{value}</span>
+    </div>
+  )
+}
+
 function ClickPlane({ onClick, modelRef }) {
   const { camera, gl } = useThree()
   const raycaster = useRef(new THREE.Raycaster())
@@ -205,6 +220,7 @@ function ModelViewer() {
   const initialFocusPendingRef = useRef(true)
   const [showPoiList, setShowPoiList] = useState(true)
   const [flash, setFlash] = useState(false)
+  const [showMeta, setShowMeta] = useState(false)
   const controlsRef = useRef()
   const modelRef = useRef(null)
   const canvasContainerRef = useRef(null)
@@ -420,6 +436,29 @@ function ModelViewer() {
           <p style={{ color: '#ffab91', fontSize: '0.8rem' }}><strong>Format not supported for viewing yet.</strong> Supported: GLTF, GLB, OBJ, FBX, STL.</p>
         </div>
       )}
+
+      {/* Left metadata panel */}
+      <div style={{ position: 'absolute', top: 64, left: 12, zIndex: 20, pointerEvents: 'none' }}>
+        <button
+          onClick={() => setShowMeta(!showMeta)}
+          style={{ pointerEvents: 'auto', ...panelStyle, padding: '6px 10px', color: '#aaa', fontSize: '0.75rem', cursor: 'pointer', background: overlayBg, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          Info
+        </button>
+        {showMeta && (
+          <div style={{ pointerEvents: 'auto', ...panelStyle, padding: '12px', width: '200px' }}>
+            <h4 style={{ color: '#4fc3f7', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Model Info</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              <MetaRow label="Format" value={extension?.toUpperCase() || 'Unknown'} />
+              <MetaRow label="Size" value={formatBytes(model.size)} />
+              <MetaRow label="Uploaded" value={new Date(model.createdAt).toLocaleDateString()} />
+              <MetaRow label="POIs" value={pois.length} />
+              <MetaRow label="Status" value={model.published ? 'Published' : 'Private'} />
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Right sidebar - POI list */}
       <div style={{ position: 'absolute', top: 64, right: 12, bottom: 48, width: 260, zIndex: 20, display: 'flex', flexDirection: 'column', gap: '8px', pointerEvents: 'none' }}>
