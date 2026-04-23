@@ -45,7 +45,16 @@ function Explore() {
                   {m.originalName?.split('.').pop()}
                 </span>
               </div>
-              <p style={{ color: '#888', fontSize: '0.9rem' }}>{m.description || 'No description'}</p>
+              <p style={{ color: '#888', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{m.description || 'No description'}</p>
+              {(m.tags || []).length > 0 && (
+                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  {m.tags.map(t => (
+                    <span key={t.id} style={{ fontSize: '0.7rem', color: '#4fc3f7', background: '#0f1f2a', padding: '2px 8px', borderRadius: '10px', border: '1px solid #1e3a4c' }}>
+                      {t.name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </Link>
           ))}
         </div>

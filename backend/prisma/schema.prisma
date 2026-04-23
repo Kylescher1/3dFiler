@@ -31,9 +31,16 @@ model Model {
   createdAt    DateTime @default(now())
   pois         POI[]
   nestedIn     POI[]   @relation("NestedModel")
+  tags         Tag[]
 
   @@index([userId])
   @@index([published])
+}
+
+model Tag {
+  id     String @id @default(uuid())
+  name   String @unique
+  models Model[]
 }
 
 model POI {

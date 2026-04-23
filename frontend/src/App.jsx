@@ -7,6 +7,7 @@ import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import ModelViewer from './pages/ModelViewer'
 import Upload from './pages/Upload'
+import Search from './pages/Search'
 import NotFound from './pages/NotFound'
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="explore" element={<Explore />} />
+          <Route path="search" element={<Search />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="dashboard" element={<Dashboard />} />

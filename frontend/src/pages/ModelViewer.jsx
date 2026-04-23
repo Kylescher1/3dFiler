@@ -207,6 +207,7 @@ function ModelViewer() {
   const [model, setModel] = useState(null)
   const [pois, setPois] = useState([])
   const [myModels, setMyModels] = useState([])
+  const [backlinks, setBacklinks] = useState([])
   const [selectedPoi, setSelectedPoi] = useState(null)
   const [addingPoi, setAddingPoi] = useState(null)
   const [editingPoi, setEditingPoi] = useState(null)
@@ -246,6 +247,7 @@ function ModelViewer() {
       .then((data) => {
         setModel(data)
         setPois((data.pois || []).map(normalizePoi))
+        setBacklinks(data.backlinks || [])
         // Track recently viewed
         const recent = JSON.parse(localStorage.getItem('recentModels') || '[]')
         const next = [{ id: data.id, title: data.title, extension: data.originalName?.split('.').pop() }, ...recent.filter(m => m.id !== data.id)].slice(0, 6)
@@ -485,11 +487,11 @@ function ModelViewer() {
         </div>
       )}
 
-      {/* Left metadata panel */}
-      <div style={{ position: 'absolute', top: 64, left: 12, zIndex: 20, pointerEvents: 'none' }}>
+      {/* Left metadata + backlinks panel */}
+      <div style={{ position: 'absolute', top: 64, left: 12, zIndex: 20, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <button
           onClick={() => setShowMeta(!showMeta)}
-          style={{ pointerEvents: 'auto', ...panelStyle, padding: '6px 10px', color: '#aaa', fontSize: '0.75rem', cursor: 'pointer', background: overlayBg, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}
+          style={{ pointerEvents: 'auto', ...panelStyle, padding: '6px 10px', color: '#aaa', fontSize: '0.75rem', cursor: 'pointer', background: overlayBg, display: 'flex', alignItems: 'center', gap: '6px' }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
           Info
@@ -503,6 +505,36 @@ function ModelViewer() {
               <MetaRow label="Uploaded" value={new Date(model.createdAt).toLocaleDateString()} />
               <MetaRow label="POIs" value={pois.length} />
               <MetaRow label="Status" value={model.published ? 'Published' : 'Private'} />
+              {(model.tags || []).length > 0 && (
+                <div style={{ marginTop: '0.4rem' }}>
+                  <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                    {model.tags.map(t => (
+                      <span key={t.id} style={{ fontSize: '0.7rem', color: '#4fc3f7', background: '#0f1f2a', padding: '2px 8px', borderRadius: '10px', border: '1px solid #1e3a4c' }}>
+                        {t.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Backlinks */}
+        {backlinks.length > 0 && (
+          <div style={{ pointerEvents: 'auto', ...panelStyle, padding: '12px', width: '200px' }}>
+            <h4 style={{ color: '#81c784', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Linked From</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              {backlinks.map(bl => (
+                <button
+                  key={bl.id}
+                  onClick={() => navigate(`/model/${bl.id}`)}
+                  style={{ textAlign: 'left', background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', padding: 0, fontSize: '0.8rem' }}
+                >
+                  <span style={{ color: '#81c784' }}>{bl.title}</span>
+                  {bl.poiTitle && <span style={{ color: '#555', fontSize: '0.7rem', marginLeft: '0.4rem' }}>via {bl.poiTitle}</span>}
+                </button>
+              ))}
             </div>
           </div>
         )}

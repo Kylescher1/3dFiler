@@ -34,9 +34,30 @@ function requireAuth(req, res, next) {
   }
 }
 
+function parseTags(input) {
+  if (!input) return [];
+  if (Array.isArray(input)) return input.map(t => String(t).toLowerCase().trim()).filter(Boolean);
+  return String(input)
+    .split(/[,;]/)
+    .map(t => t.toLowerCase().trim())
+    .filter(Boolean);
+}
+
+function buildTagConnect(tagNames) {
+  if (!tagNames || tagNames.length === 0) return undefined;
+  return {
+    connectOrCreate: tagNames.map(name => ({
+      where: { name },
+      create: { name }
+    }))
+  };
+}
+
 // Upload a 3D model
 router.post('/', requireAuth, upload.single('model'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+  const tagNames = parseTags(req.body.tags);
 
   const model = await prisma.model.create({
     data: {
@@ -47,7 +68,9 @@ router.post('/', requireAuth, upload.single('model'), async (req, res) => {
       size: req.file.size,
       title: req.body.title || req.file.originalname,
       description: req.body.description || '',
-    }
+      tags: buildTagConnect(tagNames)
+    },
+    include: { tags: true, pois: true }
   });
   res.status(201).json(model);
 });
@@ -56,7 +79,8 @@ router.post('/', requireAuth, upload.single('model'), async (req, res) => {
 router.get('/mine', requireAuth, async (req, res) => {
   const mine = await prisma.model.findMany({
     where: { userId: req.user.userId },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    include: { tags: true }
   });
   res.json(mine);
 });
@@ -65,7 +89,7 @@ router.get('/mine', requireAuth, async (req, res) => {
 router.get('/explore', async (_req, res) => {
   const published = await prisma.model.findMany({
     where: { published: true },
-    select: { id: true, title: true, description: true, createdAt: true },
+    select: { id: true, title: true, description: true, createdAt: true, originalName: true, tags: true },
     orderBy: { createdAt: 'desc' }
   });
   res.json(published);
@@ -75,7 +99,7 @@ router.get('/explore', async (_req, res) => {
 router.get('/:id', async (req, res) => {
   const model = await prisma.model.findUnique({
     where: { id: req.params.id },
-    include: { pois: true }
+    include: { pois: true, tags: true }
   });
   if (!model) return res.status(404).json({ error: 'Model not found' });
 
@@ -92,7 +116,17 @@ router.get('/:id', async (req, res) => {
     if (!owner && !share) return res.status(403).json({ error: 'Private model' });
   }
 
-  res.json(model);
+  // Gather backlinks: other models whose POIs link to this model
+  const backlinks = await prisma.pOI.findMany({
+    where: { type: 'nested-model', content: req.params.id },
+    include: { model: { select: { id: true, title: true, published: true, userId: true } } }
+  });
+
+  const visibleBacklinks = backlinks
+    .filter(b => b.model.published || b.model.userId === (req.user?.userId))
+    .map(b => ({ id: b.model.id, title: b.model.title, poiTitle: b.title }));
+
+  res.json({ ...model, backlinks: visibleBacklinks });
 });
 
 // Publish / unpublish
@@ -139,14 +173,77 @@ router.patch('/:id', requireAuth, async (req, res) => {
   if (model.userId !== req.user.userId) return res.status(403).json({ error: 'Forbidden' });
 
   const { title, description } = req.body;
-  const updated = await prisma.model.update({
+  const tagNames = parseTags(req.body.tags);
+
+  const updateData = {
+    ...(title !== undefined && { title }),
+    ...(description !== undefined && { description }),
+  };
+
+  if (req.body.tags !== undefined) {
+    updateData.tags = { set: [] }; // clear first
+  }
+
+  let updated = await prisma.model.update({
     where: { id: req.params.id },
-    data: {
-      ...(title !== undefined && { title }),
-      ...(description !== undefined && { description }),
-    }
+    data: updateData,
+    include: { tags: true }
   });
+
+  if (req.body.tags !== undefined && tagNames.length > 0) {
+    updated = await prisma.model.update({
+      where: { id: req.params.id },
+      data: { tags: buildTagConnect(tagNames) },
+      include: { tags: true }
+    });
+  }
+
   res.json(updated);
+});
+
+// List all tags for the current user
+router.get('/tags/mine', requireAuth, async (req, res) => {
+  const tags = await prisma.tag.findMany({
+    where: { models: { some: { userId: req.user.userId } } },
+    select: { id: true, name: true, _count: { select: { models: true } } },
+    orderBy: { name: 'asc' }
+  });
+  res.json(tags);
+});
+
+// Global search across user's models + POIs
+router.get('/search', requireAuth, async (req, res) => {
+  const q = (req.query.q || '').toLowerCase().trim();
+  if (!q) return res.json({ models: [], pois: [] });
+
+  const models = await prisma.model.findMany({
+    where: {
+      userId: req.user.userId,
+      OR: [
+        { title: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+        { originalName: { contains: q, mode: 'insensitive' } },
+        { tags: { some: { name: { contains: q, mode: 'insensitive' } } } }
+      ]
+    },
+    orderBy: { createdAt: 'desc' },
+    include: { tags: true }
+  });
+
+  const pois = await prisma.pOI.findMany({
+    where: {
+      model: { userId: req.user.userId },
+      OR: [
+        { title: { contains: q, mode: 'insensitive' } },
+        { content: { contains: q, mode: 'insensitive' } }
+      ]
+    },
+    include: { model: { select: { id: true, title: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: 20
+  });
+
+  res.json({ models, pois });
 });
 
 export default router;

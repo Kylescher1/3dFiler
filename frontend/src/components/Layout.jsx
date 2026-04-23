@@ -11,6 +11,7 @@ function Layout() {
         <Link to="/" className="brand">3dFiler</Link>
         <div className="nav-links">
           <Link to="/explore">Explore</Link>
+          <Link to="/search">Search</Link>
           {user ? (
             <>
               <Link to="/dashboard">My Models</Link>

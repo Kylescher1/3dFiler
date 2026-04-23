@@ -7,8 +7,10 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 function Dashboard() {
   const [models, setModels] = useState([])
   const [query, setQuery] = useState('')
+  const [activeTag, setActiveTag] = useState('')
+  const [myTags, setMyTags] = useState([])
   const [editingId, setEditingId] = useState(null)
-  const [editForm, setEditForm] = useState({ title: '', description: '' })
+  const [editForm, setEditForm] = useState({ title: '', description: '', tags: '' })
   const token = localStorage.getItem('token')
   const { addToast } = useToast()
 
@@ -23,13 +25,22 @@ function Dashboard() {
     })
       .then(r => r.json())
       .then(setModels)
+
+    fetch(`${API}/models/tags/mine`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(setMyTags)
   }, [token])
 
-  const filtered = models.filter(m =>
-    m.title.toLowerCase().includes(query.toLowerCase()) ||
-    (m.description || '').toLowerCase().includes(query.toLowerCase()) ||
-    m.originalName.toLowerCase().includes(query.toLowerCase())
-  )
+  const filtered = models.filter(m => {
+    const matchesQuery =
+      m.title.toLowerCase().includes(query.toLowerCase()) ||
+      (m.description || '').toLowerCase().includes(query.toLowerCase()) ||
+      m.originalName.toLowerCase().includes(query.toLowerCase())
+    const matchesTag = !activeTag || (m.tags || []).some(t => t.name === activeTag)
+    return matchesQuery && matchesTag
+  })
 
   const togglePublish = async (id, current) => {
     const res = await fetch(`${API}/models/${id}/publish`, {
@@ -79,7 +90,11 @@ function Dashboard() {
 
   const startEdit = (model) => {
     setEditingId(model.id)
-    setEditForm({ title: model.title, description: model.description || '' })
+    setEditForm({
+      title: model.title,
+      description: model.description || '',
+      tags: (model.tags || []).map(t => t.name).join(', ')
+    })
   }
 
   const saveEdit = async () => {
@@ -112,7 +127,9 @@ function Dashboard() {
   return (
     <div>
       <h1 className="page-title">My Models</h1>
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+
+      {/* Search + Upload row */}
+      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         <Link to="/upload" className="btn">Upload New Model</Link>
         <input
           type="text"
@@ -123,44 +140,76 @@ function Dashboard() {
         />
       </div>
 
+      {/* Tag filters */}
+      {myTags.length > 0 && (
+        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.5rem', alignItems: 'center' }}>
+          <span style={{ color: '#666', fontSize: '0.8rem' }}>Filter:</span>
+          <button
+            onClick={() => setActiveTag('')}
+            style={{
+              padding: '3px 10px', borderRadius: '12px', fontSize: '0.78rem', border: '1px solid #2a2a2a',
+              background: activeTag === '' ? '#1e3a4c' : '#111', color: activeTag === '' ? '#4fc3f7' : '#888', cursor: 'pointer'
+            }}
+          >
+            All
+          </button>
+          {myTags.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTag(activeTag === t.name ? '' : t.name)}
+              style={{
+                padding: '3px 10px', borderRadius: '12px', fontSize: '0.78rem', border: '1px solid #2a2a2a',
+                background: activeTag === t.name ? '#1e3a4c' : '#111', color: activeTag === t.name ? '#4fc3f7' : '#aaa', cursor: 'pointer'
+              }}
+              title={`${t._count.models} model${t._count.models === 1 ? '' : 's'}`}
+            >
+              {t.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {filtered.length === 0 ? (
-        <p style={{ color: '#666' }}>{query ? 'No models match your search.' : 'No models yet. Upload your first 3D model!'}</p>
+        <p style={{ color: '#666' }}>{query || activeTag ? 'No models match your filters.' : 'No models yet. Upload your first 3D model!'}</p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
           {filtered.map(m => (
-            <div key={m.id} className="card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <h3 style={{ color: '#4fc3f7' }}>{m.title}</h3>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: '4px', background: formatColor(m.originalName?.split('.').pop()), color: '#0a0a0a' }}>
-                      {m.originalName?.split('.').pop()}
-                    </span>
-                  </div>
-                  <p style={{ color: '#888', fontSize: '0.9rem' }}>{m.description || 'No description'}</p>
-                  <p style={{ color: '#666', fontSize: '0.75rem', marginTop: '0.4rem' }}>
-                    {m.originalName} &middot; {formatSize(m.size)} &middot; {formatDate(m.createdAt)}
-                  </p>
+            <div key={m.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                  <h3 style={{ color: '#4fc3f7', fontSize: '1.05rem', lineHeight: 1.3 }}>{m.title}</h3>
+                  <span style={{
+                    fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: '4px',
+                    background: formatColor(m.originalName?.split('.').pop()), color: '#0a0a0a', flexShrink: 0
+                  }}>
+                    {m.originalName?.split('.').pop()}
+                  </span>
                 </div>
-                <span style={{
-                  padding: '0.25rem 0.6rem',
-                  borderRadius: '4px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  background: m.published ? '#2e7d32' : '#424242',
-                  color: '#fff'
-                }}>
-                  {m.published ? 'Published' : 'Private'}
-                </span>
+                <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '0.6rem', lineHeight: 1.4 }}>
+                  {m.description || 'No description'}
+                </p>
+                {(m.tags || []).length > 0 && (
+                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.6rem' }}>
+                    {m.tags.map(t => (
+                      <span key={t.id} style={{ fontSize: '0.7rem', color: '#4fc3f7', background: '#0f1f2a', padding: '2px 8px', borderRadius: '10px', border: '1px solid #1e3a4c' }}>
+                        {t.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <p style={{ color: '#555', fontSize: '0.7rem' }}>
+                  {formatSize(m.size)} &middot; {formatDate(m.createdAt)} &middot; {m.pois?.length || 0} POIs
+                </p>
               </div>
-              <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <Link to={`/model/${m.id}`} className="btn" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>Open</Link>
-                <button onClick={() => startEdit(m)} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>Edit</button>
-                <button onClick={() => togglePublish(m.id, m.published)} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+
+              <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #1a1a1a', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                <Link to={`/model/${m.id}`} className="btn" style={{ padding: '0.35rem 0.7rem', fontSize: '0.8rem' }}>Open</Link>
+                <button onClick={() => startEdit(m)} className="btn btn-secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.8rem' }}>Edit</button>
+                <button onClick={() => togglePublish(m.id, m.published)} className="btn btn-secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.8rem' }}>
                   {m.published ? 'Unpublish' : 'Publish'}
                 </button>
-                <button onClick={() => createShare(m.id)} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>Share Link</button>
-                <button onClick={() => deleteModel(m.id, m.title)} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', background: '#3e2723', borderColor: '#5d4037', color: '#ffab91' }}>Delete</button>
+                <button onClick={() => createShare(m.id)} className="btn btn-secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.8rem' }}>Share</button>
+                <button onClick={() => deleteModel(m.id, m.title)} className="btn btn-secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.8rem', background: '#3e2723', borderColor: '#5d4037', color: '#ffab91' }}>Delete</button>
               </div>
             </div>
           ))}
@@ -179,6 +228,11 @@ function Dashboard() {
             <div className="form-group">
               <label>Description</label>
               <textarea rows={3} value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label>Tags</label>
+              <input type="text" value={editForm.tags} onChange={e => setEditForm(f => ({ ...f, tags: e.target.value }))} placeholder="character, wip, reference" />
+              <p style={{ color: '#555', fontSize: '0.75rem', marginTop: '0.3rem' }}>Separate tags with commas</p>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button onClick={saveEdit} className="btn" style={{ flex: 1, padding: '0.5rem' }}>Save</button>

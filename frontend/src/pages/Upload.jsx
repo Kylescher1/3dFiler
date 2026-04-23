@@ -8,6 +8,7 @@ function Upload() {
   const [file, setFile] = useState(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [tags, setTags] = useState('')
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -55,6 +56,7 @@ function Upload() {
     form.append('model', file)
     form.append('title', title || file.name)
     form.append('description', description)
+    form.append('tags', tags)
 
     const xhr = new XMLHttpRequest()
     xhr.open('POST', `${API}/models`)
@@ -157,6 +159,11 @@ function Upload() {
         <div className="form-group">
           <label>Description</label>
           <textarea rows="3" value={description} onChange={e => setDescription(e.target.value)} placeholder="What's this model about?" />
+        </div>
+        <div className="form-group">
+          <label>Tags</label>
+          <input type="text" value={tags} onChange={e => setTags(e.target.value)} placeholder="character, wip, reference (comma separated)" />
+          <p style={{ color: '#555', fontSize: '0.75rem', marginTop: '0.3rem' }}>Separate tags with commas</p>
         </div>
         <button
           type="submit"
