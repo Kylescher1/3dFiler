@@ -103,6 +103,7 @@ router.get('/:id', async (req, res) => {
   });
   if (!model) return res.status(404).json({ error: 'Model not found' });
 
+  let currentUserId = null;
   if (!model.published) {
     const share = req.query.share === model.shareToken;
     const auth = req.headers.authorization;
@@ -111,9 +112,18 @@ router.get('/:id', async (req, res) => {
       try {
         const decoded = jwt.verify(auth.slice(7), process.env.JWT_SECRET);
         owner = decoded.userId === model.userId;
+        currentUserId = decoded.userId;
       } catch { /* ignore */ }
     }
     if (!owner && !share) return res.status(403).json({ error: 'Private model' });
+  } else {
+    const auth = req.headers.authorization;
+    if (auth?.startsWith('Bearer ')) {
+      try {
+        const decoded = jwt.verify(auth.slice(7), process.env.JWT_SECRET);
+        currentUserId = decoded.userId;
+      } catch { /* ignore */ }
+    }
   }
 
   // Gather backlinks: other models whose POIs link to this model
@@ -123,7 +133,7 @@ router.get('/:id', async (req, res) => {
   });
 
   const visibleBacklinks = backlinks
-    .filter(b => b.model.published || b.model.userId === (req.user?.userId))
+    .filter(b => b.model.published || b.model.userId === currentUserId)
     .map(b => ({ id: b.model.id, title: b.model.title, poiTitle: b.title }));
 
   res.json({ ...model, backlinks: visibleBacklinks });
