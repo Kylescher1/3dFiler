@@ -5,6 +5,7 @@ import { OrbitControls, Grid, Box } from '@react-three/drei'
 import * as THREE from 'three'
 import { ModelRenderer, SUPPORTED_FORMATS } from '../components/ModelRenderer'
 import { POIMarker } from '../components/POIMarker'
+import MarkdownContent from '../components/MarkdownContent'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
@@ -162,6 +163,7 @@ function PoiForm({ title, content, type, onTitleChange, onContentChange, onTypeC
           <textarea rows={3} value={content} onChange={(e) => onContentChange(e.target.value)} />
         )}
       </div>
+      {type === 'text' && <p style={{ color: '#555', fontSize: '0.75rem', marginTop: '0.3rem' }}>Markdown supported: **bold**, *italic*, [links](url), lists, etc.</p>}
       <div style={{ display: 'flex', gap: '0.5rem' }}>
         <button onClick={onSave} className="btn" style={{ flex: 1, padding: '0.5rem' }}>Save</button>
         <button onClick={onCancel} className="btn btn-secondary" style={{ flex: 1, padding: '0.5rem' }}>Cancel</button>
@@ -208,6 +210,9 @@ function ModelViewer() {
   const [pois, setPois] = useState([])
   const [myModels, setMyModels] = useState([])
   const [backlinks, setBacklinks] = useState([])
+  const [breadcrumbs, setBreadcrumbs] = useState([])
+  const [relatedModels, setRelatedModels] = useState([])
+  const [showRelated, setShowRelated] = useState(false)
   const [selectedPoi, setSelectedPoi] = useState(null)
   const [addingPoi, setAddingPoi] = useState(null)
   const [editingPoi, setEditingPoi] = useState(null)
@@ -248,6 +253,18 @@ function ModelViewer() {
         setModel(data)
         setPois((data.pois || []).map(normalizePoi))
         setBacklinks(data.backlinks || [])
+        // Breadcrumbs: append current model to trail, avoiding loops
+        const trail = JSON.parse(sessionStorage.getItem('modelBreadcrumbs') || '[]')
+        const existingIdx = trail.findIndex(b => b.id === data.id)
+        let newTrail
+        if (existingIdx >= 0) {
+          newTrail = trail.slice(0, existingIdx + 1)
+        } else {
+          newTrail = [...trail, { id: data.id, title: data.title }]
+          if (newTrail.length > 8) newTrail = newTrail.slice(-8)
+        }
+        sessionStorage.setItem('modelBreadcrumbs', JSON.stringify(newTrail))
+        setBreadcrumbs(newTrail)
         // Track recently viewed
         const recent = JSON.parse(localStorage.getItem('recentModels') || '[]')
         const next = [{ id: data.id, title: data.title, extension: data.originalName?.split('.').pop() }, ...recent.filter(m => m.id !== data.id)].slice(0, 6)
@@ -260,6 +277,12 @@ function ModelViewer() {
         .then(r => r.json())
         .then(setMyModels)
     }
+
+    // Fetch related models
+    fetch(`${API}/models/${id}/related${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { headers })
+      .then(r => r.ok ? r.json() : [])
+      .then(setRelatedModels)
+      .catch(() => setRelatedModels([]))
   }, [id, searchParams, token])
 
   useEffect(() => {
@@ -446,6 +469,21 @@ function ModelViewer() {
           <Link to="/dashboard" style={{ color: '#4fc3f7', fontWeight: 700, fontSize: '1rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>3dFiler</Link>
           <div style={{ width: '1px', height: '20px', background: '#2a2a2a' }} />
           <div>
+            {breadcrumbs.length > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px', flexWrap: 'wrap' }}>
+                {breadcrumbs.map((crumb, idx) => (
+                  <span key={crumb.id} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {idx > 0 && <span style={{ color: '#555', fontSize: '0.7rem' }}>/</span>}
+                    <button
+                      onClick={() => idx < breadcrumbs.length - 1 ? navigate(`/model/${crumb.id}`) : null}
+                      style={{ background: 'none', border: 'none', padding: 0, color: idx === breadcrumbs.length - 1 ? '#e0e0e0' : '#4fc3f7', fontSize: '0.7rem', cursor: idx === breadcrumbs.length - 1 ? 'default' : 'pointer', fontWeight: idx === breadcrumbs.length - 1 ? 600 : 400 }}
+                    >
+                      {crumb.title}
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
             <h1 style={{ color: '#e0e0e0', fontSize: '0.95rem', margin: 0, fontWeight: 600, lineHeight: 1.2 }}>{model.title}</h1>
             {model.description && <p style={{ color: '#777', fontSize: '0.75rem', margin: '2px 0 0', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{model.description}</p>}
           </div>
@@ -513,6 +551,31 @@ function ModelViewer() {
                         {t.name}
                       </span>
                     ))}
+                  </div>
+                </div>
+              )}
+              {pois.length > 0 && (
+                <div style={{ marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #1a1a1a' }}>
+                  <h5 style={{ color: '#888', fontSize: '0.7rem', fontWeight: 600, marginBottom: '0.3rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Contents</h5>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                    {pois.map((poi, idx) => (
+                      <button
+                        key={poi.id}
+                        onClick={() => handlePoiClick(poi)}
+                        style={{ textAlign: 'left', background: 'none', border: 'none', padding: 0, color: '#aaa', cursor: 'pointer', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                      >
+                        <span style={{ color: '#4fc3f7', fontWeight: 700, fontSize: '0.65rem', minWidth: '14px' }}>{idx + 1}.</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{poi.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {model.description && (
+                <div style={{ marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #1a1a1a' }}>
+                  <h5 style={{ color: '#888', fontSize: '0.7rem', fontWeight: 600, marginBottom: '0.3rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Description</h5>
+                  <div style={{ maxHeight: '160px', overflowY: 'auto' }}>
+                    <MarkdownContent content={model.description} style={{ fontSize: '0.78rem' }} />
                   </div>
                 </div>
               )}
@@ -606,6 +669,38 @@ function ModelViewer() {
         )}
       </div>
 
+      {/* Related Models sidebar */}
+      <div style={{ position: 'absolute', top: 64, right: 284, zIndex: 20, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {relatedModels.length > 0 && (
+          <>
+            <button
+              onClick={() => setShowRelated(!showRelated)}
+              style={{ pointerEvents: 'auto', alignSelf: 'flex-end', ...panelStyle, padding: '6px 10px', color: '#aaa', fontSize: '0.75rem', cursor: 'pointer', background: overlayBg, display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={showRelated ? 'M18 15l-6-6-6 6' : 'M6 9l6 6 6-6'} /></svg>
+              See Also ({relatedModels.length})
+            </button>
+            {showRelated && (
+              <div style={{ pointerEvents: 'auto', ...panelStyle, padding: '12px', width: '200px' }}>
+                <h4 style={{ color: '#ffb74d', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Related Models</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  {relatedModels.map(rm => (
+                    <button
+                      key={rm.id}
+                      onClick={() => navigate(`/model/${rm.id}`)}
+                      style={{ textAlign: 'left', background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', padding: 0, fontSize: '0.8rem' }}
+                    >
+                      <span style={{ color: '#ffb74d' }}>{rm.title}</span>
+                      {rm.sharedTagCount > 0 && <span style={{ color: '#555', fontSize: '0.7rem', marginLeft: '0.4rem' }}>{rm.sharedTagCount} shared tag{rm.sharedTagCount === 1 ? '' : 's'}</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
       {/* Bottom hint */}
       <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 20, background: 'rgba(0,0,0,0.65)', padding: '4px 14px', borderRadius: '20px', fontSize: '0.7rem', color: '#777', pointerEvents: 'none', letterSpacing: '0.3px' }}>
         Double-click to add a point of interest
@@ -630,8 +725,8 @@ function ModelViewer() {
                 </button>
               </div>
             ) : (
-              <div style={{ background: '#0f0f12', borderRadius: '8px', padding: '14px', marginBottom: '16px', maxHeight: '240px', overflowY: 'auto' }}>
-                <p style={{ color: '#bbb', fontSize: '0.9rem', whiteSpace: 'pre-wrap', lineHeight: 1.5, margin: 0 }}>{selectedPoi.content || <em style={{ color: '#555' }}>No content.</em>}</p>
+              <div style={{ background: '#0f0f12', borderRadius: '8px', padding: '14px', marginBottom: '16px', maxHeight: '280px', overflowY: 'auto' }}>
+                <MarkdownContent content={selectedPoi.content} />
               </div>
             )}
 

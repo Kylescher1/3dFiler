@@ -228,6 +228,7 @@ function Dashboard() {
             <div className="form-group">
               <label>Description</label>
               <textarea rows={3} value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
+              <p style={{ color: '#555', fontSize: '0.75rem', marginTop: '0.3rem' }}>Markdown supported in viewer</p>
             </div>
             <div className="form-group">
               <label>Tags</label>

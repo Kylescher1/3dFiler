@@ -256,4 +256,53 @@ router.get('/search', requireAuth, async (req, res) => {
   res.json({ models, pois });
 });
 
+// Get related models based on shared tags
+router.get('/:id/related', async (req, res) => {
+  const model = await prisma.model.findUnique({
+    where: { id: req.params.id },
+    include: { tags: true }
+  });
+  if (!model) return res.status(404).json({ error: 'Model not found' });
+
+  let currentUserId = null;
+  const auth = req.headers.authorization;
+  if (auth?.startsWith('Bearer ')) {
+    try {
+      currentUserId = jwt.verify(auth.slice(7), process.env.JWT_SECRET).userId;
+    } catch { /* ignore */ }
+  }
+
+  // Must be owner or published to see related
+  if (!model.published && model.userId !== currentUserId) {
+    const share = req.query.share === model.shareToken;
+    if (!share) return res.status(403).json({ error: 'Private model' });
+  }
+
+  const tagNames = model.tags.map(t => t.name);
+  if (tagNames.length === 0) return res.json([]);
+
+  const related = await prisma.model.findMany({
+    where: {
+      id: { not: model.id },
+      OR: [
+        { published: true },
+        { userId: currentUserId }
+      ],
+      tags: { some: { name: { in: tagNames } } }
+    },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, title: true, description: true, originalName: true, tags: true },
+    take: 10
+  });
+
+  // Sort by number of shared tags (most relevant first)
+  const scored = related.map(r => {
+    const shared = r.tags.filter(t => tagNames.includes(t.name)).length;
+    return { ...r, sharedTagCount: shared };
+  });
+  scored.sort((a, b) => b.sharedTagCount - a.sharedTagCount);
+
+  res.json(scored);
+});
+
 export default router;
