@@ -10,8 +10,7 @@ function Layout() {
       <nav className="navbar">
         <Link to="/" className="brand">3dFiler</Link>
         <div className="nav-links">
-          <Link to="/explore">Explore</Link>
-          <Link to="/search">Search</Link>
+          <Link to="/search">Explore</Link>
           {user ? (
             <>
               <Link to="/dashboard">Library</Link>

@@ -17,7 +17,7 @@ function Home() {
         Upload 3D models, create interactive points of interest, and share your creations with the world.
       </p>
       <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '3rem' }}>
-        <Link to="/explore" className="btn">Explore Models</Link>
+        <Link to="/search" className="btn">Explore Models</Link>
         <Link to="/upload" className="btn btn-secondary">Upload Model</Link>
       </div>
 

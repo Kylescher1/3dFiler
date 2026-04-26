@@ -19,16 +19,6 @@ function formatSize(bytes = 0) {
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`
 }
 
-function MetricCard({ label, value, tone = '#4fc3f7', sub }) {
-  return (
-    <div className="card" style={{ padding: '1rem', minHeight: '88px', background: 'linear-gradient(135deg, #111 0%, #0b0f13 100%)' }}>
-      <div style={{ color: '#777', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.4rem' }}>{label}</div>
-      <div style={{ color: tone, fontSize: '1.65rem', fontWeight: 800, lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ color: '#666', fontSize: '0.75rem', marginTop: '0.45rem' }}>{sub}</div>}
-    </div>
-  )
-}
-
 function CompletionBar({ score = 0 }) {
   const color = score >= 70 ? '#81c784' : score >= 40 ? '#ffb74d' : '#e57373'
   return (
@@ -44,59 +34,8 @@ function CompletionBar({ score = 0 }) {
   )
 }
 
-function MiniGraph({ graph }) {
-  const nodes = graph?.nodes || []
-  const edges = graph?.edges || []
-  const nodeMap = new Map(nodes.map((node, idx) => [node.id, { ...node, idx }]))
-  const shownEdges = edges.filter(edge => nodeMap.has(edge.from) && nodeMap.has(edge.to)).slice(0, 18)
-
-  if (nodes.length === 0) {
-    return <p style={{ color: '#666', fontSize: '0.85rem' }}>Upload models and connect them with nested-model POIs to build your 3D wiki graph.</p>
-  }
-
-  return (
-    <div style={{ position: 'relative', height: 230, border: '1px solid #1d1d22', borderRadius: 14, background: 'radial-gradient(circle at 50% 45%, rgba(79,195,247,0.08), transparent 55%)', overflow: 'hidden' }}>
-      <svg width="100%" height="100%" viewBox="0 0 520 230" style={{ position: 'absolute', inset: 0 }}>
-        {shownEdges.map((edge, idx) => {
-          const from = nodeMap.get(edge.from)
-          const to = nodeMap.get(edge.to)
-          const angleFrom = (from.idx / Math.max(nodes.length, 1)) * Math.PI * 2
-          const angleTo = (to.idx / Math.max(nodes.length, 1)) * Math.PI * 2
-          const x1 = 260 + Math.cos(angleFrom) * 180
-          const y1 = 115 + Math.sin(angleFrom) * 75
-          const x2 = 260 + Math.cos(angleTo) * 180
-          const y2 = 115 + Math.sin(angleTo) * 75
-          return <line key={`${edge.from}-${edge.to}-${idx}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(79,195,247,0.35)" strokeWidth="1.5" />
-        })}
-      </svg>
-      {nodes.slice(0, 18).map((node, idx) => {
-        const angle = (idx / Math.max(Math.min(nodes.length, 18), 1)) * Math.PI * 2
-        const x = ((260 + Math.cos(angle) * 180) / 520) * 100
-        const y = ((115 + Math.sin(angle) * 75) / 230) * 100
-        return (
-          <Link
-            key={node.id}
-            to={`/model/${node.id}`}
-            title={node.title}
-            style={{
-              position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)',
-              width: 12 + Math.min(18, node.poiCount * 2), height: 12 + Math.min(18, node.poiCount * 2),
-              borderRadius: '50%', background: node.published ? '#81c784' : '#4fc3f7', boxShadow: '0 0 20px rgba(79,195,247,0.45)',
-              border: '2px solid rgba(255,255,255,0.15)'
-            }}
-          />
-        )
-      })}
-      <div style={{ position: 'absolute', left: 14, bottom: 12, color: '#777', fontSize: '0.75rem' }}>
-        {nodes.length} nodes · {edges.length} links
-      </div>
-    </div>
-  )
-}
-
 function Dashboard() {
   const [models, setModels] = useState([])
-  const [overview, setOverview] = useState(null)
   const [query, setQuery] = useState('')
   const [activeTag, setActiveTag] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -111,13 +50,9 @@ function Dashboard() {
     if (!token) return
     setLoading(true)
     try {
-      const [modelsRes, overviewRes] = await Promise.all([
-        fetch(`${API}/models/mine`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/models/library/overview`, { headers: { Authorization: `Bearer ${token}` } })
-      ])
-      if (!modelsRes.ok || !overviewRes.ok) throw new Error('Failed to load library')
-      setModels(await modelsRes.json())
-      setOverview(await overviewRes.json())
+      const res = await fetch(`${API}/models/mine`, { headers: { Authorization: `Bearer ${token}` } })
+      if (!res.ok) throw new Error('Failed to load library')
+      setModels(await res.json())
     } catch (error) {
       addToast(error.message, 'error')
     } finally {
@@ -126,6 +61,16 @@ function Dashboard() {
   }
 
   useEffect(() => { refresh() }, [token])
+
+  const allTags = useMemo(() => {
+    const map = new Map()
+    models.forEach(m => {
+      (m.tags || []).forEach(t => {
+        map.set(t.name, (map.get(t.name) || 0) + 1)
+      })
+    })
+    return [...map.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([name, count]) => ({ name, count }))
+  }, [models])
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase()
@@ -201,49 +146,17 @@ function Dashboard() {
     } else addToast('Failed to update model', 'error')
   }
 
-  const totals = overview?.totals || { models: 0, pois: 0, tags: 0, wikiPages: 0, published: 0, private: 0 }
-
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
         <div>
-          <p style={{ color: '#4fc3f7', textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.72rem', fontWeight: 800, marginBottom: '0.35rem' }}>3D Wiki Command Center</p>
-          <h1 className="page-title" style={{ marginBottom: '0.35rem' }}>My Knowledge Library</h1>
-          <p style={{ color: '#888', maxWidth: 680, lineHeight: 1.6 }}>Organize 3D assets as connected wiki pages with POIs, tags, backlinks, and searchable notes.</p>
+          <p style={{ color: '#4fc3f7', textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.72rem', fontWeight: 800, marginBottom: '0.35rem' }}>3D Wiki Library</p>
+          <h1 className="page-title" style={{ marginBottom: '0.35rem' }}>My Models</h1>
+          <p style={{ color: '#888', maxWidth: 680, lineHeight: 1.6 }}>Manage your 3D assets, wiki pages, POIs, and tags.</p>
         </div>
         <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-          <Link to="/search" className="btn btn-secondary">Search Wiki</Link>
+          <Link to="/search" className="btn btn-secondary">Search</Link>
           <Link to="/upload" className="btn">Upload Model</Link>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
-        <MetricCard label="Models" value={totals.models} sub={`${totals.published} published`} />
-        <MetricCard label="POIs" value={totals.pois} tone="#81c784" sub="interactive annotations" />
-        <MetricCard label="Wiki Pages" value={totals.wikiPages} tone="#ffb74d" sub={`${totals.private} private`} />
-        <MetricCard label="Tags" value={totals.tags} tone="#ba68c8" sub="knowledge clusters" />
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(260px, 0.6fr)', gap: '1rem', marginBottom: '1.25rem' }}>
-        <div className="card" style={{ padding: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-            <h2 style={{ fontSize: '1rem', color: '#e0e0e0' }}>Knowledge Graph</h2>
-            <span style={{ color: '#666', fontSize: '0.75rem' }}>Nested-model links</span>
-          </div>
-          <MiniGraph graph={overview?.graph} />
-        </div>
-        <div className="card" style={{ padding: '1rem' }}>
-          <h2 style={{ fontSize: '1rem', color: '#e0e0e0', marginBottom: '0.8rem' }}>Top Tags</h2>
-          {(overview?.tags || []).length === 0 ? <p style={{ color: '#666', fontSize: '0.85rem' }}>No tags yet.</p> : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-              {overview.tags.slice(0, 10).map(tag => (
-                <button key={tag.name} onClick={() => setActiveTag(activeTag === tag.name ? '' : tag.name)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: activeTag === tag.name ? '#1e3a4c' : '#111', border: '1px solid #222', borderRadius: 8, color: '#ccc', padding: '0.45rem 0.6rem', cursor: 'pointer' }}>
-                  <span style={{ color: '#4fc3f7' }}>{tag.name}</span>
-                  <span style={{ color: '#777', fontSize: '0.78rem' }}>{tag.count}</span>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
@@ -262,7 +175,28 @@ function Dashboard() {
             <option value="pois">POI count</option>
           </select>
         </div>
-        {activeTag && <button onClick={() => setActiveTag('')} style={{ marginTop: '0.6rem', background: '#1e3a4c', color: '#4fc3f7', border: '1px solid #31566b', borderRadius: 999, padding: '0.25rem 0.7rem', cursor: 'pointer' }}>Filtering: {activeTag} ×</button>}
+        {allTags.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.6rem' }}>
+            {allTags.slice(0, 12).map(tag => (
+              <button
+                key={tag.name}
+                onClick={() => setActiveTag(activeTag === tag.name ? '' : tag.name)}
+                style={{
+                  fontSize: '0.7rem',
+                  color: activeTag === tag.name ? '#fff' : '#4fc3f7',
+                  background: activeTag === tag.name ? '#1e3a4c' : '#0f1f2a',
+                  padding: '2px 8px',
+                  borderRadius: 10,
+                  border: '1px solid #1e3a4c',
+                  cursor: 'pointer'
+                }}
+              >
+                {tag.name} ({tag.count})
+              </button>
+            ))}
+          </div>
+        )}
+        {activeTag && <button onClick={() => setActiveTag('')} style={{ marginTop: '0.6rem', background: '#1e3a4c', color: '#4fc3f7', border: '1px solid #31566b', borderRadius: 999, padding: '0.25rem 0.7rem', cursor: 'pointer' }}>Filtering: {activeTag} &times;</button>}
       </div>
 
       {loading ? <p style={{ color: '#666' }}>Loading library...</p> : filtered.length === 0 ? (
@@ -281,7 +215,7 @@ function Dashboard() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.65rem' }}>
                     <div>
                       <h3 style={{ color: '#e0e0e0', fontSize: '1.08rem', lineHeight: 1.25, marginBottom: '0.2rem' }}>{m.title}</h3>
-                      <p style={{ color: '#666', fontSize: '0.72rem' }}>{formatSize(m.size)} · {formatDate(m.createdAt)}</p>
+                      <p style={{ color: '#666', fontSize: '0.72rem' }}>{formatSize(m.size)} &middot; {formatDate(m.createdAt)}</p>
                     </div>
                     <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', padding: '3px 7px', borderRadius: 6, background: formatColor(ext), color: '#0a0a0a', height: 'fit-content' }}>{ext}</span>
                   </div>
