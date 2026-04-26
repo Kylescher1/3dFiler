@@ -5,3 +5,4 @@ uploads/*
 dev.db
 *.db
 src/generated/
+_start_*.cmd

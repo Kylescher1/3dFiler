@@ -182,12 +182,13 @@ router.patch('/:id', requireAuth, async (req, res) => {
   if (!model) return res.status(404).json({ error: 'Not found' });
   if (model.userId !== req.user.userId) return res.status(403).json({ error: 'Forbidden' });
 
-  const { title, description } = req.body;
+  const { title, description, wikiContent } = req.body;
   const tagNames = parseTags(req.body.tags);
 
   const updateData = {
     ...(title !== undefined && { title }),
     ...(description !== undefined && { description }),
+    ...(wikiContent !== undefined && { wikiContent }),
   };
 
   if (req.body.tags !== undefined) {
