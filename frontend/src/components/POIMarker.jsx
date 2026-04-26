@@ -1,78 +1,42 @@
-import { useRef, useState } from 'react'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useState } from 'react'
 import { Html } from '@react-three/drei'
-import * as THREE from 'three'
 
 export function POIMarker({ position, title, onClick, selected, index }) {
-  const meshRef = useRef()
   const [hovered, setHovered] = useState(false)
-  const { camera } = useThree()
   const showLabel = selected || hovered
 
   const color = selected ? '#ef5350' : hovered ? '#81d4fa' : '#4fc3f7'
 
-  useFrame(() => {
-    if (meshRef.current) {
-      const dist = camera.position.distanceTo(
-        new THREE.Vector3(position.x, position.y, position.z)
-      )
-      // Scale between 0.4x and 2.2x based on distance
-      const scale = Math.max(0.4, Math.min(2.2, dist / 5))
-      meshRef.current.scale.setScalar(scale)
-    }
-  })
-
   return (
     <group position={[position.x, position.y + 0.05, position.z]}>
-      {/* Pin stem */}
-      <mesh position={[0, -0.025, 0]}>
-        <cylinderGeometry args={[0.01, 0.01, 0.05, 8]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} />
-      </mesh>
-      <mesh
-        ref={meshRef}
-        onClick={(e) => { e.stopPropagation(); onClick() }}
-        onPointerOver={(e) => {
-          e.stopPropagation()
-          setHovered(true)
-          document.body.style.cursor = 'pointer'
-        }}
-        onPointerOut={() => {
-          setHovered(false)
-          document.body.style.cursor = 'default'
-        }}
-      >
-        <sphereGeometry args={[0.08, 24, 24]} />
-        <meshStandardMaterial
-          color={color}
-          emissive={color}
-          emissiveIntensity={selected ? 0.6 : 0.35}
-          roughness={0.3}
-          metalness={0.4}
-        />
-      </mesh>
-
-      {/* Numeric index badge */}
-      {index && (
-        <Html distanceFactor={14} center style={{ pointerEvents: 'none', userSelect: 'none' }}>
-          <div style={{
-            background: color,
-            color: '#0a0a0a',
-            width: '20px',
-            height: '20px',
+      <Html distanceFactor={14} center>
+        <div
+          onClick={(e) => { e.stopPropagation(); onClick() }}
+          onMouseEnter={() => { setHovered(true); document.body.style.cursor = 'pointer' }}
+          onMouseLeave={() => { setHovered(false); document.body.style.cursor = 'default' }}
+          style={{
+            width: '28px',
+            height: '28px',
             borderRadius: '50%',
-            fontSize: '11px',
-            fontWeight: 700,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transform: 'translate(14px, -14px)',
-            boxShadow: '0 1px 6px rgba(0,0,0,0.5)',
-          }}>
-            {index}
-          </div>
-        </Html>
-      )}
+            fontSize: '13px',
+            fontWeight: 700,
+            color: '#fff',
+            background: selected ? 'rgba(239,83,80,0.15)' : hovered ? 'rgba(79,195,247,0.12)' : 'rgba(10,10,16,0.35)',
+            border: `2px solid ${color}`,
+            boxShadow: hovered || selected ? `0 0 10px ${color}66` : 'none',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          title={title || 'POI'}
+        >
+          {index}
+        </div>
+      </Html>
 
       {/* Label tooltip */}
       {showLabel && (

@@ -163,7 +163,7 @@ function PoiForm({ title, content, type, onTitleChange, onContentChange, onTypeC
           <textarea rows={3} value={content} onChange={(e) => onContentChange(e.target.value)} />
         )}
       </div>
-      {type === 'text' && <p style={{ color: '#555', fontSize: '0.75rem', marginTop: '0.3rem' }}>Markdown supported: **bold**, *italic*, [links](url), lists, etc.</p>}
+
       <div style={{ display: 'flex', gap: '0.5rem' }}>
         <button onClick={onSave} className="btn" style={{ flex: 1, padding: '0.5rem' }}>Save</button>
         <button onClick={onCancel} className="btn btn-secondary" style={{ flex: 1, padding: '0.5rem' }}>Cancel</button>
@@ -761,7 +761,7 @@ function ModelViewer() {
               </div>
             ) : (
               <div style={{ background: '#0f0f12', borderRadius: '8px', padding: '14px', marginBottom: '16px', maxHeight: '280px', overflowY: 'auto' }}>
-                <MarkdownContent content={selectedPoi.content} />
+                <p style={{ color: '#ccc', fontSize: '0.9rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{selectedPoi.content}</p>
               </div>
             )}
 
