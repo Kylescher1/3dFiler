@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import ModelViewer from './pages/ModelViewer'
+import ModelWiki from './pages/ModelWiki'
 import Upload from './pages/Upload'
 import Search from './pages/Search'
 import NotFound from './pages/NotFound'
@@ -25,6 +26,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Route>
         <Route path="/model/:id" element={<ModelViewer />} />
+        <Route path="/model/:id/wiki" element={<ModelWiki />} />
       </Routes>
     </BrowserRouter>
   )

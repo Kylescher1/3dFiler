@@ -159,7 +159,6 @@ function Upload() {
         <div className="form-group">
           <label>Description</label>
           <textarea rows="3" value={description} onChange={e => setDescription(e.target.value)} placeholder="What's this model about?" />
-          <p style={{ color: '#555', fontSize: '0.75rem', marginTop: '0.3rem' }}>Markdown supported in viewer</p>
         </div>
         <div className="form-group">
           <label>Tags</label>
