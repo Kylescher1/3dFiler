@@ -62,7 +62,7 @@ body {
 }
 
 main {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
 }
@@ -120,7 +120,10 @@ main {
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+input,
+select,
+textarea {
   width: 100%;
   padding: 0.6rem 0.8rem;
   background: #111;
@@ -128,12 +131,17 @@ main {
   border-radius: 6px;
   color: #e0e0e0;
   font-size: 1rem;
+  font-family: inherit;
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+input:focus,
+select:focus,
+textarea:focus {
   outline: none;
   border-color: #4fc3f7;
+  box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.08);
 }
 
 .error {

@@ -14,7 +14,7 @@ function Layout() {
           <Link to="/search">Search</Link>
           {user ? (
             <>
-              <Link to="/dashboard">My Models</Link>
+              <Link to="/dashboard">Library</Link>
               <Link to="/upload">Upload</Link>
               <span className="user-name">{user.username}</span>
               <button onClick={logout} className="btn-link">Logout</button>

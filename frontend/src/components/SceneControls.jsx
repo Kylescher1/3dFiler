@@ -58,7 +58,6 @@ export function SceneControls({
   onFullscreen,
   bgDark,
   setBgDark,
-  controlsRef,
 }) {
   const [flash, setFlash] = useState(false)
   const containerRef = useRef()

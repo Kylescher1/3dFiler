@@ -58,6 +58,7 @@ model POI {
   positionY      Float    @default(0)
   positionZ      Float    @default(0)
   createdAt      DateTime @default(now())
+  order          Int      @default(0)
 
   @@index([modelId])
 }

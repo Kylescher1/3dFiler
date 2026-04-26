@@ -23,7 +23,7 @@ function preprocessWikiWiki(content, pois) {
 }
 
 /* Suggest-box for POI references while editing */
-function PoiReferenceHelper({ pois, onInsert, visible, query, caretPos, textareaRef }) {
+function PoiReferenceHelper({ pois, onInsert, visible, query }) {
   if (!visible || !query) return null
   const matches = pois.filter(p => p.title.toLowerCase().includes(query.toLowerCase())).slice(0, 6)
   if (matches.length === 0) return null
@@ -165,6 +165,9 @@ function ModelWiki() {
 
   const extension = model.originalName?.split('.').pop()?.toUpperCase()
   const processedWiki = preprocessWikiWiki(model.wikiContent, pois)
+  const summary = model.summary || {}
+  const nestedModels = model.nestedModels || []
+  const backlinks = model.backlinks || []
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#e0e0e0' }}>
@@ -385,25 +388,33 @@ function ModelWiki() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Model meta card */}
           <div style={{ background: '#0f0f12', borderRadius: '10px', padding: '16px', border: '1px solid #1a1a1a' }}>
-            <h4 style={{ color: '#4fc3f7', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Model Info</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.8rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#666' }}>Format</span>
-                <span style={{ color: '#ccc', fontWeight: 500 }}>{extension || 'Unknown'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#666' }}>POIs</span>
-                <span style={{ color: '#ccc', fontWeight: 500 }}>{pois.length}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#666' }}>Status</span>
-                <span style={{ color: model.published ? '#81c784' : '#ffab91', fontWeight: 500 }}>{model.published ? 'Published' : 'Private'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#666' }}>Uploaded</span>
-                <span style={{ color: '#ccc', fontWeight: 500 }}>{new Date(model.createdAt).toLocaleDateString()}</span>
-              </div>
+            <h4 style={{ color: '#4fc3f7', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Wiki Health</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.8rem' }}>
+              {[
+                ['Complete', `${summary.completionScore || 0}%`, '#4fc3f7'],
+                ['Words', summary.wikiWordCount || 0, '#ffb74d'],
+                ['POIs', pois.length, '#81c784'],
+                ['Links', summary.nestedCount || 0, '#ba68c8'],
+              ].map(([label, value, color]) => (
+                <div key={label} style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: '8px', padding: '0.55rem', textAlign: 'center' }}>
+                  <div style={{ color, fontWeight: 800, fontSize: '1rem' }}>{value}</div>
+                  <div style={{ color: '#666', fontSize: '0.68rem' }}>{label}</div>
+                </div>
+              ))}
             </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.8rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#666' }}>Format</span><span style={{ color: '#ccc', fontWeight: 500 }}>{extension || 'Unknown'}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#666' }}>Status</span><span style={{ color: model.published ? '#81c784' : '#ffab91', fontWeight: 500 }}>{model.published ? 'Published' : 'Private'}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#666' }}>Uploaded</span><span style={{ color: '#ccc', fontWeight: 500 }}>{new Date(model.createdAt).toLocaleDateString()}</span></div>
+            </div>
+            {(summary.topTerms || []).length > 0 && (
+              <div style={{ marginTop: '0.8rem', paddingTop: '0.75rem', borderTop: '1px solid #1a1a1a' }}>
+                <h5 style={{ color: '#888', fontSize: '0.7rem', marginBottom: '0.45rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Key Terms</h5>
+                <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                  {summary.topTerms.slice(0, 8).map(t => <Link key={t.term} to={`/search?q=${encodeURIComponent(t.term)}`} style={{ color: '#4fc3f7', background: '#0f1f2a', border: '1px solid #1e3a4c', borderRadius: '10px', padding: '2px 7px', fontSize: '0.68rem', textDecoration: 'none' }}>{t.term}</Link>)}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Quick links */}
@@ -422,6 +433,29 @@ function ModelWiki() {
               )}
             </div>
           </div>
+
+          {/* Graph context */}
+          {(nestedModels.length > 0 || backlinks.length > 0) && (
+            <div style={{ background: '#0f0f12', borderRadius: '10px', padding: '16px', border: '1px solid #1a1a1a' }}>
+              <h4 style={{ color: '#81c784', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Graph Context</h4>
+              {nestedModels.length > 0 && (
+                <div style={{ marginBottom: backlinks.length ? '0.8rem' : 0 }}>
+                  <h5 style={{ color: '#777', fontSize: '0.72rem', marginBottom: '0.4rem' }}>Links Out</h5>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    {nestedModels.map(nested => <Link key={nested.id} to={`/model/${nested.id}`} style={{ color: '#ccc', background: '#111', border: '1px solid #1a1a1a', borderRadius: '6px', padding: '5px 8px', textDecoration: 'none', fontSize: '0.8rem' }}>{nested.title}</Link>)}
+                  </div>
+                </div>
+              )}
+              {backlinks.length > 0 && (
+                <div>
+                  <h5 style={{ color: '#777', fontSize: '0.72rem', marginBottom: '0.4rem' }}>Linked From</h5>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    {backlinks.map(link => <Link key={`${link.id}-${link.poiId}`} to={`/model/${link.id}`} style={{ color: '#ccc', background: '#111', border: '1px solid #1a1a1a', borderRadius: '6px', padding: '5px 8px', textDecoration: 'none', fontSize: '0.8rem' }}>{link.title}<span style={{ color: '#555', marginLeft: '0.35rem' }}>via {link.poiTitle}</span></Link>)}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* POI quick nav */}
           {pois.length > 0 && (

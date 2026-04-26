@@ -320,7 +320,19 @@ function ModelViewer() {
         case 'h':
           setShowHelp((v) => !v)
           break
-        case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+        case 'n':
+          if (selectedPoi) {
+            const currentIdx = pois.findIndex(p => p.id === selectedPoi.id)
+            if (currentIdx >= 0 && currentIdx < pois.length - 1) setSelectedPoi(pois[currentIdx + 1])
+          } else if (pois[0]) setSelectedPoi(pois[0])
+          break
+        case 'p':
+          if (selectedPoi) {
+            const currentIdx = pois.findIndex(p => p.id === selectedPoi.id)
+            if (currentIdx > 0) setSelectedPoi(pois[currentIdx - 1])
+          }
+          break
+        case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': {
           const idx = parseInt(e.key, 10) - 1
           if (pois[idx]) {
             setSelectedPoi(pois[idx])
@@ -328,13 +340,14 @@ function ModelViewer() {
             setEditingPoi(null)
           }
           break
+        }
         default:
           break
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [pois])
+  }, [pois, selectedPoi])
 
   const handleFocusDone = useCallback(() => {}, [])
 
@@ -362,7 +375,14 @@ function ModelViewer() {
   const submitPoi = async () => {
     const res = await fetch(`${API}/pois`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ modelId: id, position: addingPoi, title: poiForm.title, content: poiForm.content, type: poiForm.type })
+      body: JSON.stringify({
+        modelId: id,
+        position: addingPoi,
+        title: poiForm.title,
+        content: poiForm.content,
+        type: poiForm.type,
+        nestedModelId: poiForm.type === 'nested-model' ? poiForm.content : null
+      })
     })
     const data = await res.json()
     if (res.ok) { setPois((prev) => [...prev, normalizePoi(data)]); setAddingPoi(null); setPoiForm({ title: '', content: '', type: 'text' }) }
@@ -379,7 +399,12 @@ function ModelViewer() {
     if (!editingPoi) return
     const res = await fetch(`${API}/pois/${editingPoi.id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ title: poiForm.title, content: poiForm.content, type: poiForm.type })
+      body: JSON.stringify({
+        title: poiForm.title,
+        content: poiForm.content,
+        type: poiForm.type,
+        nestedModelId: poiForm.type === 'nested-model' ? poiForm.content : null
+      })
     })
     const data = await res.json()
     if (res.ok) {
@@ -617,9 +642,10 @@ function ModelViewer() {
 
         {showPoiList && (
           <div style={{ pointerEvents: 'auto', ...panelStyle, padding: '12px', flex: 1, overflowY: 'auto', minHeight: 0 }}>
-            <h3 style={{ color: '#4fc3f7', marginBottom: '0.75rem', fontSize: '0.9rem', fontWeight: 600 }}>Points of Interest</h3>
+            <h3 style={{ color: '#4fc3f7', marginBottom: '0.25rem', fontSize: '0.9rem', fontWeight: 600 }}>Points of Interest</h3>
+            {pois.length > 1 && <p style={{ color: '#666', fontSize: '0.7rem', marginBottom: '0.65rem' }}>Drag to reorder wiki sections. Press N/P to move through selected POIs.</p>}
             {pois.length === 0 ? (
-              <p style={{ color: '#666', fontSize: '0.8rem' }}>No POIs yet. Double-click on the model to add one.</p>
+              <p style={{ color: '#666', fontSize: '0.8rem' }}>No POIs yet. Double-click on the model to add one. Drag POIs later to turn them into ordered wiki sections.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 {pois.map((poi, idx) => (
@@ -636,6 +662,14 @@ function ModelViewer() {
                         const next = [...prev]
                         const [moved] = next.splice(fromIdx, 1)
                         next.splice(idx, 0, moved)
+                        fetch(`${API}/pois/reorder`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                          body: JSON.stringify({ modelId: id, poiIds: next.map(p => p.id) })
+                        })
+                          .then(r => r.ok ? r.json() : next)
+                          .then(data => { if (Array.isArray(data)) setPois(data.map(normalizePoi)) })
+                          .catch(() => {})
                         return next
                       })
                     }}
@@ -777,6 +811,7 @@ function ModelViewer() {
                 ['B', 'Toggle Background'],
                 ['S', 'Take Screenshot'],
                 ['1-9', 'Select POI by number'],
+                ['N / P', 'Next / previous POI'],
                 ['Esc', 'Close panels / modals'],
                 ['H', 'Toggle this help'],
               ].map(([key, desc]) => (

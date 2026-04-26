@@ -9,6 +9,7 @@ function Upload() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState('')
+  const [wikiTemplate, setWikiTemplate] = useState(true)
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -72,11 +73,19 @@ function Upload() {
       setUploading(false)
       if (xhr.status >= 200 && xhr.status < 300) {
         const data = JSON.parse(xhr.responseText)
+        if (wikiTemplate) {
+          const template = `# ${title || file.name.replace(/\.[^/.]+$/, '')}\n\n## Overview\n${description || 'Describe what this model is, why it matters, and how it should be used.'}\n\n## Key Areas\nAdd points of interest in the 3D viewer, then reference them here with [[poi:...]].\n\n## Notes\n- Source file: ${file.name}\n- Tags: ${tags || 'none yet'}\n\n## Open Questions\n- What should be annotated next?\n`
+          fetch(`${API}/models/${data.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+            body: JSON.stringify({ wikiContent: template })
+          }).catch(() => {})
+        }
         addToast('Upload complete!', 'success')
         navigate(`/model/${data.id}`)
       } else {
         let msg = 'Upload failed'
-        try { msg = JSON.parse(xhr.responseText).error || msg } catch {}
+        try { msg = JSON.parse(xhr.responseText).error || msg } catch { msg = 'Upload failed' }
         setError(msg)
         addToast(msg, 'error')
       }
@@ -165,6 +174,13 @@ function Upload() {
           <input type="text" value={tags} onChange={e => setTags(e.target.value)} placeholder="character, wip, reference (comma separated)" />
           <p style={{ color: '#555', fontSize: '0.75rem', marginTop: '0.3rem' }}>Separate tags with commas</p>
         </div>
+        <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', background: '#101014', border: '1px solid #202027', borderRadius: '10px', padding: '0.85rem', marginBottom: '1rem', cursor: 'pointer' }}>
+          <input type="checkbox" checked={wikiTemplate} onChange={e => setWikiTemplate(e.target.checked)} style={{ marginTop: '0.2rem' }} />
+          <span>
+            <span style={{ color: '#e0e0e0', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>Create starter wiki page</span>
+            <span style={{ color: '#777', fontSize: '0.8rem', lineHeight: 1.4 }}>Adds a professional markdown outline so every upload starts as a usable wiki entry.</span>
+          </span>
+        </label>
         <button
           type="submit"
           className="btn"
