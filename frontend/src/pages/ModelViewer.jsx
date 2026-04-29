@@ -528,28 +528,6 @@ function ModelViewer() {
           </div>
         )}
       />
-            {[
-              { icon: controlIcons.grid, onClick: () => setShowGrid(!showGrid), active: showGrid, title: 'Grid' },
-              { icon: controlIcons.wireframe, onClick: () => setWireframe(!wireframe), active: wireframe, title: 'Wireframe' },
-              { icon: controlIcons.rotate, onClick: () => setAutoRotate(!autoRotate), active: autoRotate, title: 'Auto-Rotate' },
-              { icon: controlIcons.bg, onClick: () => setBgDark(!bgDark), active: bgDark, title: 'Background' },
-            ].map((c, i) => (
-              <button key={i} onClick={c.onClick} title={c.title} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.active ? '#1e3a4c' : 'transparent', border: 'none', borderRadius: '6px', color: c.active ? '#4fc3f7' : '#aaa', cursor: 'pointer' }} onMouseEnter={e => { if (!c.active) e.currentTarget.style.background = '#2a2a2a' }} onMouseLeave={e => { if (!c.active) e.currentTarget.style.background = 'transparent' }}>{c.icon}</button>
-            ))}
-            <div style={{ width: '1px', background: '#2a2a2a', margin: '4px 2px' }} />
-            {[
-              { icon: controlIcons.screenshot, onClick: handleScreenshot, title: 'Screenshot (S)' },
-              { icon: controlIcons.fullscreen, onClick: handleFullscreen, title: 'Fullscreen' },
-            ].map((c, i) => (
-              <button key={i} onClick={c.onClick} title={c.title} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{c.icon}</button>
-            ))}
-            <div style={{ width: '1px', background: '#2a2a2a', margin: '4px 2px' }} />
-            <button onClick={() => setShowWikiSidebar(v => !v)} title="Toggle Wiki Sidebar" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: showWikiSidebar ? '#1e3a4c' : 'transparent', border: 'none', borderRadius: '6px', color: showWikiSidebar ? '#4fc3f7' : '#aaa', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }} onMouseEnter={e => { if (!showWikiSidebar) e.currentTarget.style.background = '#2a2a2a' }} onMouseLeave={e => { if (!showWikiSidebar) e.currentTarget.style.background = 'transparent' }}>W</button>
-            <button onClick={() => setShowHelp(true)} title="Keyboard Shortcuts (H)" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>?</button>
-          </div>
-        )}
-      />
-
       {/* Format warning */}
       {!isSupported && (
         <div style={{ position: 'absolute', top: 68, left: '50%', transform: 'translateX(-50%)', zIndex: 20, ...panelStyle, padding: '8px 14px', background: '#3e2723' }}>
