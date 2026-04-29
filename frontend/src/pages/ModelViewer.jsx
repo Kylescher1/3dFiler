@@ -6,6 +6,7 @@ import * as THREE from 'three'
 import { ModelRenderer, SUPPORTED_FORMATS } from '../components/ModelRenderer'
 import { POIMarker } from '../components/POIMarker'
 import MarkdownContent from '../components/MarkdownContent'
+import ModelHeader from '../components/ModelHeader'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
@@ -227,6 +228,8 @@ function ModelViewer() {
   const [showPoiList, setShowPoiList] = useState(true)
   const [flash, setFlash] = useState(false)
   const [showMeta, setShowMeta] = useState(false)
+  const [showWikiSidebar, setShowWikiSidebar] = useState(true)
+  const [isOwner, setIsOwner] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const controlsRef = useRef()
   const modelRef = useRef(null)
@@ -240,6 +243,7 @@ function ModelViewer() {
     setAddingPoi(null)
     setEditingPoi(null)
     setPoiForm({ title: '', content: '', type: 'text' })
+    setIsOwner(false)
     setFocusTrigger(0)
     modelRef.current = null
     initialFocusPendingRef.current = true
@@ -251,6 +255,9 @@ function ModelViewer() {
       .then((r) => { if (!r.ok) throw new Error(r.status === 403 ? 'Private model' : 'Not found'); return r.json() })
       .then((data) => {
         setModel(data)
+        setIsOwner(Boolean(token) && data.userId === (() => {
+          try { return JSON.parse(atob(token.split('.')[1])).userId } catch { return null }
+        })())
         setPois((data.pois || []).map(normalizePoi))
         setBacklinks(data.backlinks || [])
         // Breadcrumbs: append current model to trail, avoiding loops
@@ -370,6 +377,7 @@ function ModelViewer() {
     setSelectedPoi(poi)
     setEditingPoi(null)
     setAddingPoi(null)
+    setFocusTrigger((n) => n + 1)
   }, [])
 
   const submitPoi = async () => {
@@ -489,61 +497,42 @@ function ModelViewer() {
       </div>
 
       {/* Top overlay bar */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', zIndex: 20, pointerEvents: 'none' }}>
-        <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: '12px', ...panelStyle, padding: '8px 14px' }}>
-          <Link to="/dashboard" style={{ color: '#4fc3f7', fontWeight: 700, fontSize: '1rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>3dFiler</Link>
-          <div style={{ width: '1px', height: '20px', background: '#2a2a2a' }} />
-          <div>
-            {breadcrumbs.length > 1 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px', flexWrap: 'wrap' }}>
-                {breadcrumbs.map((crumb, idx) => (
-                  <span key={crumb.id} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {idx > 0 && <span style={{ color: '#555', fontSize: '0.7rem' }}>/</span>}
-                    <button
-                      onClick={() => idx < breadcrumbs.length - 1 ? navigate(`/model/${crumb.id}`) : null}
-                      style={{ background: 'none', border: 'none', padding: 0, color: idx === breadcrumbs.length - 1 ? '#e0e0e0' : '#4fc3f7', fontSize: '0.7rem', cursor: idx === breadcrumbs.length - 1 ? 'default' : 'pointer', fontWeight: idx === breadcrumbs.length - 1 ? 600 : 400 }}
-                    >
-                      {crumb.title}
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <h1 style={{ color: '#e0e0e0', fontSize: '0.95rem', margin: 0, fontWeight: 600, lineHeight: 1.2 }}>{model.title}</h1>
-            {model.description && <p style={{ color: '#777', fontSize: '0.75rem', margin: '2px 0 0', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{model.description}</p>}
+      <ModelHeader
+        model={model}
+        breadcrumbs={breadcrumbs}
+        mode="viewer"
+        onOpenViewer={() => {}}
+        onOpenWiki={() => navigate(`/model/${id}/wiki`)}
+        extraButtons={(
+          <div style={{ pointerEvents: 'auto', display: 'flex', gap: '2px', ...panelStyle, padding: '4px' }}>
+            {[
+              { icon: controlIcons.focus, onClick: handleFocus, title: 'Focus' },
+              { icon: controlIcons.reset, onClick: handleReset, title: 'Reset' },
+            ].map((c, i) => (
+              <button key={i} onClick={c.onClick} title={c.title} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{c.icon}</button>
+            ))}
+            <div style={{ width: '1px', background: '#2a2a2a', margin: '4px 2px' }} />
+            {[
+              { icon: controlIcons.grid, onClick: () => setShowGrid(!showGrid), active: showGrid, title: 'Grid' },
+              { icon: controlIcons.wireframe, onClick: () => setWireframe(!wireframe), active: wireframe, title: 'Wireframe' },
+              { icon: controlIcons.rotate, onClick: () => setAutoRotate(!autoRotate), active: autoRotate, title: 'Auto-Rotate' },
+              { icon: controlIcons.bg, onClick: () => setBgDark(!bgDark), active: bgDark, title: 'Background' },
+            ].map((c, i) => (
+              <button key={i} onClick={c.onClick} title={c.title} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.active ? '#1e3a4c' : 'transparent', border: 'none', borderRadius: '6px', color: c.active ? '#4fc3f7' : '#aaa', cursor: 'pointer' }} onMouseEnter={e => { if (!c.active) e.currentTarget.style.background = '#2a2a2a' }} onMouseLeave={e => { if (!c.active) e.currentTarget.style.background = 'transparent' }}>{c.icon}</button>
+            ))}
+            <div style={{ width: '1px', background: '#2a2a2a', margin: '4px 2px' }} />
+            {[
+              { icon: controlIcons.screenshot, onClick: handleScreenshot, title: 'Screenshot (S)' },
+              { icon: controlIcons.fullscreen, onClick: handleFullscreen, title: 'Fullscreen' },
+            ].map((c, i) => (
+              <button key={i} onClick={c.onClick} title={c.title} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{c.icon}</button>
+            ))}
+            <div style={{ width: '1px', background: '#2a2a2a', margin: '4px 2px' }} />
+            <button onClick={() => setShowWikiSidebar(v => !v)} title="Toggle Wiki Sidebar" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: showWikiSidebar ? '#1e3a4c' : 'transparent', border: 'none', borderRadius: '6px', color: showWikiSidebar ? '#4fc3f7' : '#aaa', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }} onMouseEnter={e => { if (!showWikiSidebar) e.currentTarget.style.background = '#2a2a2a' }} onMouseLeave={e => { if (!showWikiSidebar) e.currentTarget.style.background = 'transparent' }}>W</button>
+            <button onClick={() => setShowHelp(true)} title="Keyboard Shortcuts (H)" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>?</button>
           </div>
-        </div>
-
-        {/* Scene controls */}
-        <div style={{ pointerEvents: 'auto', display: 'flex', gap: '2px', ...panelStyle, padding: '4px' }}>
-          {[
-            { icon: controlIcons.focus, onClick: handleFocus, title: 'Focus' },
-            { icon: controlIcons.reset, onClick: handleReset, title: 'Reset' },
-          ].map((c, i) => (
-            <button key={i} onClick={c.onClick} title={c.title} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{c.icon}</button>
-          ))}
-          <div style={{ width: '1px', background: '#2a2a2a', margin: '4px 2px' }} />
-          {[
-            { icon: controlIcons.grid, onClick: () => setShowGrid(!showGrid), active: showGrid, title: 'Grid' },
-            { icon: controlIcons.wireframe, onClick: () => setWireframe(!wireframe), active: wireframe, title: 'Wireframe' },
-            { icon: controlIcons.rotate, onClick: () => setAutoRotate(!autoRotate), active: autoRotate, title: 'Auto-Rotate' },
-            { icon: controlIcons.bg, onClick: () => setBgDark(!bgDark), active: bgDark, title: 'Background' },
-          ].map((c, i) => (
-            <button key={i} onClick={c.onClick} title={c.title} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.active ? '#1e3a4c' : 'transparent', border: 'none', borderRadius: '6px', color: c.active ? '#4fc3f7' : '#aaa', cursor: 'pointer' }} onMouseEnter={e => { if (!c.active) e.currentTarget.style.background = '#2a2a2a' }} onMouseLeave={e => { if (!c.active) e.currentTarget.style.background = 'transparent' }}>{c.icon}</button>
-          ))}
-          <div style={{ width: '1px', background: '#2a2a2a', margin: '4px 2px' }} />
-          {[
-            { icon: controlIcons.screenshot, onClick: handleScreenshot, title: 'Screenshot (S)' },
-            { icon: controlIcons.fullscreen, onClick: handleFullscreen, title: 'Fullscreen' },
-          ].map((c, i) => (
-            <button key={i} onClick={c.onClick} title={c.title} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{c.icon}</button>
-          ))}
-          <div style={{ width: '1px', background: '#2a2a2a', margin: '4px 2px' }} />
-          <button onClick={() => navigate(`/model/${id}/wiki`)} title="Open Wiki" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>W</button>
-          <button onClick={() => setShowHelp(true)} title="Keyboard Shortcuts (H)" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>?</button>
-        </div>
-      </div>
-
+        )}
+      />
       {/* Format warning */}
       {!isSupported && (
         <div style={{ position: 'absolute', top: 68, left: '50%', transform: 'translateX(-50%)', zIndex: 20, ...panelStyle, padding: '8px 14px', background: '#3e2723' }}>
@@ -551,7 +540,7 @@ function ModelViewer() {
         </div>
       )}
 
-      {/* Left metadata + backlinks panel */}
+      {/* Left metadata + wiki + backlinks panel */}
       <div style={{ position: 'absolute', top: 64, left: 12, zIndex: 20, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <button
           onClick={() => setShowMeta(!showMeta)}
@@ -606,6 +595,19 @@ function ModelViewer() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+        {showWikiSidebar && isOwner && (
+          <div style={{ pointerEvents: 'auto', ...panelStyle, padding: '12px', width: '320px', maxHeight: '56vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+              <h4 style={{ color: '#81d4fa', fontSize: '0.86rem', margin: 0 }}>Wiki Sidebar</h4>
+              <button onClick={() => navigate(`/model/${id}/wiki`)} className="btn btn-secondary" style={{ padding: '0.24rem 0.55rem', fontSize: '0.68rem' }}>Open wiki</button>
+            </div>
+            {model.wikiContent ? (
+              <MarkdownContent content={model.wikiContent} style={{ fontSize: '0.8rem', lineHeight: 1.55 }} />
+            ) : (
+              <p style={{ color: '#777', fontSize: '0.78rem' }}>No wiki content yet. Add wiki notes to enrich this model.</p>
+            )}
           </div>
         )}
 
@@ -703,6 +705,7 @@ function ModelViewer() {
           </div>
         )}
       </div>
+
 
       {/* Related Models sidebar */}
       <div style={{ position: 'absolute', top: 64, right: 284, zIndex: 20, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>

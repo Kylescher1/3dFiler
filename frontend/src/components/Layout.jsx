@@ -1,9 +1,15 @@
-import { Outlet, Link } from 'react-router-dom'
+import { Outlet, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import './Layout.css'
 
 function Layout() {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/search')
+  }
 
   return (
     <div className="app">
@@ -16,7 +22,7 @@ function Layout() {
               <Link to="/dashboard">Library</Link>
               <Link to="/upload">Upload</Link>
               <span className="user-name">{user.username}</span>
-              <button onClick={logout} className="btn-link">Logout</button>
+              <button onClick={handleLogout} className="btn-link">Logout</button>
             </>
           ) : (
             <>

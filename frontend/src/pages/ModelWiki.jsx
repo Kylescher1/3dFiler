@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import MarkdownContent from '../components/MarkdownContent'
+import ModelHeader from '../components/ModelHeader'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
@@ -165,54 +166,21 @@ function ModelWiki() {
 
   const extension = model.originalName?.split('.').pop()?.toUpperCase()
   const processedWiki = preprocessWikiWiki(model.wikiContent, pois)
-  const summary = model.summary || {}
   const nestedModels = model.nestedModels || []
   const backlinks = model.backlinks || []
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#e0e0e0' }}>
       {/* Top bar */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 50,
-        background: 'rgba(10,10,14,0.95)', backdropFilter: 'blur(8px)',
-        borderBottom: '1px solid #1a1a1a',
-      }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link to="/dashboard" style={{ color: '#4fc3f7', fontWeight: 700, fontSize: '1rem', textDecoration: 'none' }}>3dFiler</Link>
-            <span style={{ color: '#333' }}>/</span>
-            <span style={{ color: '#888', fontSize: '0.85rem', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{model.title}</span>
-          </div>
-
-          {/* Tabs */}
-          <div style={{ display: 'flex', gap: '2px', background: '#111', borderRadius: '8px', padding: '3px' }}>
-            <button
-              onClick={() => navigate(`/model/${id}`)}
-              style={{
-                padding: '6px 14px', borderRadius: '6px', border: 'none',
-                background: 'transparent', color: '#888', cursor: 'pointer',
-                fontSize: '0.85rem', fontWeight: 500,
-              }}
-              onMouseEnter={e => e.currentTarget.style.color = '#ccc'}
-              onMouseLeave={e => e.currentTarget.style.color = '#888'}
-            >
-              3D Viewer
-            </button>
-            <button
-              style={{
-                padding: '6px 14px', borderRadius: '6px', border: 'none',
-                background: '#1e3a4c', color: '#4fc3f7', cursor: 'default',
-                fontSize: '0.85rem', fontWeight: 600,
-              }}
-            >
-              Wiki
-            </button>
-          </div>
-        </div>
-      </div>
+      <ModelHeader
+        model={model}
+        mode="wiki"
+        onOpenViewer={() => navigate(`/model/${id}`)}
+        onOpenWiki={() => {}}
+      />
 
       {/* Main content */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '28px 20px 60px', display: 'grid', gridTemplateColumns: '1fr 280px', gap: '28px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '82px 20px 60px', display: 'grid', gridTemplateColumns: '1fr 280px', gap: '28px' }}>
         {/* Left: Wiki content */}
         <div>
           {/* Title + actions */}
@@ -386,37 +354,6 @@ function ModelWiki() {
 
         {/* Right sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Model meta card */}
-          <div style={{ background: '#0f0f12', borderRadius: '10px', padding: '16px', border: '1px solid #1a1a1a' }}>
-            <h4 style={{ color: '#4fc3f7', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Wiki Health</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.8rem' }}>
-              {[
-                ['Complete', `${summary.completionScore || 0}%`, '#4fc3f7'],
-                ['Words', summary.wikiWordCount || 0, '#ffb74d'],
-                ['POIs', pois.length, '#81c784'],
-                ['Links', summary.nestedCount || 0, '#ba68c8'],
-              ].map(([label, value, color]) => (
-                <div key={label} style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: '8px', padding: '0.55rem', textAlign: 'center' }}>
-                  <div style={{ color, fontWeight: 800, fontSize: '1rem' }}>{value}</div>
-                  <div style={{ color: '#666', fontSize: '0.68rem' }}>{label}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.8rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#666' }}>Format</span><span style={{ color: '#ccc', fontWeight: 500 }}>{extension || 'Unknown'}</span></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#666' }}>Status</span><span style={{ color: model.published ? '#81c784' : '#ffab91', fontWeight: 500 }}>{model.published ? 'Published' : 'Private'}</span></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#666' }}>Uploaded</span><span style={{ color: '#ccc', fontWeight: 500 }}>{new Date(model.createdAt).toLocaleDateString()}</span></div>
-            </div>
-            {(summary.topTerms || []).length > 0 && (
-              <div style={{ marginTop: '0.8rem', paddingTop: '0.75rem', borderTop: '1px solid #1a1a1a' }}>
-                <h5 style={{ color: '#888', fontSize: '0.7rem', marginBottom: '0.45rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Key Terms</h5>
-                <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                  {summary.topTerms.slice(0, 8).map(t => <Link key={t.term} to={`/search?q=${encodeURIComponent(t.term)}`} style={{ color: '#4fc3f7', background: '#0f1f2a', border: '1px solid #1e3a4c', borderRadius: '10px', padding: '2px 7px', fontSize: '0.68rem', textDecoration: 'none' }}>{t.term}</Link>)}
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Quick links */}
           <div style={{ background: '#0f0f12', borderRadius: '10px', padding: '16px', border: '1px solid #1a1a1a' }}>
             <h4 style={{ color: '#4fc3f7', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Quick Links</h4>
