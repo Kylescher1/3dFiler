@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import MarkdownContent from '../components/MarkdownContent'
+import ModelHeader from '../components/ModelHeader'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
@@ -172,29 +173,16 @@ function ModelWiki() {
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#e0e0e0' }}>
       {/* Top bar */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 50, padding: '12px 16px',
-        background: 'rgba(10,10,14,0.95)', backdropFilter: 'blur(8px)',
-        borderBottom: '1px solid #1a1a1a',
-      }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(12, 12, 16, 0.88)', border: '1px solid #2a2a2a', borderRadius: '10px', backdropFilter: 'blur(6px)', padding: '8px 14px' }}>
-            <Link to="/dashboard" style={{ color: '#4fc3f7', fontWeight: 700, fontSize: '1rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>3dFiler</Link>
-            <div style={{ width: '1px', height: '20px', background: '#2a2a2a' }} />
-            <div>
-              <h1 style={{ color: '#e0e0e0', fontSize: '0.95rem', margin: 0, fontWeight: 600, lineHeight: 1.2 }}>{model.title}</h1>
-              {model.description && <p style={{ color: '#777', fontSize: '0.75rem', margin: '2px 0 0', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{model.description}</p>}
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div style={{ display: 'flex', gap: '2px', background: '#111', borderRadius: '8px', padding: '3px' }}>
+      <ModelHeader
+        model={model}
+        rightContent={(
+          <div style={{ pointerEvents: 'auto', display: 'flex', gap: '2px', background: 'rgba(12, 12, 16, 0.88)', border: '1px solid #2a2a2a', borderRadius: '10px', backdropFilter: 'blur(6px)', padding: '4px' }}>
             <button
               onClick={() => navigate(`/model/${id}`)}
               style={{
-                padding: '6px 14px', borderRadius: '6px', border: 'none',
+                width: '90px', height: '32px', borderRadius: '6px', border: 'none',
                 background: 'transparent', color: '#888', cursor: 'pointer',
-                fontSize: '0.85rem', fontWeight: 500,
+                fontSize: '0.82rem', fontWeight: 500,
               }}
               onMouseEnter={e => e.currentTarget.style.color = '#ccc'}
               onMouseLeave={e => e.currentTarget.style.color = '#888'}
@@ -203,19 +191,19 @@ function ModelWiki() {
             </button>
             <button
               style={{
-                padding: '6px 14px', borderRadius: '6px', border: 'none',
+                width: '90px', height: '32px', borderRadius: '6px', border: 'none',
                 background: '#1e3a4c', color: '#4fc3f7', cursor: 'default',
-                fontSize: '0.85rem', fontWeight: 600,
+                fontSize: '0.82rem', fontWeight: 600,
               }}
             >
               Wiki
             </button>
           </div>
-        </div>
-      </div>
+        )}
+      />
 
       {/* Main content */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '28px 20px 60px', display: 'grid', gridTemplateColumns: '1fr 280px', gap: '28px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '82px 20px 60px', display: 'grid', gridTemplateColumns: '1fr 280px', gap: '28px' }}>
         {/* Left: Wiki content */}
         <div>
           {/* Title + actions */}
