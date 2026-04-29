@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '../contexts/ToastContext'
+import { Upload as UploadIcon, CloudUpload, FileBox, Tag, FileText, Check } from 'lucide-react'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
@@ -101,94 +103,152 @@ function Upload() {
   }
 
   return (
-    <div className="card" style={{ maxWidth: '600px', margin: '2rem auto' }}>
-      <h2 className="page-title" style={{ fontSize: '1.5rem' }}>Upload 3D Model</h2>
-      {error && <div className="error">{error}</div>}
-      <form onSubmit={handleSubmit}>
-        <div
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          style={{
-            border: `2px dashed ${dragOver ? '#4fc3f7' : '#2a2a2a'}`,
-            borderRadius: '12px',
-            padding: '2rem',
-            textAlign: 'center',
-            background: dragOver ? 'rgba(79,195,247,0.05)' : '#111',
-            transition: 'all 0.2s',
-            marginBottom: '1rem',
-            cursor: 'pointer',
-          }}
-          onClick={() => document.getElementById('file-input').click()}
-        >
-          <input
-            id="file-input"
-            type="file"
-            accept=".gltf,.glb,.obj,.fbx,.stl"
-            style={{ display: 'none' }}
-            onChange={e => handleFile(e.target.files[0])}
-          />
-          {file ? (
-            <div>
-              <p style={{ color: '#4fc3f7', fontWeight: 600, fontSize: '1.1rem' }}>{file.name}</p>
-              <p style={{ color: '#666', fontSize: '0.85rem' }}>{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-              <p style={{ color: '#888', fontSize: '0.8rem', marginTop: '0.5rem' }}>Click or drop to replace</p>
-            </div>
-          ) : (
-            <div>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="1.5" style={{ marginBottom: '0.5rem' }}>
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-              <p style={{ color: '#888' }}>Drag & drop a 3D model here</p>
-              <p style={{ color: '#666', fontSize: '0.8rem' }}>or click to browse</p>
-              <p style={{ color: '#555', fontSize: '0.75rem', marginTop: '0.5rem' }}>.gltf .glb .obj .fbx .stl</p>
-            </div>
+    <div style={{ padding: '2rem', maxWidth: '700px', margin: '0 auto' }}>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div style={{ marginBottom: '1.5rem' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--neon-cyan)', textTransform: 'uppercase', letterSpacing: '2px' }}>// Upload Interface</span>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: 700, marginTop: '0.35rem', marginBottom: '0.3rem' }}>
+            Upload 3D Model
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Deploy your 3D asset to the knowledge base.</p>
+        </div>
+
+        <div className="card-modern" style={{ padding: '1.5rem', border: '1px solid var(--border-medium)' }}>
+          {error && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-sm)', color: 'var(--neon-red)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              {error}
+            </motion.div>
           )}
-        </div>
 
-        {/* Progress bar */}
-        {uploading && (
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#888', marginBottom: '0.3rem' }}>
-              <span>Uploading...</span>
-              <span>{progress}%</span>
+          <form onSubmit={handleSubmit}>
+            <div
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              style={{
+                border: `2px dashed ${dragOver ? 'var(--neon-cyan)' : 'var(--border-medium)'}`,
+                borderRadius: 'var(--radius-md)',
+                padding: '2.5rem',
+                textAlign: 'center',
+                background: dragOver ? 'rgba(0, 229, 255, 0.05)' : 'var(--bg-tertiary)',
+                transition: 'all 0.3s ease',
+                marginBottom: '1.5rem',
+                cursor: 'pointer',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+              onClick={() => document.getElementById('file-input').click()}
+            >
+              {dragOver && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle, rgba(0,229,255,0.05), transparent)', pointerEvents: 'none' }}
+                />
+              )}
+              <input
+                id="file-input"
+                type="file"
+                accept=".gltf,.glb,.obj,.fbx,.stl"
+                style={{ display: 'none' }}
+                onChange={e => handleFile(e.target.files[0])}
+              />
+              <AnimatePresence mode="wait">
+                {file ? (
+                  <motion.div
+                    key="file"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                  >
+                    <FileBox size={36} color="var(--neon-cyan)" style={{ margin: '0 auto 0.75rem' }} />
+                    <p style={{ color: 'var(--neon-cyan)', fontWeight: 600, fontSize: '1.1rem', fontFamily: 'var(--font-mono)' }}>{file.name}</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.3rem' }}>{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.75rem' }}>Click or drop to replace</p>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                  >
+                    <CloudUpload size={40} color="var(--text-muted)" style={{ margin: '0 auto 0.75rem', opacity: 0.5 }} />
+                    <p style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Drag & drop a 3D model here</p>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.3rem' }}>or click to browse</p>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: '1rem' }}>
+                      {['.gltf', '.glb', '.obj', '.fbx', '.stl'].map(ext => (
+                        <span key={ext} className="tag-minimal" style={{ fontSize: '0.6rem' }}>{ext}</span>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-            <div style={{ width: '100%', height: '6px', background: '#2a2a2a', borderRadius: '3px', overflow: 'hidden' }}>
-              <div style={{ width: `${progress}%`, height: '100%', background: '#4fc3f7', borderRadius: '3px', transition: 'width 0.2s ease' }} />
-            </div>
-          </div>
-        )}
 
-        <div className="form-group">
-          <label>Title</label>
-          <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="My Awesome Model" />
+            {uploading && (
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--neon-cyan)', fontFamily: 'var(--font-mono)', marginBottom: '0.4rem' }}>
+                  <span>UPLOADING ASSET...</span>
+                  <span>{progress}%</span>
+                </div>
+                <div style={{ width: '100%', height: 4, background: 'var(--bg-secondary)', borderRadius: 2, overflow: 'hidden' }}>
+                  <motion.div
+                    style={{ height: '100%', background: 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))', borderRadius: 2 }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <FileBox size={12} /> Asset Title
+              </label>
+              <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Turbofan Engine Assembly" />
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <FileText size={12} /> Description
+              </label>
+              <textarea rows={3} value={description} onChange={e => setDescription(e.target.value)} placeholder="What is this model? What do you want to document about it?" />
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Tag size={12} /> Classification Tags
+              </label>
+              <input type="text" value={tags} onChange={e => setTags(e.target.value)} placeholder="aerospace, turbine, reference (comma separated)" />
+            </div>
+
+            <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', background: 'var(--bg-tertiary)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', padding: '1rem', marginBottom: '1.5rem', cursor: 'pointer' }}>
+              <input type="checkbox" checked={wikiTemplate} onChange={e => setWikiTemplate(e.target.checked)} style={{ marginTop: '0.25rem', accentColor: 'var(--neon-cyan)' }} />
+              <span>
+                <span style={{ color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
+                  <Check size={14} style={{ verticalAlign: 'text-bottom', marginRight: '0.3rem' }} />
+                  Generate starter wiki page
+                </span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', lineHeight: 1.4 }}>Creates a professional markdown outline so every upload starts as a usable wiki entry.</span>
+              </span>
+            </label>
+
+            <button
+              type="submit"
+              className="btn-primary"
+              style={{ width: '100%', justifyContent: 'center', padding: '0.85rem', opacity: uploading ? 0.6 : 1, pointerEvents: uploading ? 'none' : 'auto' }}
+            >
+              <UploadIcon size={16} />
+              {uploading ? 'DEPLOYING...' : 'DEPLOY ASSET'}
+            </button>
+          </form>
         </div>
-        <div className="form-group">
-          <label>Description</label>
-          <textarea rows="3" value={description} onChange={e => setDescription(e.target.value)} placeholder="What's this model about?" />
-        </div>
-        <div className="form-group">
-          <label>Tags</label>
-          <input type="text" value={tags} onChange={e => setTags(e.target.value)} placeholder="character, wip, reference (comma separated)" />
-          <p style={{ color: '#555', fontSize: '0.75rem', marginTop: '0.3rem' }}>Separate tags with commas</p>
-        </div>
-        <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', background: '#101014', border: '1px solid #202027', borderRadius: '10px', padding: '0.85rem', marginBottom: '1rem', cursor: 'pointer' }}>
-          <input type="checkbox" checked={wikiTemplate} onChange={e => setWikiTemplate(e.target.checked)} style={{ marginTop: '0.2rem' }} />
-          <span>
-            <span style={{ color: '#e0e0e0', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>Create starter wiki page</span>
-            <span style={{ color: '#777', fontSize: '0.8rem', lineHeight: 1.4 }}>Adds a professional markdown outline so every upload starts as a usable wiki entry.</span>
-          </span>
-        </label>
-        <button
-          type="submit"
-          className="btn"
-          style={{ width: '100%', opacity: uploading ? 0.6 : 1, pointerEvents: uploading ? 'none' : 'auto' }}
-        >
-          {uploading ? 'Uploading...' : 'Upload'}
-        </button>
-      </form>
+      </motion.div>
     </div>
   )
 }
