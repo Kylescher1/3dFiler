@@ -6,6 +6,7 @@ export function POIMarker({ position, title, onClick, selected, index }) {
   const showLabel = selected || hovered
 
   const color = selected ? '#ef5350' : hovered ? '#81d4fa' : '#4fc3f7'
+  const pulse = selected ? '0 0 0 0 rgba(239,83,80,0.55)' : '0 0 0 0 rgba(79,195,247,0.25)'
 
   return (
     <group position={[position.x, position.y + 0.05, position.z]}>
@@ -26,11 +27,12 @@ export function POIMarker({ position, title, onClick, selected, index }) {
             color: '#fff',
             background: selected ? 'rgba(239,83,80,0.15)' : hovered ? 'rgba(79,195,247,0.12)' : 'rgba(10,10,16,0.35)',
             border: `2px solid ${color}`,
-            boxShadow: hovered || selected ? `0 0 10px ${color}66` : 'none',
+            boxShadow: hovered || selected ? `0 0 14px ${color}88` : 'none',
             userSelect: 'none',
             WebkitUserSelect: 'none',
             cursor: 'pointer',
             transition: 'all 0.15s ease',
+            animation: showLabel ? 'poiPulse 1.35s ease-out infinite' : 'none',
           }}
           title={title || 'POI'}
         >
@@ -58,6 +60,9 @@ export function POIMarker({ position, title, onClick, selected, index }) {
           </div>
         </Html>
       )}
+      <Html>
+        <style>{`@keyframes poiPulse {0% { box-shadow:${pulse}; } 70% { box-shadow:0 0 0 12px rgba(79,195,247,0); } 100% { box-shadow:0 0 0 0 rgba(79,195,247,0);} }`}</style>
+      </Html>
     </group>
   )
 }

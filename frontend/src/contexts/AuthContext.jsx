@@ -15,7 +15,15 @@ export function AuthProvider({ children }) {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(r => r.ok ? r.json() : null)
-      .then(data => setUser(data))
+      .then(data => {
+        if (!data) {
+          localStorage.removeItem('token')
+          sessionStorage.removeItem('token')
+          setUser(null)
+          return
+        }
+        setUser(data)
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -28,6 +36,7 @@ export function AuthProvider({ children }) {
     const data = await res.json()
     if (!res.ok) throw new Error(data.error)
     localStorage.setItem('token', data.token)
+    sessionStorage.setItem('token', data.token)
     setUser(data.user)
     return data.user
   }
@@ -41,12 +50,16 @@ export function AuthProvider({ children }) {
     const data = await res.json()
     if (!res.ok) throw new Error(data.error)
     localStorage.setItem('token', data.token)
+    sessionStorage.setItem('token', data.token)
     setUser(data.user)
     return data.user
   }
 
   const logout = () => {
     localStorage.removeItem('token')
+    sessionStorage.removeItem('token')
+    sessionStorage.removeItem('modelBreadcrumbs')
+    localStorage.removeItem('recentModels')
     setUser(null)
   }
 

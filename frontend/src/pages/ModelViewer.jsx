@@ -370,6 +370,7 @@ function ModelViewer() {
     setSelectedPoi(poi)
     setEditingPoi(null)
     setAddingPoi(null)
+    setFocusTrigger((n) => n + 1)
   }, [])
 
   const submitPoi = async () => {
@@ -539,7 +540,7 @@ function ModelViewer() {
             <button key={i} onClick={c.onClick} title={c.title} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{c.icon}</button>
           ))}
           <div style={{ width: '1px', background: '#2a2a2a', margin: '4px 2px' }} />
-          <button onClick={() => navigate(`/model/${id}/wiki`)} title="Open Wiki" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>W</button>
+          <button onClick={() => navigate(`/model/${id}/wiki`)} title="Open Full Wiki" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>2D</button>
           <button onClick={() => setShowHelp(true)} title="Keyboard Shortcuts (H)" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#aaa', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }} onMouseEnter={e => e.currentTarget.style.background = '#2a2a2a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>?</button>
         </div>
       </div>
@@ -704,6 +705,16 @@ function ModelViewer() {
         )}
       </div>
 
+
+        {showPoiList && model.wikiContent && (
+          <div style={{ pointerEvents: 'auto', ...panelStyle, padding: '12px', maxHeight: '34vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+              <h4 style={{ color: '#81d4fa', fontSize: '0.82rem', margin: 0 }}>3D Wiki Notes</h4>
+              <button onClick={() => navigate(`/model/${id}/wiki`)} className="btn btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.68rem' }}>Open 2D Wiki</button>
+            </div>
+            <MarkdownContent content={model.wikiContent} style={{ fontSize: '0.78rem', lineHeight: 1.55 }} />
+          </div>
+        )}
       {/* Related Models sidebar */}
       <div style={{ position: 'absolute', top: 64, right: 284, zIndex: 20, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {relatedModels.length > 0 && (
