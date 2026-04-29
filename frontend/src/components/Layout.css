@@ -1,152 +1,79 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: radial-gradient(circle at top, #161a24 0%, #0f1016 45%, #0a0b10 100%);
-  color: #e0e0e0;
+.app {
   min-height: 100vh;
+  color: #d7e7f5;
 }
 
 .navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background: rgba(20, 22, 30, 0.9);
-  border-bottom: 1px solid #2f3444;
-  backdrop-filter: blur(8px);
+  padding: 0.95rem 2rem;
+  border-bottom: 1px solid rgba(117, 149, 182, 0.3);
+  background: rgba(4, 10, 18, 0.75);
+  backdrop-filter: blur(12px);
 }
 
 .brand {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #4fc3f7;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
   text-decoration: none;
+  color: #9defff;
+  text-transform: uppercase;
 }
 
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
+.nav-links { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; justify-content: flex-end; }
 
-.nav-links a {
-  color: #ccc;
-  text-decoration: none;
-  font-size: 0.95rem;
-  transition: color 0.2s;
-}
-
-.nav-links a:hover {
-  color: #4fc3f7;
-}
-
-.user-name {
-  color: #aaa;
-  font-size: 0.9rem;
-}
-
+.nav-links a,
 .btn-link {
-  background: none;
-  border: none;
-  color: #ccc;
-  cursor: pointer;
-  font-size: 0.95rem;
+  color: #c3d6eb;
+  text-decoration: none;
+  font-size: 0.92rem;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
 }
 
-.btn-link:hover {
-  color: #ef5350;
-}
+.nav-links a:hover,
+.btn-link:hover { color: #89edff; text-shadow: 0 0 15px rgba(137, 237, 255, 0.4); }
 
-main {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-}
+.user-name { color: #84a3c0; font-size: .85rem; padding: .2rem .5rem; border: 1px solid #35516e; border-radius: 999px; }
+.btn-link { border: none; background: none; cursor: pointer; }
 
-.page-title {
-  font-size: 2rem;
-  margin-bottom: 1.5rem;
-  color: #fff;
-}
+main { width: min(1200px, 94vw); margin: 2rem auto 3rem; }
 
-.card {
-  background: linear-gradient(180deg, rgba(24,27,36,0.95), rgba(17,18,24,0.95));
-  border: 1px solid #2b3040;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-}
+.card { background: rgba(11, 18, 27, 0.92); border: 1px solid #304255; border-radius: 12px; padding: 1.1rem; margin-bottom: 1rem; }
 
 .btn {
   display: inline-block;
-  padding: 0.6rem 1.2rem;
-  border: none;
-  border-radius: 6px;
-  background: #4fc3f7;
-  color: #000;
-  font-weight: 600;
-  cursor: pointer;
+  padding: 0.62rem 1rem;
+  border-radius: 9px;
+  border: 1px solid transparent;
   text-decoration: none;
-  transition: background 0.2s;
+  font-weight: 600;
 }
 
-.btn:hover {
-  background: #29b6f6;
-}
+.btn-secondary { background: rgba(14, 22, 34, 0.85); color: #cde3f8; border-color: #33465d; }
 
-.btn-secondary {
-  background: #2a2a2a;
-  color: #e0e0e0;
-  border: 1px solid #3a3a3a;
-}
-
-.btn-secondary:hover {
-  background: #333;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.4rem;
-  font-size: 0.9rem;
-  color: #aaa;
-}
-
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; margin-bottom: .38rem; color: #9fb4cb; font-size: .9rem; }
 .form-group input,
 .form-group textarea,
-input,
-select,
-textarea {
+input, select, textarea {
   width: 100%;
-  padding: 0.6rem 0.8rem;
-  background: #111;
-  border: 1px solid #2a2a2a;
-  border-radius: 6px;
-  color: #e0e0e0;
-  font-size: 1rem;
-  font-family: inherit;
+  padding: .6rem .8rem;
+  border: 1px solid #33485f;
+  border-radius: 8px;
+  background: #0b121c;
+  color: #d7e7f5;
 }
+.error { color: #ff7070; margin-bottom: .8rem; font-size: .9rem; }
 
-.form-group input:focus,
-.form-group textarea:focus,
-input:focus,
-select:focus,
-textarea:focus {
-  outline: none;
-  border-color: #4fc3f7;
-  box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.08);
-}
-
-.error {
-  color: #ef5350;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
+@media (max-width: 800px) {
+  .navbar { padding: .85rem 1rem; }
+  .nav-links { gap: .7rem; }
+  .brand { font-size: 1.1rem; }
 }
