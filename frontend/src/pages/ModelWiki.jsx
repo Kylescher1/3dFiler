@@ -175,31 +175,9 @@ function ModelWiki() {
       {/* Top bar */}
       <ModelHeader
         model={model}
-        rightContent={(
-          <div style={{ pointerEvents: 'auto', display: 'flex', gap: '2px', background: 'rgba(12, 12, 16, 0.88)', border: '1px solid #2a2a2a', borderRadius: '10px', backdropFilter: 'blur(6px)', padding: '4px' }}>
-            <button
-              onClick={() => navigate(`/model/${id}`)}
-              style={{
-                width: '90px', height: '32px', borderRadius: '6px', border: 'none',
-                background: 'transparent', color: '#888', cursor: 'pointer',
-                fontSize: '0.82rem', fontWeight: 500,
-              }}
-              onMouseEnter={e => e.currentTarget.style.color = '#ccc'}
-              onMouseLeave={e => e.currentTarget.style.color = '#888'}
-            >
-              3D Viewer
-            </button>
-            <button
-              style={{
-                width: '90px', height: '32px', borderRadius: '6px', border: 'none',
-                background: '#1e3a4c', color: '#4fc3f7', cursor: 'default',
-                fontSize: '0.82rem', fontWeight: 600,
-              }}
-            >
-              Wiki
-            </button>
-          </div>
-        )}
+        mode="wiki"
+        onOpenViewer={() => navigate(`/model/${id}`)}
+        onOpenWiki={() => {}}
       />
 
       {/* Main content */}
