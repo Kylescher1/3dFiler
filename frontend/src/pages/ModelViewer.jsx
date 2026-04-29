@@ -229,6 +229,7 @@ function ModelViewer() {
   const [flash, setFlash] = useState(false)
   const [showMeta, setShowMeta] = useState(false)
   const [showWikiSidebar, setShowWikiSidebar] = useState(true)
+  const [isOwner, setIsOwner] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const controlsRef = useRef()
   const modelRef = useRef(null)
@@ -242,6 +243,7 @@ function ModelViewer() {
     setAddingPoi(null)
     setEditingPoi(null)
     setPoiForm({ title: '', content: '', type: 'text' })
+    setIsOwner(false)
     setFocusTrigger(0)
     modelRef.current = null
     initialFocusPendingRef.current = true
@@ -253,6 +255,9 @@ function ModelViewer() {
       .then((r) => { if (!r.ok) throw new Error(r.status === 403 ? 'Private model' : 'Not found'); return r.json() })
       .then((data) => {
         setModel(data)
+        setIsOwner(Boolean(token) && data.userId === (() => {
+          try { return JSON.parse(atob(token.split('.')[1])).userId } catch { return null }
+        })())
         setPois((data.pois || []).map(normalizePoi))
         setBacklinks(data.backlinks || [])
         // Breadcrumbs: append current model to trail, avoiding loops
@@ -592,7 +597,7 @@ function ModelViewer() {
             </div>
           </div>
         )}
-        {showWikiSidebar && (
+        {showWikiSidebar && isOwner && (
           <div style={{ pointerEvents: 'auto', ...panelStyle, padding: '12px', width: '320px', maxHeight: '56vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
               <h4 style={{ color: '#81d4fa', fontSize: '0.86rem', margin: 0 }}>Wiki Sidebar</h4>
