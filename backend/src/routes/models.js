@@ -375,10 +375,14 @@ router.get('/:id/related', async (req, res) => {
   const tagNames = model.tags.map(t => t.name);
   const termNames = topTerms(model.title, model.description, model.wikiContent, ...model.pois.map(p => `${p.title} ${p.content}`)).map(t => t.term);
 
+  const visibilityFilter = currentUserId
+    ? { OR: [{ published: true }, { userId: currentUserId }] }
+    : { published: true };
+
   const candidates = await prisma.model.findMany({
     where: {
       id: { not: model.id },
-      OR: [{ published: true }, { userId: currentUserId }]
+      ...visibilityFilter
     },
     orderBy: { createdAt: 'desc' },
     include: { tags: true, pois: true },
