@@ -30,11 +30,11 @@ export default function ModelHeader({ model, breadcrumbs = [], leftLink = '/dash
         </div>
       </div>
       <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: '8px', ...panelStyle, padding: '4px' }}>
+        {extraButtons}
         <div style={{ display: 'flex', gap: '2px', background: '#0d1320', borderRadius: '8px', padding: '3px' }}>
           <button onClick={onOpenViewer} style={{ width: '92px', height: '32px', borderRadius: '6px', border: 'none', background: mode === 'viewer' ? '#1e3a4c' : 'transparent', color: mode === 'viewer' ? '#4fc3f7' : '#8b95ac', cursor: mode === 'viewer' ? 'default' : 'pointer', fontSize: '0.82rem', fontWeight: mode === 'viewer' ? 600 : 500 }}>3D Viewer</button>
           <button onClick={onOpenWiki} style={{ width: '92px', height: '32px', borderRadius: '6px', border: 'none', background: mode === 'wiki' ? '#1e3a4c' : 'transparent', color: mode === 'wiki' ? '#4fc3f7' : '#8b95ac', cursor: mode === 'wiki' ? 'default' : 'pointer', fontSize: '0.82rem', fontWeight: mode === 'wiki' ? 600 : 500 }}>Wiki</button>
         </div>
-        {extraButtons}
       </div>
     </div>
   )
