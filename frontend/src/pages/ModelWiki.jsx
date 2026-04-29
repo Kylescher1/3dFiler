@@ -173,15 +173,18 @@ function ModelWiki() {
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#e0e0e0' }}>
       {/* Top bar */}
       <div style={{
-        position: 'sticky', top: 0, zIndex: 50,
+        position: 'sticky', top: 0, zIndex: 50, padding: '12px 16px',
         background: 'rgba(10,10,14,0.95)', backdropFilter: 'blur(8px)',
         borderBottom: '1px solid #1a1a1a',
       }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link to="/dashboard" style={{ color: '#4fc3f7', fontWeight: 700, fontSize: '1rem', textDecoration: 'none' }}>3dFiler</Link>
-            <span style={{ color: '#333' }}>/</span>
-            <span style={{ color: '#888', fontSize: '0.85rem', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{model.title}</span>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(12, 12, 16, 0.88)', border: '1px solid #2a2a2a', borderRadius: '10px', backdropFilter: 'blur(6px)', padding: '8px 14px' }}>
+            <Link to="/dashboard" style={{ color: '#4fc3f7', fontWeight: 700, fontSize: '1rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>3dFiler</Link>
+            <div style={{ width: '1px', height: '20px', background: '#2a2a2a' }} />
+            <div>
+              <h1 style={{ color: '#e0e0e0', fontSize: '0.95rem', margin: 0, fontWeight: 600, lineHeight: 1.2 }}>{model.title}</h1>
+              {model.description && <p style={{ color: '#777', fontSize: '0.75rem', margin: '2px 0 0', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{model.description}</p>}
+            </div>
           </div>
 
           {/* Tabs */}

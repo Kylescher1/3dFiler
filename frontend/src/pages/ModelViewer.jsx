@@ -228,7 +228,6 @@ function ModelViewer() {
   const [flash, setFlash] = useState(false)
   const [showMeta, setShowMeta] = useState(false)
   const [showWikiSidebar, setShowWikiSidebar] = useState(true)
-  const [wikiFullPage, setWikiFullPage] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const controlsRef = useRef()
   const modelRef = useRef(null)
@@ -611,14 +610,11 @@ function ModelViewer() {
             </div>
           </div>
         )}
-        {showWikiSidebar && !wikiFullPage && (
+        {showWikiSidebar && (
           <div style={{ pointerEvents: 'auto', ...panelStyle, padding: '12px', width: '320px', maxHeight: '56vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
               <h4 style={{ color: '#81d4fa', fontSize: '0.86rem', margin: 0 }}>Wiki Sidebar</h4>
-              <div style={{ display: 'flex', gap: '0.35rem' }}>
-                <button onClick={() => setWikiFullPage(true)} className="btn btn-secondary" style={{ padding: '0.24rem 0.55rem', fontSize: '0.68rem' }}>Full page 2D</button>
-                <button onClick={() => navigate(`/model/${id}/wiki`)} className="btn btn-secondary" style={{ padding: '0.24rem 0.55rem', fontSize: '0.68rem' }}>Open route</button>
-              </div>
+              <button onClick={() => navigate(`/model/${id}/wiki`)} className="btn btn-secondary" style={{ padding: '0.24rem 0.55rem', fontSize: '0.68rem' }}>Open wiki</button>
             </div>
             {model.wikiContent ? (
               <MarkdownContent content={model.wikiContent} style={{ fontSize: '0.8rem', lineHeight: 1.55 }} />
@@ -760,25 +756,6 @@ function ModelViewer() {
       <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 20, background: 'rgba(0,0,0,0.65)', padding: '4px 14px', borderRadius: '20px', fontSize: '0.7rem', color: '#777', pointerEvents: 'none', letterSpacing: '0.3px' }}>
         Double-click to add a point of interest
       </div>
-
-      {wikiFullPage && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 240, background: 'rgba(7,8,12,0.97)', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderBottom: '1px solid #2a2a2a' }}>
-            <h2 style={{ color: '#81d4fa', fontSize: '1rem', margin: 0, fontWeight: 700 }}>2D Wiki — {model.title}</h2>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={() => navigate(`/model/${id}/wiki`)} className="btn btn-secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.78rem' }}>Open dedicated page</button>
-              <button onClick={() => setWikiFullPage(false)} className="btn" style={{ padding: '0.35rem 0.7rem', fontSize: '0.78rem' }}>Back to 3D</button>
-            </div>
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
-            {model.wikiContent ? (
-              <MarkdownContent content={model.wikiContent} style={{ fontSize: '0.94rem', lineHeight: 1.7 }} />
-            ) : (
-              <p style={{ color: '#777' }}>No wiki content yet.</p>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* POI Detail Modal */}
       {selectedPoi && !addingPoi && !editingPoi && (
