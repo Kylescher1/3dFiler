@@ -3,25 +3,19 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 function GridFloor() {
-  const meshRef = useRef()
-  const gridHelper = useMemo(() => {
-    const grid = new THREE.GridHelper(40, 40, '#00e5ff', '#0a2a2a')
-    grid.material.transparent = true
-    grid.material.opacity = 0.3
-    return grid
-  }, [])
+  const groupRef = useRef()
 
   useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.position.z = (state.clock.elapsedTime * 0.5) % 1
+    if (groupRef.current) {
+      groupRef.current.position.z = (state.clock.elapsedTime * 0.5) % 1
     }
   })
 
   return (
-    <group>
-      <primitive object={gridHelper} position={[0, -2, 0]} />
-      <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.01, 0]}>
-        <planeGeometry args={[40, 40]} />
+    <group ref={groupRef}>
+      <gridHelper args={[50, 50, '#00e5ff', '#0a2a3a']} position={[0, -2, 0]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.01, 0]}>
+        <planeGeometry args={[50, 50]} />
         <meshBasicMaterial color="#050508" transparent opacity={0.8} />
       </mesh>
     </group>
@@ -54,12 +48,15 @@ function FloatingParticles() {
     }
   })
 
+  const geo = useMemo(() => {
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    return geometry
+  }, [positions, colors])
+
   return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
-      </bufferGeometry>
+    <points ref={pointsRef} geometry={geo}>
       <pointsMaterial size={0.05} vertexColors transparent opacity={0.8} sizeAttenuation />
     </points>
   )
@@ -78,9 +75,9 @@ function FloatingOrbitals() {
   return (
     <group ref={groupRef}>
       {[
-        { radius: 4, speed: 1, color: '#00e5ff', opacity: 0.15 },
-        { radius: 5.5, speed: -0.7, color: '#a855f7', opacity: 0.1 },
-        { radius: 3, speed: 1.5, color: '#00e5ff', opacity: 0.08 },
+        { radius: 4, color: '#00e5ff', opacity: 0.15 },
+        { radius: 5.5, color: '#a855f7', opacity: 0.1 },
+        { radius: 3, color: '#00e5ff', opacity: 0.08 },
       ].map((ring, i) => (
         <mesh key={i} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[ring.radius, 0.02, 8, 100]} />
@@ -93,25 +90,31 @@ function FloatingOrbitals() {
 
 function WireframeBox() {
   const meshRef = useRef()
+  const edgesRef = useRef()
 
   useFrame((state) => {
     if (meshRef.current) {
       meshRef.current.rotation.x = state.clock.elapsedTime * 0.15
       meshRef.current.rotation.y = state.clock.elapsedTime * 0.25
     }
+    if (edgesRef.current) {
+      edgesRef.current.rotation.x = state.clock.elapsedTime * 0.15
+      edgesRef.current.rotation.y = state.clock.elapsedTime * 0.25
+    }
   })
 
+  const boxGeo = useMemo(() => new THREE.BoxGeometry(2, 2, 2), [])
+  const edgesGeo = useMemo(() => new THREE.EdgesGeometry(boxGeo), [boxGeo])
+
   return (
-    <group ref={meshRef} position={[0, 0, 0]}>
-      <mesh>
+    <group position={[0, 0, 0]}>
+      <mesh ref={meshRef}>
         <boxGeometry args={[2, 2, 2]} />
-        <meshBasicMaterial color="#00e5ff" wireframe transparent opacity={0.15} />
+        <meshBasicMaterial color="#00e5ff" wireframe transparent opacity={0.12} />
       </mesh>
-      <mesh>
-        <boxGeometry args={[2.05, 2.05, 2.05]} />
-        <edgesGeometry args={[new THREE.BoxGeometry(2.05, 2.05, 2.05)]} />
-        <lineBasicMaterial color="#00e5ff" transparent opacity={0.4} />
-      </mesh>
+      <lineSegments ref={edgesRef} geometry={edgesGeo}>
+        <lineBasicMaterial color="#00e5ff" transparent opacity={0.35} />
+      </lineSegments>
     </group>
   )
 }
