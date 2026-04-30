@@ -1,7 +1,7 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { motion } from 'framer-motion'
-import { Box, Search, Library, Upload, LogOut, LogIn, UserPlus, Hexagon } from 'lucide-react'
+import { Search, Library, Upload, LogOut, LogIn, UserPlus, Hexagon } from 'lucide-react'
 import './Layout.css'
 
 function NavLink({ to, icon: Icon, children }) {
@@ -18,6 +18,7 @@ function NavLink({ to, icon: Icon, children }) {
 function Layout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const handleLogout = () => {
     logout()
@@ -59,12 +60,12 @@ function Layout() {
       </nav>
       <main>
         <motion.div
-          key={useLocation().pathname}
+          key={location.pathname}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
-          style={{ height: '100%' }}
+          style={{ minHeight: 'calc(100vh - 60px)' }}
         >
           <Outlet />
         </motion.div>

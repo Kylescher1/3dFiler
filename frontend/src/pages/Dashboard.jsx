@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '../contexts/ToastContext'
-import { Plus, Search, Filter, Box, MapPin, Link2, Eye, EyeOff, Edit2, Trash2, Share2, ExternalLink, X } from 'lucide-react'
+import { Plus, Search, Filter, Box, MapPin, Link2, Eye, EyeOff, Edit2, Trash2, Share2, ExternalLink, X, FileText } from 'lucide-react'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
@@ -54,8 +54,11 @@ function Dashboard() {
   const { addToast } = useToast()
 
   const refresh = async () => {
-    if (!token) return
     setLoading(true)
+    if (!token) {
+      setLoading(false)
+      return
+    }
     try {
       const res = await fetch(`${API}/models/mine`, { headers: { Authorization: `Bearer ${token}` } })
       if (!res.ok) throw new Error('Failed to load library')

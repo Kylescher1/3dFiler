@@ -1,9 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
 :root {
-  --neon-cyan: #00e5ff;
-  --neon-blue: #0088ff;
-  --neon-purple: #a855f7;
+  --neon-cyan: #00f5d4;
+  --neon-blue: #00b8d4;
+  --neon-matrix: #00ff88;
+  --neon-purple: #8b5cf6;
   --neon-amber: #f59e0b;
   --neon-red: #ef4444;
   --neon-green: #22c55e;
@@ -53,6 +54,28 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
+  position: relative;
 }
 
 body::before {
