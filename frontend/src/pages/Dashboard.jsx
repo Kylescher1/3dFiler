@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '../contexts/ToastContext'
+import { Plus, Search, Filter, Box, MapPin, Link2, Eye, EyeOff, Edit2, Trash2, Share2, ExternalLink, X } from 'lucide-react'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
 function formatColor(ext) {
-  const map = { glb: '#4fc3f7', gltf: '#4fc3f7', obj: '#81c784', fbx: '#ffb74d', stl: '#e57373' }
+  const map = { glb: '#00e5ff', gltf: '#00e5ff', obj: '#22c55e', fbx: '#f59e0b', stl: '#ef4444' }
   return map[ext?.toLowerCase()] || '#888'
 }
 
@@ -20,15 +22,20 @@ function formatSize(bytes = 0) {
 }
 
 function CompletionBar({ score = 0 }) {
-  const color = score >= 70 ? '#81c784' : score >= 40 ? '#ffb74d' : '#e57373'
+  const color = score >= 70 ? '#22c55e' : score >= 40 ? '#f59e0b' : '#ef4444'
   return (
     <div title={`Wiki completeness: ${score}%`} style={{ marginTop: '0.65rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#666', marginBottom: '0.25rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
         <span>Wiki completeness</span>
         <span>{score}%</span>
       </div>
-      <div style={{ height: 5, background: '#1d1d22', borderRadius: 999, overflow: 'hidden' }}>
-        <div style={{ width: `${score}%`, height: '100%', background: color, borderRadius: 999 }} />
+      <div style={{ height: 3, background: 'rgba(0,0,0,0.4)', borderRadius: 999, overflow: 'hidden' }}>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${score}%` }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+          style={{ height: '100%', background: color, borderRadius: 999 }}
+        />
       </div>
     </div>
   )
@@ -147,119 +154,204 @@ function Dashboard() {
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        <div>
-          <p style={{ color: '#4fc3f7', textTransform: 'uppercase', letterSpacing: '0.14em', fontSize: '0.72rem', fontWeight: 800, marginBottom: '0.35rem' }}>3D Wiki Library</p>
-          <h1 className="page-title" style={{ marginBottom: '0.35rem' }}>My Models</h1>
-          <p style={{ color: '#888', maxWidth: 680, lineHeight: 1.6 }}>Manage your 3D assets, wiki pages, POIs, and tags.</p>
+    <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--neon-cyan)', textTransform: 'uppercase', letterSpacing: '2px' }}>// Personal Library</span>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: 700, marginTop: '0.35rem', marginBottom: '0.3rem' }}>
+              My Models
+            </h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Manage your 3D assets, wiki pages, POIs, and tags.</p>
+          </div>
+          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+            <Link to="/search" className="btn-ghost">
+              <Search size={14} />
+              Search
+            </Link>
+            <Link to="/upload" className="btn-primary">
+              <Plus size={14} />
+              Upload Model
+            </Link>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-          <Link to="/search" className="btn btn-secondary">Search</Link>
-          <Link to="/upload" className="btn">Upload Model</Link>
-        </div>
-      </div>
 
-      <div className="card" style={{ padding: '0.85rem', marginBottom: '1rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 1fr) 160px 160px', gap: '0.6rem' }}>
-          <input type="text" placeholder="Filter by title, tag, description, or term..." value={query} onChange={e => setQuery(e.target.value)} />
-          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-            <option value="all">All status</option>
-            <option value="published">Published</option>
-            <option value="private">Private</option>
-          </select>
-          <select value={sortBy} onChange={e => setSortBy(e.target.value)}>
-            <option value="updated">Newest</option>
-            <option value="title">Title</option>
-            <option value="complete">Completeness</option>
-            <option value="pois">POI count</option>
-          </select>
+        <div className="card-modern" style={{ padding: '1rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 1fr) 160px 160px', gap: '0.6rem' }}>
+            <div style={{ position: 'relative' }}>
+              <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <input type="text" placeholder="Filter by title, tag, description, or term..." value={query} onChange={e => setQuery(e.target.value)} style={{ paddingLeft: '2.5rem', background: 'var(--bg-tertiary)' }} />
+            </div>
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ background: 'var(--bg-tertiary)' }}>
+              <option value="all">All status</option>
+              <option value="published">Published</option>
+              <option value="private">Private</option>
+            </select>
+            <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ background: 'var(--bg-tertiary)' }}>
+              <option value="updated">Newest</option>
+              <option value="title">Title</option>
+              <option value="complete">Completeness</option>
+              <option value="pois">POI count</option>
+            </select>
+          </div>
+          {allTags.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.75rem' }}>
+              {allTags.slice(0, 12).map(tag => (
+                <button
+                  key={tag.name}
+                  onClick={() => setActiveTag(activeTag === tag.name ? '' : tag.name)}
+                  className="tag-minimal"
+                  style={{
+                    color: activeTag === tag.name ? '#fff' : 'var(--neon-cyan)',
+                    background: activeTag === tag.name ? 'rgba(0, 229, 255, 0.2)' : 'rgba(0, 229, 255, 0.05)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {tag.name} ({tag.count})
+                </button>
+              ))}
+            </div>
+          )}
+          {activeTag && (
+            <button onClick={() => setActiveTag('')} className="tag-minimal" style={{ marginTop: '0.6rem', cursor: 'pointer', borderColor: 'var(--neon-red)', color: 'var(--neon-red)' }}>
+              Filtering: {activeTag} <X size={10} />
+            </button>
+          )}
         </div>
-        {allTags.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.6rem' }}>
-            {allTags.slice(0, 12).map(tag => (
-              <button
-                key={tag.name}
-                onClick={() => setActiveTag(activeTag === tag.name ? '' : tag.name)}
-                style={{
-                  fontSize: '0.7rem',
-                  color: activeTag === tag.name ? '#fff' : '#4fc3f7',
-                  background: activeTag === tag.name ? '#1e3a4c' : '#0f1f2a',
-                  padding: '2px 8px',
-                  borderRadius: 10,
-                  border: '1px solid #1e3a4c',
-                  cursor: 'pointer'
-                }}
-              >
-                {tag.name} ({tag.count})
-              </button>
-            ))}
+
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+            <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 1.5 }}>
+              LOADING ASSETS...
+            </motion.div>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="card-modern" style={{ textAlign: 'center', padding: '3rem' }}>
+            <Box size={40} color="var(--text-muted)" style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              {query || activeTag ? 'No models match your filters.' : 'No models yet. Upload your first 3D model to start a wiki.'}
+            </p>
+            <Link to="/upload" className="btn-primary">
+              <Plus size={14} />
+              Upload New Model
+            </Link>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+            <AnimatePresence>
+              {filtered.map((m, i) => {
+                const ext = m.originalName?.split('.').pop()
+                return (
+                  <motion.div
+                    key={m.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: i * 0.03, duration: 0.4 }}
+                    className="card-modern holo-border"
+                    style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden', padding: '1.25rem' }}
+                  >
+                    <div style={{ position: 'absolute', inset: '0 0 auto 0', height: 2, background: `linear-gradient(90deg, ${formatColor(ext)}, transparent)` }} />
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.65rem' }}>
+                        <div style={{ overflow: 'hidden' }}>
+                          <h3 style={{ color: 'var(--text-primary)', fontSize: '1.05rem', lineHeight: 1.25, marginBottom: '0.2rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.title}</h3>
+                          <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', fontFamily: 'var(--font-mono)' }}>{formatSize(m.size)} &middot; {formatDate(m.createdAt)}</p>
+                        </div>
+                        <span className="tag-minimal" style={{ color: formatColor(ext), borderColor: formatColor(ext), background: `${formatColor(ext)}10`, height: 'fit-content', flexShrink: 0 }}>{ext}</span>
+                      </div>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.75rem', lineHeight: 1.45, minHeight: 38 }}>
+                        {m.description || 'No description yet. Add one to make this easier to search and understand.'}
+                      </p>
+                      {(m.tags || []).length > 0 && (
+                        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
+                          {m.tags.map(t => <button key={t.id} onClick={() => setActiveTag(t.name)} className="tag-minimal" style={{ cursor: 'pointer' }}>{t.name}</button>)}
+                        </div>
+                      )}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', marginTop: '0.7rem' }}>
+                        <div className="stat-box" style={{ padding: '0.5rem' }}>
+                          <div className="value" style={{ fontSize: '1rem' }}>{m.summary?.poiCount || 0}</div>
+                          <div className="label" style={{ fontSize: '0.6rem' }}>POIs</div>
+                        </div>
+                        <div className="stat-box" style={{ padding: '0.5rem' }}>
+                          <div className="value" style={{ fontSize: '1rem', color: 'var(--neon-purple)' }}>{m.summary?.nestedCount || 0}</div>
+                          <div className="label" style={{ fontSize: '0.6rem' }}>Links</div>
+                        </div>
+                        <div className="stat-box" style={{ padding: '0.5rem' }}>
+                          <div className="value" style={{ fontSize: '1rem', color: m.published ? '#22c55e' : '#f59e0b' }}>{m.published ? 'LIVE' : 'PVT'}</div>
+                          <div className="label" style={{ fontSize: '0.6rem' }}>Status</div>
+                        </div>
+                      </div>
+                      <CompletionBar score={m.summary?.completionScore || 0} />
+                    </div>
+                    <div style={{ marginTop: '0.9rem', paddingTop: '0.8rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                      <Link to={`/model/${m.id}`} className="btn-primary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem' }}>
+                        <ExternalLink size={12} />
+                        3D
+                      </Link>
+                      <Link to={`/model/${m.id}/wiki`} className="btn-ghost" style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem' }}>
+                        <FileText size={12} />
+                        Wiki
+                      </Link>
+                      <button onClick={() => startEdit(m)} className="btn-ghost" style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem' }}>
+                        <Edit2 size={12} />
+                      </button>
+                      <button onClick={() => togglePublish(m.id, m.published)} className="btn-ghost" style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem' }}>
+                        {m.published ? <EyeOff size={12} /> : <Eye size={12} />}
+                      </button>
+                      <button onClick={() => createShare(m.id)} className="btn-ghost" style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem' }}>
+                        <Share2 size={12} />
+                      </button>
+                      <button onClick={() => deleteModel(m.id, m.title)} className="btn-danger" style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem' }}>
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </AnimatePresence>
           </div>
         )}
-        {activeTag && <button onClick={() => setActiveTag('')} style={{ marginTop: '0.6rem', background: '#1e3a4c', color: '#4fc3f7', border: '1px solid #31566b', borderRadius: 999, padding: '0.25rem 0.7rem', cursor: 'pointer' }}>Filtering: {activeTag} &times;</button>}
-      </div>
 
-      {loading ? <p style={{ color: '#666' }}>Loading library...</p> : filtered.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
-          <p style={{ color: '#888', marginBottom: '1rem' }}>{query || activeTag ? 'No models match your filters.' : 'No models yet. Upload your first 3D model to start a wiki.'}</p>
-          <Link to="/upload" className="btn">Upload New Model</Link>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '1rem' }}>
-          {filtered.map(m => {
-            const ext = m.originalName?.split('.').pop()
-            return (
-              <div key={m.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', inset: '0 0 auto 0', height: 3, background: `linear-gradient(90deg, ${formatColor(ext)}, transparent)` }} />
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.65rem' }}>
-                    <div>
-                      <h3 style={{ color: '#e0e0e0', fontSize: '1.08rem', lineHeight: 1.25, marginBottom: '0.2rem' }}>{m.title}</h3>
-                      <p style={{ color: '#666', fontSize: '0.72rem' }}>{formatSize(m.size)} &middot; {formatDate(m.createdAt)}</p>
-                    </div>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', padding: '3px 7px', borderRadius: 6, background: formatColor(ext), color: '#0a0a0a', height: 'fit-content' }}>{ext}</span>
-                  </div>
-                  <p style={{ color: '#888', fontSize: '0.86rem', marginBottom: '0.75rem', lineHeight: 1.45, minHeight: 38 }}>{m.description || 'No description yet. Add one to make this easier to search and understand.'}</p>
-                  {(m.tags || []).length > 0 && (
-                    <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
-                      {m.tags.map(t => <button key={t.id} onClick={() => setActiveTag(t.name)} style={{ fontSize: '0.7rem', color: '#4fc3f7', background: '#0f1f2a', padding: '2px 8px', borderRadius: 10, border: '1px solid #1e3a4c', cursor: 'pointer' }}>{t.name}</button>)}
-                    </div>
-                  )}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', marginTop: '0.7rem' }}>
-                    <div style={{ background: '#101014', borderRadius: 8, padding: '0.45rem', textAlign: 'center' }}><div style={{ color: '#4fc3f7', fontWeight: 800 }}>{m.summary?.poiCount || 0}</div><div style={{ color: '#666', fontSize: '0.68rem' }}>POIs</div></div>
-                    <div style={{ background: '#101014', borderRadius: 8, padding: '0.45rem', textAlign: 'center' }}><div style={{ color: '#81c784', fontWeight: 800 }}>{m.summary?.nestedCount || 0}</div><div style={{ color: '#666', fontSize: '0.68rem' }}>Links</div></div>
-                    <div style={{ background: '#101014', borderRadius: 8, padding: '0.45rem', textAlign: 'center' }}><div style={{ color: m.published ? '#81c784' : '#ffab91', fontWeight: 800 }}>{m.published ? 'Live' : 'Private'}</div><div style={{ color: '#666', fontSize: '0.68rem' }}>Status</div></div>
-                  </div>
-                  <CompletionBar score={m.summary?.completionScore || 0} />
-                </div>
-                <div style={{ marginTop: '0.9rem', paddingTop: '0.8rem', borderTop: '1px solid #1a1a1a', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                  <Link to={`/model/${m.id}`} className="btn" style={{ padding: '0.38rem 0.72rem', fontSize: '0.8rem' }}>Open 3D</Link>
-                  <Link to={`/model/${m.id}/wiki`} className="btn btn-secondary" style={{ padding: '0.38rem 0.72rem', fontSize: '0.8rem' }}>Wiki</Link>
-                  <button onClick={() => startEdit(m)} className="btn btn-secondary" style={{ padding: '0.38rem 0.72rem', fontSize: '0.8rem' }}>Edit</button>
-                  <button onClick={() => togglePublish(m.id, m.published)} className="btn btn-secondary" style={{ padding: '0.38rem 0.72rem', fontSize: '0.8rem' }}>{m.published ? 'Unpublish' : 'Publish'}</button>
-                  <button onClick={() => createShare(m.id)} className="btn btn-secondary" style={{ padding: '0.38rem 0.72rem', fontSize: '0.8rem' }}>Share</button>
-                  <button onClick={() => deleteModel(m.id, m.title)} className="btn btn-secondary" style={{ padding: '0.38rem 0.72rem', fontSize: '0.8rem', background: '#3e2723', borderColor: '#5d4037', color: '#ffab91' }}>Delete</button>
-                </div>
+        {editingId && (
+          <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={() => setEditingId(null)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-md)', padding: 24, width: 460, maxWidth: '92vw', boxShadow: 'var(--shadow-card)', position: 'relative' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 style={{ color: 'var(--neon-cyan)', marginBottom: '0.9rem', fontSize: '1.1rem', fontWeight: 600, fontFamily: 'var(--font-display)' }}>Edit Model Metadata</h3>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '0.4rem' }}>Title</label>
+                <input type="text" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} />
               </div>
-            )
-          })}
-        </div>
-      )}
-
-      {editingId && (
-        <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }} onClick={() => setEditingId(null)}>
-          <div style={{ background: '#141419', border: '1px solid #2a2a2a', borderRadius: 14, padding: 24, width: 460, maxWidth: '92vw', boxShadow: '0 24px 80px rgba(0,0,0,0.7)' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ color: '#4fc3f7', marginBottom: '0.9rem', fontSize: '1.1rem', fontWeight: 700 }}>Edit Model Metadata</h3>
-            <div className="form-group"><label>Title</label><input type="text" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} /></div>
-            <div className="form-group"><label>Description</label><textarea rows={4} value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} /></div>
-            <div className="form-group"><label>Tags</label><input type="text" value={editForm.tags} onChange={e => setEditForm(f => ({ ...f, tags: e.target.value }))} placeholder="anatomy, machine, reference" /><p style={{ color: '#555', fontSize: '0.75rem', marginTop: '0.3rem' }}>Separate tags with commas.</p></div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button onClick={saveEdit} className="btn" style={{ flex: 1, padding: '0.55rem' }}>Save</button>
-              <button onClick={() => setEditingId(null)} className="btn btn-secondary" style={{ flex: 1, padding: '0.55rem' }}>Cancel</button>
-            </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '0.4rem' }}>Description</label>
+                <textarea rows={4} value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
+              </div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '0.4rem' }}>Tags</label>
+                <input type="text" value={editForm.tags} onChange={e => setEditForm(f => ({ ...f, tags: e.target.value }))} placeholder="aerospace, engine, reference" />
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.3rem' }}>Separate tags with commas.</p>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={saveEdit} className="btn-primary" style={{ flex: 1, padding: '0.6rem' }}>
+                  Save
+                </button>
+                <button onClick={() => setEditingId(null)} className="btn-ghost" style={{ flex: 1, padding: '0.6rem' }}>
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </motion.div>
     </div>
   )
 }
