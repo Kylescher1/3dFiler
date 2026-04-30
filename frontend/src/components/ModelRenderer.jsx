@@ -124,7 +124,7 @@ export function ModelRenderer({ url, extension, onReady }) {
       ) : (
         <group>
           <Box args={[1, 1, 1]} position={[0, 0.5, 0]}>
-            <meshStandardMaterial color="#333" wireframe />
+            <meshStandardMaterial color="#cccccc" wireframe />
           </Box>
         </group>
       )}

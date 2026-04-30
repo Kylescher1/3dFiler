@@ -7,7 +7,7 @@ import { Plus, Search, Filter, Box, MapPin, Link2, Eye, EyeOff, Edit2, Trash2, S
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
 function formatColor(ext) {
-  const map = { glb: '#00e5ff', gltf: '#00e5ff', obj: '#22c55e', fbx: '#f59e0b', stl: '#ef4444' }
+  const map = { glb: '#b91c1c', gltf: '#b91c1c', obj: '#16a34a', fbx: '#d97706', stl: '#dc2626' }
   return map[ext?.toLowerCase()] || '#888'
 }
 
@@ -22,14 +22,14 @@ function formatSize(bytes = 0) {
 }
 
 function CompletionBar({ score = 0 }) {
-  const color = score >= 70 ? '#22c55e' : score >= 40 ? '#f59e0b' : '#ef4444'
+  const color = score >= 70 ? '#16a34a' : score >= 40 ? '#d97706' : '#dc2626'
   return (
     <div title={`Wiki completeness: ${score}%`} style={{ marginTop: '0.65rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: '0.25rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
         <span>Wiki completeness</span>
         <span>{score}%</span>
       </div>
-      <div style={{ height: 3, background: 'rgba(0,0,0,0.4)', borderRadius: 999, overflow: 'hidden' }}>
+      <div style={{ height: 3, background: 'rgba(0,0,0,0.04)', borderRadius: 999, overflow: 'hidden' }}>
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${score}%` }}
@@ -165,7 +165,7 @@ function Dashboard() {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
           <div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--neon-cyan)', textTransform: 'uppercase', letterSpacing: '2px' }}>// Personal Library</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '2px' }}>// Personal Library</span>
             <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: 700, marginTop: '0.35rem', marginBottom: '0.3rem' }}>
               My Models
             </h1>
@@ -209,8 +209,8 @@ function Dashboard() {
                   onClick={() => setActiveTag(activeTag === tag.name ? '' : tag.name)}
                   className="tag-minimal"
                   style={{
-                    color: activeTag === tag.name ? '#fff' : 'var(--neon-cyan)',
-                    background: activeTag === tag.name ? 'rgba(0, 229, 255, 0.2)' : 'rgba(0, 229, 255, 0.05)',
+                    color: activeTag === tag.name ? '#fff' : 'var(--primary)',
+                    background: activeTag === tag.name ? 'var(--primary)' : 'rgba(185, 28, 28, 0.05)',
                     cursor: 'pointer'
                   }}
                 >
@@ -220,7 +220,7 @@ function Dashboard() {
             </div>
           )}
           {activeTag && (
-            <button onClick={() => setActiveTag('')} className="tag-minimal" style={{ marginTop: '0.6rem', cursor: 'pointer', borderColor: 'var(--neon-red)', color: 'var(--neon-red)' }}>
+            <button onClick={() => setActiveTag('')} className="tag-minimal" style={{ marginTop: '0.6rem', cursor: 'pointer', borderColor: 'var(--danger)', color: 'var(--danger)' }}>
               Filtering: {activeTag} <X size={10} />
             </button>
           )}
@@ -281,11 +281,11 @@ function Dashboard() {
                           <div className="label" style={{ fontSize: '0.6rem' }}>POIs</div>
                         </div>
                         <div className="stat-box" style={{ padding: '0.5rem' }}>
-                          <div className="value" style={{ fontSize: '1rem', color: 'var(--neon-purple)' }}>{m.summary?.nestedCount || 0}</div>
+                          <div className="value" style={{ fontSize: '1rem', color: 'var(--secondary)' }}>{m.summary?.nestedCount || 0}</div>
                           <div className="label" style={{ fontSize: '0.6rem' }}>Links</div>
                         </div>
                         <div className="stat-box" style={{ padding: '0.5rem' }}>
-                          <div className="value" style={{ fontSize: '1rem', color: m.published ? '#22c55e' : '#f59e0b' }}>{m.published ? 'LIVE' : 'PVT'}</div>
+                          <div className="value" style={{ fontSize: '1rem', color: m.published ? '#16a34a' : '#d97706' }}>{m.published ? 'LIVE' : 'PVT'}</div>
                           <div className="label" style={{ fontSize: '0.6rem' }}>Status</div>
                         </div>
                       </div>
@@ -321,7 +321,7 @@ function Dashboard() {
         )}
 
         {editingId && (
-          <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={() => setEditingId(null)}>
+          <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(4px)' }} onClick={() => setEditingId(null)}>
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -329,7 +329,7 @@ function Dashboard() {
               style={{ background: 'var(--bg-card)', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-md)', padding: 24, width: 460, maxWidth: '92vw', boxShadow: 'var(--shadow-card)', position: 'relative' }}
               onClick={e => e.stopPropagation()}
             >
-              <h3 style={{ color: 'var(--neon-cyan)', marginBottom: '0.9rem', fontSize: '1.1rem', fontWeight: 600, fontFamily: 'var(--font-display)' }}>Edit Model Metadata</h3>
+              <h3 style={{ color: 'var(--primary)', marginBottom: '0.9rem', fontSize: '1.1rem', fontWeight: 600, fontFamily: 'var(--font-display)' }}>Edit Model Metadata</h3>
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '0.4rem' }}>Title</label>
                 <input type="text" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} />

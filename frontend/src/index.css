@@ -1,29 +1,30 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700;800;900&display=swap');
 
 :root {
-  --neon-cyan: #00f5d4;
-  --neon-blue: #00b8d4;
-  --neon-matrix: #00ff88;
-  --neon-purple: #8b5cf6;
-  --neon-amber: #f59e0b;
-  --neon-red: #ef4444;
-  --neon-green: #22c55e;
-  --neon-pink: #ec4899;
+  --primary: #b91c1c;
+  --primary-light: #dc2626;
+  --primary-dark: #7f1d1d;
+  --secondary: #1a1a1a;
+  --secondary-light: #2d2d2d;
 
-  --bg-primary: #050508;
-  --bg-secondary: #0a0a10;
-  --bg-tertiary: #0e0e18;
-  --bg-card: rgba(15, 15, 25, 0.85);
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
 
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-medium: rgba(255, 255, 255, 0.1);
-  --border-accent: rgba(0, 229, 255, 0.3);
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f8f9;
+  --bg-tertiary: #f0f0f2;
+  --bg-card: rgba(255, 255, 255, 0.95);
 
-  --text-primary: #f0f0f5;
-  --text-secondary: #a0a0b0;
-  --text-muted: #606070;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-medium: rgba(0, 0, 0, 0.12);
+  --border-accent: rgba(185, 28, 28, 0.25);
 
-  --font-display: 'Orbitron', sans-serif;
+  --text-primary: #111111;
+  --text-secondary: #555555;
+  --text-muted: #888888;
+
+  --font-display: 'Cinzel', serif;
   --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
@@ -32,8 +33,8 @@
   --radius-lg: 16px;
   --radius-xl: 24px;
 
-  --shadow-card: 0 0 40px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(0, 229, 255, 0.2);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.06);
+  --shadow-glow: 0 0 20px rgba(185, 28, 28, 0.12);
 }
 
 * {
@@ -78,17 +79,6 @@ main {
   position: relative;
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 229, 255, 0.04), transparent),
-    radial-gradient(ellipse 60% 60% at 80% 80%, rgba(168, 85, 247, 0.03), transparent);
-  pointer-events: none;
-  z-index: 0;
-}
-
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -97,37 +87,16 @@ body::before {
   background: var(--bg-secondary);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.15);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--neon-cyan);
-}
-
-/* Matrix scanline effect */
-@keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-
-.matrix-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0.03;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 229, 255, 0.3) 2px,
-    rgba(0, 229, 255, 0.3) 4px
-  );
+  background: var(--primary);
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); }
-  50% { box-shadow: 0 0 20px rgba(0, 229, 255, 0.4), 0 0 40px rgba(0, 229, 255, 0.1); }
+  0%, 100% { box-shadow: 0 0 10px rgba(185, 28, 28, 0.15); }
+  50% { box-shadow: 0 0 20px rgba(185, 28, 28, 0.25), 0 0 40px rgba(185, 28, 28, 0.08); }
 }
 
 @keyframes float {
@@ -209,7 +178,7 @@ body::before {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.03) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -234,10 +203,10 @@ body::before {
   align-items: center;
   gap: 8px;
   padding: 0.65rem 1.5rem;
-  border: 1px solid var(--neon-cyan);
+  border: 1px solid var(--primary);
   border-radius: var(--radius-sm);
-  background: rgba(0, 229, 255, 0.08);
-  color: var(--neon-cyan);
+  background: rgba(185, 28, 28, 0.06);
+  color: var(--primary);
   font-family: var(--font-mono);
   font-size: 0.82rem;
   font-weight: 600;
@@ -255,7 +224,7 @@ body::before {
   position: absolute;
   top: 0; left: -100%;
   width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(185, 28, 28, 0.15), transparent);
   transition: left 0.5s ease;
 }
 
@@ -264,8 +233,8 @@ body::before {
 }
 
 .btn-primary:hover {
-  background: rgba(0, 229, 255, 0.15);
-  box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+  background: rgba(185, 28, 28, 0.12);
+  box-shadow: 0 0 20px rgba(185, 28, 28, 0.2);
   transform: translateY(-1px);
 }
 
@@ -289,9 +258,9 @@ body::before {
 }
 
 .btn-ghost:hover {
-  border-color: var(--neon-cyan);
-  color: var(--neon-cyan);
-  background: rgba(0, 229, 255, 0.05);
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(185, 28, 28, 0.04);
 }
 
 .btn-danger {
@@ -299,10 +268,10 @@ body::before {
   align-items: center;
   gap: 8px;
   padding: 0.65rem 1.5rem;
-  border: 1px solid var(--neon-red);
+  border: 1px solid var(--danger);
   border-radius: var(--radius-sm);
-  background: rgba(239, 68, 68, 0.08);
-  color: var(--neon-red);
+  background: rgba(220, 38, 38, 0.06);
+  color: var(--danger);
   font-family: var(--font-mono);
   font-size: 0.82rem;
   font-weight: 600;
@@ -311,18 +280,18 @@ body::before {
 }
 
 .btn-danger:hover {
-  background: rgba(239, 68, 68, 0.15);
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+  background: rgba(220, 38, 38, 0.12);
+  box-shadow: 0 0 15px rgba(220, 38, 38, 0.15);
 }
 
 .tag-minimal {
   font-size: 0.65rem;
   font-family: var(--font-mono);
-  color: var(--neon-cyan);
-  background: rgba(0, 229, 255, 0.06);
+  color: var(--primary);
+  background: rgba(185, 28, 28, 0.05);
   padding: 2px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(0, 229, 255, 0.2);
+  border: 1px solid rgba(185, 28, 28, 0.2);
   text-transform: uppercase;
   letter-spacing: 0.6px;
 }
@@ -337,7 +306,7 @@ body::before {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(0,229,255,0.4), rgba(168,85,247,0.4), rgba(0,229,255,0.4));
+  background: linear-gradient(135deg, rgba(185,28,28,0.35), rgba(26,26,26,0.35), rgba(185,28,28,0.35));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -353,18 +322,18 @@ body::before {
 /* Grid background pattern */
 .grid-bg {
   background-image:
-    linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(185, 28, 28, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(185, 28, 28, 0.04) 1px, transparent 1px);
   background-size: 50px 50px;
 }
 
 /* Text effects */
 .text-glow {
-  text-shadow: 0 0 20px rgba(0, 229, 255, 0.5), 0 0 40px rgba(0, 229, 255, 0.2);
+  text-shadow: 0 0 20px rgba(185, 28, 28, 0.3), 0 0 40px rgba(185, 28, 28, 0.1);
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -385,8 +354,8 @@ input, textarea, select {
 
 input:focus, textarea:focus, select:focus {
   outline: none;
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.08);
 }
 
 input::placeholder, textarea::placeholder {
@@ -395,7 +364,7 @@ input::placeholder, textarea::placeholder {
 
 /* Stats/Numbers display */
 .stat-box {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.03);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   padding: 0.6rem 1rem;
@@ -406,7 +375,7 @@ input::placeholder, textarea::placeholder {
   font-family: var(--font-mono);
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--neon-cyan);
+  color: var(--primary);
 }
 
 .stat-box .label {

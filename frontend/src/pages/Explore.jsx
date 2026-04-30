@@ -8,7 +8,7 @@ function Explore() {
   const [query, setQuery] = useState('')
 
   const formatColor = (ext) => {
-    const map = { glb: '#4fc3f7', gltf: '#4fc3f7', obj: '#81c784', fbx: '#ffb74d', stl: '#e57373' }
+    const map = { glb: '#b91c1c', gltf: '#b91c1c', obj: '#81c784', fbx: '#ffb74d', stl: '#dc2626' }
     return map[ext?.toLowerCase()] || '#888'
   }
 
@@ -31,17 +31,17 @@ function Explore() {
         placeholder="Search published models..."
         value={query}
         onChange={e => setQuery(e.target.value)}
-        style={{ width: '100%', maxWidth: '400px', marginBottom: '1.5rem', padding: '0.6rem 0.8rem', background: '#111', border: '1px solid #2a2a2a', borderRadius: '6px', color: '#e0e0e0', fontSize: '1rem' }}
+        style={{ width: '100%', maxWidth: '400px', marginBottom: '1.5rem', padding: '0.6rem 0.8rem', background: '#ffffff', border: '1px solid #e5e5e5', borderRadius: '6px', color: '#333333', fontSize: '1rem' }}
       />
       {filtered.length === 0 ? (
-        <p style={{ color: '#666' }}>{query ? 'No models match your search.' : 'No published models yet.'}</p>
+        <p style={{ color: '#888888' }}>{query ? 'No models match your search.' : 'No published models yet.'}</p>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
           {filtered.map(m => (
             <Link key={m.id} to={`/model/${m.id}`} className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                <h3 style={{ color: '#4fc3f7' }}>{m.title}</h3>
-                <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: '4px', background: formatColor(m.originalName?.split('.').pop()), color: '#0a0a0a', flexShrink: 0 }}>
+                <h3 style={{ color: '#b91c1c' }}>{m.title}</h3>
+                <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', padding: '2px 6px', borderRadius: '4px', background: formatColor(m.originalName?.split('.').pop()), color: '#ffffff', flexShrink: 0 }}>
                   {m.originalName?.split('.').pop()}
                 </span>
               </div>
@@ -49,7 +49,7 @@ function Explore() {
               {(m.tags || []).length > 0 && (
                 <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                   {m.tags.map(t => (
-                    <span key={t.id} style={{ fontSize: '0.7rem', color: '#4fc3f7', background: '#0f1f2a', padding: '2px 8px', borderRadius: '10px', border: '1px solid #1e3a4c' }}>
+                    <span key={t.id} style={{ fontSize: '0.7rem', color: '#b91c1c', background: '#fef2f2', padding: '2px 8px', borderRadius: '10px', border: '1px solid #fee2e2' }}>
                       {t.name}
                     </span>
                   ))}

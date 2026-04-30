@@ -5,8 +5,8 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: rgba(15, 15, 15, 0.85);
-  border: 1px solid #2a2a2a;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e5e5e5;
   border-radius: 8px;
   padding: 6px;
   z-index: 10;
@@ -20,7 +20,7 @@
 
 .control-divider {
   height: 1px;
-  background: #2a2a2a;
+  background: #e5e5e5;
   margin: 4px 0;
 }
 
@@ -33,19 +33,19 @@
   background: transparent;
   border: none;
   border-radius: 6px;
-  color: #aaa;
+  color: #888888;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .scene-controls button:hover {
-  background: #2a2a2a;
-  color: #e0e0e0;
+  background: #e5e5e5;
+  color: #333333;
 }
 
 .scene-controls button.active {
-  background: #1e3a4c;
-  color: #4fc3f7;
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .screenshot-flash {

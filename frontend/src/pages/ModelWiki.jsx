@@ -55,7 +55,7 @@ function PoiReferenceHelper({ pois, onInsert, visible, query }) {
           onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         >
-          <span style={{ color: 'var(--neon-cyan)', fontWeight: 600 }}>{poi.title}</span>
+          <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{poi.title}</span>
           <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '0.5rem' }}>[[poi:{poi.id}]]</span>
         </button>
       ))}
@@ -171,7 +171,7 @@ function ModelWiki() {
   }, [draftWiki])
 
   if (error) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'var(--neon-red)', fontFamily: 'var(--font-mono)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'var(--danger)', fontFamily: 'var(--font-mono)' }}>
       ERROR: {error.toUpperCase()}
     </div>
   )
@@ -209,12 +209,12 @@ function ModelWiki() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
                 <span className="tag-minimal">{extension}</span>
                 {model.published ? (
-                  <span className="tag-minimal" style={{ color: 'var(--neon-green)', borderColor: 'rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.08)' }}>Published</span>
+                  <span className="tag-minimal" style={{ color: 'var(--success)', borderColor: 'rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.08)' }}>Published</span>
                 ) : (
-                  <span className="tag-minimal" style={{ color: 'var(--neon-amber)', borderColor: 'rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.08)' }}>Private</span>
+                  <span className="tag-minimal" style={{ color: 'var(--warning)', borderColor: 'rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.08)' }}>Private</span>
                 )}
                 {(model.tags || []).map(t => (
-                  <span key={t.id} className="tag-minimal" style={{ color: 'var(--neon-cyan)' }}>{t.name}</span>
+                  <span key={t.id} className="tag-minimal" style={{ color: 'var(--primary)' }}>{t.name}</span>
                 ))}
               </div>
             </div>
@@ -323,7 +323,7 @@ function ModelWiki() {
               transition={{ delay: 0.15, duration: 0.5 }}
               style={{ marginTop: '36px' }}
             >
-              <h2 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--neon-cyan)', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-display)', letterSpacing: '0.5px' }}>
+              <h2 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-display)', letterSpacing: '0.5px' }}>
                 <MapPin size={18} />
                 Points of Interest
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400, fontFamily: 'var(--font-body)' }}>({pois.length})</span>
@@ -340,7 +340,7 @@ function ModelWiki() {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                       <span style={{
-                        background: 'var(--neon-cyan)', color: 'var(--bg-primary)', width: '26px', height: '26px',
+                        background: 'var(--primary)', color: 'var(--bg-primary)', width: '26px', height: '26px',
                         borderRadius: '50%', fontSize: '12px', fontWeight: 700,
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                         fontFamily: 'var(--font-mono)',
@@ -376,7 +376,7 @@ function ModelWiki() {
                       </button>
                       {isOwner && editing && (
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', fontFamily: 'var(--font-mono)' }}>
-                          Ref: <code style={{ background: 'var(--bg-tertiary)', padding: '2px 6px', borderRadius: '4px', marginLeft: '4px', color: 'var(--neon-cyan)' }}>[[poi:{poi.id}]]</code>
+                          Ref: <code style={{ background: 'var(--bg-tertiary)', padding: '2px 6px', borderRadius: '4px', marginLeft: '4px', color: 'var(--primary)' }}>[[poi:{poi.id}]]</code>
                         </span>
                       )}
                     </div>
@@ -397,7 +397,7 @@ function ModelWiki() {
             className="card-modern"
             style={{ padding: '18px' }}
           >
-            <h4 style={{ color: 'var(--neon-cyan)', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'var(--font-mono)' }}>
+            <h4 style={{ color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'var(--font-mono)' }}>
               <Globe size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
               Quick Links
             </h4>
@@ -434,7 +434,7 @@ function ModelWiki() {
                 className="card-modern"
                 style={{ padding: '18px' }}
               >
-                <h4 style={{ color: 'var(--neon-green)', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'var(--font-mono)' }}>
+                <h4 style={{ color: 'var(--success)', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'var(--font-mono)' }}>
                   <Layers size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
                   Graph Context
                 </h4>
@@ -480,7 +480,7 @@ function ModelWiki() {
                 className="card-modern"
                 style={{ padding: '18px' }}
               >
-                <h4 style={{ color: 'var(--neon-cyan)', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'var(--font-mono)' }}>
+                <h4 style={{ color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'var(--font-mono)' }}>
                   <MapPin size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
                   Jump to POI
                 </h4>
@@ -500,7 +500,7 @@ function ModelWiki() {
                       onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-tertiary)'; e.currentTarget.style.color = 'var(--text-primary)' }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' }}
                     >
-                      <span style={{ color: 'var(--neon-cyan)', fontWeight: 700, fontSize: '0.7rem', minWidth: '18px', fontFamily: 'var(--font-mono)' }}>{idx + 1}.</span>
+                      <span style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '0.7rem', minWidth: '18px', fontFamily: 'var(--font-mono)' }}>{idx + 1}.</span>
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{poi.title}</span>
                     </button>
                   ))}

@@ -33,8 +33,8 @@ function Register() {
       >
         <div className="card-modern" style={{ padding: '2.5rem', border: '1px solid var(--border-medium)' }}>
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <div style={{ width: 56, height: 56, borderRadius: 'var(--radius-md)', background: 'rgba(168, 85, 247, 0.08)', border: '1px solid rgba(168, 85, 247, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
-              <UserPlus size={24} color="var(--neon-purple)" />
+            <div style={{ width: 56, height: 56, borderRadius: 'var(--radius-md)', background: 'rgba(26, 26, 26, 0.08)', border: '1px solid rgba(26, 26, 26, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+              <UserPlus size={24} color="var(--secondary)" />
             </div>
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.4rem' }}>
               New Clearance
@@ -48,7 +48,7 @@ function Register() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-sm)', color: 'var(--neon-red)', fontSize: '0.85rem', marginBottom: '1rem' }}
+              style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-sm)', color: 'var(--danger)', fontSize: '0.85rem', marginBottom: '1rem' }}
             >
               {error}
             </motion.div>
@@ -79,7 +79,7 @@ function Register() {
               </div>
             </div>
 
-            <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.8rem', borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', background: 'rgba(168, 85, 247, 0.08)' }}>
+            <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.8rem', borderColor: 'var(--secondary)', color: 'var(--secondary)', background: 'rgba(26, 26, 26, 0.08)' }}>
               <UserPlus size={16} />
               Request Access
               <ArrowRight size={14} />
@@ -89,7 +89,7 @@ function Register() {
           <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-subtle)' }}>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
               Already cleared?{' '}
-              <Link to="/login" style={{ color: 'var(--neon-cyan)', textDecoration: 'none', fontWeight: 500 }}>
+              <Link to="/login" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 500 }}>
                 Authenticate
               </Link>
             </p>

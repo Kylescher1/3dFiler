@@ -6,7 +6,7 @@ import { Search as SearchIcon, Box, ArrowRight, FileText, Tag } from 'lucide-rea
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
 function formatColor(ext) {
-  const map = { glb: '#00e5ff', gltf: '#00e5ff', obj: '#22c55e', fbx: '#f59e0b', stl: '#ef4444' }
+  const map = { glb: '#b91c1c', gltf: '#b91c1c', obj: '#16a34a', fbx: '#d97706', stl: '#dc2626' }
   return map[ext?.toLowerCase()] || '#888'
 }
 
@@ -17,7 +17,7 @@ function Highlight({ text = '', query = '' }) {
   return (
     <>
       {text.slice(0, idx)}
-      <mark style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', padding: '0 2px', borderRadius: 3 }}>{text.slice(idx, idx + query.length)}</mark>
+      <mark style={{ background: 'rgba(185, 28, 28, 0.15)', color: '#b91c1c', padding: '0 2px', borderRadius: 3 }}>{text.slice(idx, idx + query.length)}</mark>
       {text.slice(idx + query.length)}
     </>
   )
@@ -97,7 +97,7 @@ function Search() {
         transition={{ duration: 0.4 }}
       >
         <div style={{ marginBottom: '1.5rem' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--neon-cyan)', textTransform: 'uppercase', letterSpacing: '2px' }}>// Discovery</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '2px' }}>// Discovery</span>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: 700, marginTop: '0.35rem', marginBottom: '0.3rem' }}>
             Explore Models
           </h1>
@@ -116,7 +116,7 @@ function Search() {
         </form>
 
         {error && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-sm)', color: 'var(--neon-red)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-sm)', color: 'var(--danger)', fontSize: '0.85rem', marginBottom: '1rem' }}>
             {error}
           </motion.div>
         )}
@@ -154,7 +154,7 @@ function Search() {
                         <div className="card-modern holo-border" style={{ padding: '1.25rem', position: 'relative', overflow: 'hidden' }}>
                           <div style={{ position: 'absolute', inset: '0 0 auto 0', height: 2, background: `linear-gradient(90deg, ${formatColor(ext)}, transparent)` }} />
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '0.6rem' }}>
-                            <h3 style={{ color: 'var(--neon-cyan)', fontSize: '1rem', lineHeight: 1.3, fontWeight: 600 }}>{m.title}</h3>
+                            <h3 style={{ color: 'var(--primary)', fontSize: '1rem', lineHeight: 1.3, fontWeight: 600 }}>{m.title}</h3>
                             <span className="tag-minimal" style={{ color: formatColor(ext), borderColor: formatColor(ext), background: `${formatColor(ext)}10`, flexShrink: 0 }}>{ext}</span>
                           </div>
                           <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: 1.45, marginBottom: '0.6rem' }}>{m.description || 'No description'}</p>
@@ -209,7 +209,7 @@ function Search() {
                           <div className="card-modern" style={{ padding: '1rem', position: 'relative', overflow: 'hidden' }}>
                             <div style={{ position: 'absolute', inset: '0 0 auto 0', height: 2, background: `linear-gradient(90deg, ${formatColor(ext)}, transparent)` }} />
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '0.4rem' }}>
-                              <h3 style={{ color: 'var(--neon-cyan)', fontSize: '0.95rem', fontWeight: 600 }}><Highlight text={m.title} query={query} /></h3>
+                              <h3 style={{ color: 'var(--primary)', fontSize: '0.95rem', fontWeight: 600 }}><Highlight text={m.title} query={query} /></h3>
                               <span className="tag-minimal" style={{ color: formatColor(ext), borderColor: formatColor(ext), background: `${formatColor(ext)}10`, flexShrink: 0 }}>{ext}</span>
                             </div>
                             <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', lineHeight: 1.4 }}><Highlight text={m.excerpt || m.description || 'No description'} query={query} /></p>
@@ -237,7 +237,7 @@ function Search() {
                         <div className="card-modern" style={{ padding: '0.8rem 1rem' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
                             <div>
-                              <h3 style={{ color: 'var(--neon-cyan)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.2rem' }}><Highlight text={p.title} query={query} /></h3>
+                              <h3 style={{ color: 'var(--primary)', fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.2rem' }}><Highlight text={p.title} query={query} /></h3>
                               <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', lineHeight: 1.4 }}><Highlight text={p.excerpt || p.content || 'No content'} query={query} /></p>
                             </div>
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }}>in {p.model.title}</span>

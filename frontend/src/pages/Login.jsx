@@ -32,8 +32,8 @@ function Login() {
       >
         <div className="card-modern" style={{ padding: '2.5rem', border: '1px solid var(--border-medium)' }}>
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <div style={{ width: 56, height: 56, borderRadius: 'var(--radius-md)', background: 'rgba(0, 229, 255, 0.06)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
-              <LogIn size={24} color="var(--neon-cyan)" />
+            <div style={{ width: 56, height: 56, borderRadius: 'var(--radius-md)', background: 'rgba(185, 28, 28, 0.06)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+              <LogIn size={24} color="var(--primary)" />
             </div>
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.4rem' }}>
               Authentication
@@ -47,7 +47,7 @@ function Login() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-sm)', color: 'var(--neon-red)', fontSize: '0.85rem', marginBottom: '1rem' }}
+              style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-sm)', color: 'var(--danger)', fontSize: '0.85rem', marginBottom: '1rem' }}
             >
               {error}
             </motion.div>
@@ -80,7 +80,7 @@ function Login() {
           <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-subtle)' }}>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
               No clearance?{' '}
-              <Link to="/register" style={{ color: 'var(--neon-cyan)', textDecoration: 'none', fontWeight: 500 }}>
+              <Link to="/register" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 500 }}>
                 Request Access
               </Link>
             </p>

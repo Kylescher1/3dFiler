@@ -11,10 +11,10 @@ function NotFound() {
         transition={{ duration: 0.5 }}
         style={{ textAlign: 'center', maxWidth: '500px' }}
       >
-        <div style={{ width: 80, height: 80, borderRadius: 'var(--radius-lg)', background: 'rgba(0, 229, 255, 0.05)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-          <AlertTriangle size={36} color="var(--neon-cyan)" />
+        <div style={{ width: 80, height: 80, borderRadius: 'var(--radius-lg)', background: 'rgba(185, 28, 28, 0.05)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+          <AlertTriangle size={36} color="var(--primary)" />
         </div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '5rem', margin: 0, color: 'var(--neon-cyan)', lineHeight: 1, textShadow: '0 0 30px rgba(0, 229, 255, 0.3)' }}>404</h1>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '5rem', margin: 0, color: 'var(--primary)', lineHeight: 1, textShadow: '0 0 30px rgba(185, 28, 28, 0.3)' }}>404</h1>
         <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', margin: '1rem 0 2rem' }}>
           This asset does not exist in this dimension.
         </p>

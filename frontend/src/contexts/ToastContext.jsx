@@ -49,7 +49,7 @@ export function ToastProvider({ children }) {
                   : toast.type === 'error'
                     ? '#c62828'
                     : '#1565c0',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               cursor: 'pointer',
               animation: 'toastIn 0.3s ease',
               maxWidth: '320px',

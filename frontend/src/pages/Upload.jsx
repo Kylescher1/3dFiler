@@ -110,7 +110,7 @@ function Upload() {
         transition={{ duration: 0.4 }}
       >
         <div style={{ marginBottom: '1.5rem' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--neon-cyan)', textTransform: 'uppercase', letterSpacing: '2px' }}>// Upload Interface</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '2px' }}>// Upload Interface</span>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.5rem, 4vw, 2.2rem)', fontWeight: 700, marginTop: '0.35rem', marginBottom: '0.3rem' }}>
             Upload 3D Model
           </h1>
@@ -119,7 +119,7 @@ function Upload() {
 
         <div className="card-modern" style={{ padding: '1.5rem', border: '1px solid var(--border-medium)' }}>
           {error && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-sm)', color: 'var(--neon-red)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-sm)', color: 'var(--danger)', fontSize: '0.85rem', marginBottom: '1rem' }}>
               {error}
             </motion.div>
           )}
@@ -130,11 +130,11 @@ function Upload() {
               onDragOver={onDragOver}
               onDragLeave={onDragLeave}
               style={{
-                border: `2px dashed ${dragOver ? 'var(--neon-cyan)' : 'var(--border-medium)'}`,
+                border: `2px dashed ${dragOver ? 'var(--primary)' : 'var(--border-medium)'}`,
                 borderRadius: 'var(--radius-md)',
                 padding: '2.5rem',
                 textAlign: 'center',
-                background: dragOver ? 'rgba(0, 229, 255, 0.05)' : 'var(--bg-tertiary)',
+                background: dragOver ? 'rgba(185, 28, 28, 0.05)' : 'var(--bg-tertiary)',
                 transition: 'all 0.3s ease',
                 marginBottom: '1.5rem',
                 cursor: 'pointer',
@@ -147,7 +147,7 @@ function Upload() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle, rgba(0,229,255,0.05), transparent)', pointerEvents: 'none' }}
+                  style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle, rgba(185,28,28,0.05), transparent)', pointerEvents: 'none' }}
                 />
               )}
               <input
@@ -165,8 +165,8 @@ function Upload() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
                   >
-                    <FileBox size={36} color="var(--neon-cyan)" style={{ margin: '0 auto 0.75rem' }} />
-                    <p style={{ color: 'var(--neon-cyan)', fontWeight: 600, fontSize: '1.1rem', fontFamily: 'var(--font-mono)' }}>{file.name}</p>
+                    <FileBox size={36} color="var(--primary)" style={{ margin: '0 auto 0.75rem' }} />
+                    <p style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '1.1rem', fontFamily: 'var(--font-mono)' }}>{file.name}</p>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.3rem' }}>{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.75rem' }}>Click or drop to replace</p>
                   </motion.div>
@@ -192,13 +192,13 @@ function Upload() {
 
             {uploading && (
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--neon-cyan)', fontFamily: 'var(--font-mono)', marginBottom: '0.4rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--primary)', fontFamily: 'var(--font-mono)', marginBottom: '0.4rem' }}>
                   <span>UPLOADING ASSET...</span>
                   <span>{progress}%</span>
                 </div>
                 <div style={{ width: '100%', height: 4, background: 'var(--bg-secondary)', borderRadius: 2, overflow: 'hidden' }}>
                   <motion.div
-                    style={{ height: '100%', background: 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))', borderRadius: 2 }}
+                    style={{ height: '100%', background: 'linear-gradient(90deg, var(--primary), var(--secondary))', borderRadius: 2 }}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 0.3 }}
                   />
@@ -228,7 +228,7 @@ function Upload() {
             </div>
 
             <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', background: 'var(--bg-tertiary)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', padding: '1rem', marginBottom: '1.5rem', cursor: 'pointer' }}>
-              <input type="checkbox" checked={wikiTemplate} onChange={e => setWikiTemplate(e.target.checked)} style={{ marginTop: '0.25rem', accentColor: 'var(--neon-cyan)' }} />
+              <input type="checkbox" checked={wikiTemplate} onChange={e => setWikiTemplate(e.target.checked)} style={{ marginTop: '0.25rem', accentColor: 'var(--primary)' }} />
               <span>
                 <span style={{ color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
                   <Check size={14} style={{ verticalAlign: 'text-bottom', marginRight: '0.3rem' }} />
