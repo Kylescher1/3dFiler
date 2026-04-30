@@ -1,38 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, useInView } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Link as LinkIcon, Box, MapPin, FileText, Globe, Cpu, Layers, Share2, Zap, Upload } from 'lucide-react'
 import LandingScene from '../components/LandingScene'
-
-function AnimatedCounter({ target, suffix = '' }) {
-  const [count, setCount] = useState(0)
-  const ref = useRef()
-  const isInView = useInView(ref, { once: true })
-
-  useEffect(() => {
-    if (!isInView) return
-    const duration = 2000
-    const steps = 60
-    const increment = target / steps
-    let current = 0
-    const timer = setInterval(() => {
-      current += increment
-      if (current >= target) {
-        setCount(target)
-        clearInterval(timer)
-      } else {
-        setCount(Math.floor(current))
-      }
-    }, duration / steps)
-    return () => clearInterval(timer)
-  }, [isInView, target])
-
-  return (
-    <span ref={ref} style={{ fontFamily: 'var(--font-mono)', fontSize: '2rem', fontWeight: 700, color: 'var(--neon-cyan)' }}>
-      {count}{suffix}
-    </span>
-  )
-}
 
 function FeatureCard({ icon: Icon, title, desc, delay }) {
   return (
@@ -54,15 +24,6 @@ function FeatureCard({ icon: Icon, title, desc, delay }) {
   )
 }
 
-function StatBox({ value, label, suffix }) {
-  return (
-    <div className="stat-box">
-      <div className="value"><AnimatedCounter target={value} suffix={suffix} /></div>
-      <div className="label">{label}</div>
-    </div>
-  )
-}
-
 function Home() {
   const [recent, setRecent] = useState([])
 
@@ -78,10 +39,46 @@ function Home() {
 
         {/* Hero Content */}
         <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '2rem', maxWidth: '900px' }}>
+          {/* 3D Filer Branding */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            style={{ marginBottom: '1.5rem' }}
+          >
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.5rem 1.25rem',
+              borderRadius: '999px',
+              border: '1px solid var(--border-accent)',
+              background: 'rgba(0, 229, 255, 0.05)',
+              backdropFilter: 'blur(8px)',
+            }}>
+              <Box size={18} color="var(--neon-cyan)" style={{ filter: 'drop-shadow(0 0 6px var(--neon-cyan))' }} />
+              <span style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                color: 'var(--neon-cyan)',
+                letterSpacing: '3px',
+                textTransform: 'uppercase',
+                textShadow: '0 0 12px rgba(0, 245, 212, 0.4)',
+              }}>
+                3D Filer
+              </span>
+              <span style={{ width: 1, height: 14, background: 'var(--border-accent)' }} />
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--text-muted)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                Knowledge Base Platform
+              </span>
+            </div>
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
+            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
           >
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.35rem 1rem', borderRadius: '999px', border: '1px solid var(--border-accent)', background: 'rgba(0, 229, 255, 0.05)', marginBottom: '1.5rem' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--neon-cyan)', boxShadow: '0 0 8px var(--neon-cyan)' }} />
@@ -124,17 +121,6 @@ function Home() {
               <Upload size={16} />
               Upload Model
             </Link>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1, duration: 1 }}
-            style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}
-          >
-            <StatBox value={500} suffix="+" label="Models Hosted" />
-            <StatBox value={2500} suffix="+" label="POIs Created" />
-            <StatBox value={12} suffix="" label="File Formats" />
           </motion.div>
         </div>
 

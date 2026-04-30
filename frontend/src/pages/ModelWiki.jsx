@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Edit3, Eye, Link2, MapPin, FileText, ChevronRight, Box, ExternalLink, Globe, Layers, Save, Undo2 } from 'lucide-react'
 import MarkdownContent from '../components/MarkdownContent'
 import ModelHeader from '../components/ModelHeader'
 
@@ -33,12 +35,13 @@ function PoiReferenceHelper({ pois, onInsert, visible, query }) {
     <div style={{
       position: 'absolute',
       zIndex: 100,
-      background: '#1a1a24',
-      border: '1px solid #2a2a2a',
-      borderRadius: '8px',
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border-medium)',
+      borderRadius: 'var(--radius-md)',
       padding: '4px 0',
       minWidth: '200px',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+      boxShadow: 'var(--shadow-card)',
+      backdropFilter: 'blur(12px)',
     }}>
       {matches.map(poi => (
         <button
@@ -47,15 +50,31 @@ function PoiReferenceHelper({ pois, onInsert, visible, query }) {
           style={{
             display: 'block', width: '100%', textAlign: 'left',
             background: 'none', border: 'none', padding: '6px 12px',
-            color: '#ccc', cursor: 'pointer', fontSize: '0.85rem',
+            color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.85rem',
           }}
-          onMouseEnter={e => e.currentTarget.style.background = '#252530'}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         >
-          <span style={{ color: '#4fc3f7', fontWeight: 600 }}>{poi.title}</span>
-          <span style={{ color: '#555', fontSize: '0.75rem', marginLeft: '0.5rem' }}>[[poi:{poi.id}]]</span>
+          <span style={{ color: 'var(--neon-cyan)', fontWeight: 600 }}>{poi.title}</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '0.5rem' }}>[[poi:{poi.id}]]</span>
         </button>
       ))}
+    </div>
+  )
+}
+
+function WikiSkeleton() {
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-muted)' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '100px 20px 60px' }}>
+        <motion.div
+          animate={{ opacity: [0.4, 0.8, 0.4] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          style={{ fontFamily: 'var(--font-mono)', textAlign: 'center', padding: '4rem 0' }}
+        >
+          INITIALIZING WIKI...
+        </motion.div>
+      </div>
     </div>
   )
 }
@@ -90,7 +109,6 @@ function ModelWiki() {
         setModel(data)
         setPois((data.pois || []).map(normalizePoi))
         setDraftWiki(data.wikiContent || '')
-        // Determine ownership
         if (token) {
           try {
             const payload = JSON.parse(atob(token.split('.')[1]))
@@ -153,16 +171,12 @@ function ModelWiki() {
   }, [draftWiki])
 
   if (error) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a0a', color: '#ef5350' }}>
-      {error}
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'var(--neon-red)', fontFamily: 'var(--font-mono)' }}>
+      ERROR: {error.toUpperCase()}
     </div>
   )
 
-  if (!model) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a0a', color: '#888' }}>
-      Loading wiki...
-    </div>
-  )
+  if (!model) return <WikiSkeleton />
 
   const extension = model.originalName?.split('.').pop()?.toUpperCase()
   const processedWiki = preprocessWikiWiki(model.wikiContent, pois)
@@ -170,7 +184,7 @@ function ModelWiki() {
   const backlinks = model.backlinks || []
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#e0e0e0' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       {/* Top bar */}
       <ModelHeader
         model={model}
@@ -180,245 +194,320 @@ function ModelWiki() {
       />
 
       {/* Main content */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '82px 20px 60px', display: 'grid', gridTemplateColumns: '1fr 280px', gap: '28px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '82px 20px 60px', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '28px' }}>
         {/* Left: Wiki content */}
         <div>
           {/* Title + actions */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}
+          >
             <div>
-              <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 700, color: '#e0e0e0' }}>{model.title}</h1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.75rem', color: '#666', background: '#111', padding: '2px 8px', borderRadius: '10px', border: '1px solid #1a1a1a' }}>{extension}</span>
+              <h1 style={{ margin: 0, fontSize: '1.7rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-display)', letterSpacing: '0.5px' }}>{model.title}</h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                <span className="tag-minimal">{extension}</span>
                 {model.published ? (
-                  <span style={{ fontSize: '0.75rem', color: '#81c784', background: '#0f2a15', padding: '2px 8px', borderRadius: '10px', border: '1px solid #1e4a2a' }}>Published</span>
+                  <span className="tag-minimal" style={{ color: 'var(--neon-green)', borderColor: 'rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.08)' }}>Published</span>
                 ) : (
-                  <span style={{ fontSize: '0.75rem', color: '#ffab91', background: '#2a1810', padding: '2px 8px', borderRadius: '10px', border: '1px solid #4a3020' }}>Private</span>
+                  <span className="tag-minimal" style={{ color: 'var(--neon-amber)', borderColor: 'rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.08)' }}>Private</span>
                 )}
                 {(model.tags || []).map(t => (
-                  <span key={t.id} style={{ fontSize: '0.75rem', color: '#4fc3f7', background: '#0f1f2a', padding: '2px 8px', borderRadius: '10px', border: '1px solid #1e3a4c' }}>{t.name}</span>
+                  <span key={t.id} className="tag-minimal" style={{ color: 'var(--neon-cyan)' }}>{t.name}</span>
                 ))}
               </div>
             </div>
             {isOwner && !editing && (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => setEditing(true)}
-                style={{
-                  padding: '6px 14px', borderRadius: '6px', border: '1px solid #2a2a2a',
-                  background: '#141419', color: '#ccc', cursor: 'pointer',
-                  fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px',
-                }}
+                className="btn-ghost"
+                style={{ padding: '0.45rem 0.9rem', fontSize: '0.8rem', flexShrink: 0 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                <Edit3 size={14} />
                 Edit Wiki
-              </button>
+              </motion.button>
             )}
-          </div>
+          </motion.div>
 
           {/* Wiki body */}
-          {editing ? (
-            <div style={{ position: 'relative' }}>
-              <textarea
-                ref={textareaRef}
-                value={draftWiki}
-                onChange={handleTextareaChange}
-                rows={20}
-                style={{
-                  width: '100%', padding: '16px', background: '#111', color: '#e0e0e0',
-                  border: '1px solid #2a2a2a', borderRadius: '10px', fontSize: '0.9rem',
-                  lineHeight: 1.6, fontFamily: 'monospace', resize: 'vertical',
-                }}
-                placeholder="# Welcome to the Wiki&#10;&#10;Write markdown here. Reference POIs with [[poi:poi-id]]."
-              />
-              <PoiReferenceHelper
-                pois={pois}
-                onInsert={insertPoiRef}
-                visible={suggestVisible}
-                query={suggestQuery}
-                textareaRef={textareaRef}
-              />
-              <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => { setEditing(false); setDraftWiki(model.wikiContent || ''); setSuggestVisible(false) }}
-                  style={{
-                    padding: '8px 16px', borderRadius: '6px', border: '1px solid #2a2a2a',
-                    background: '#141419', color: '#ccc', cursor: 'pointer', fontSize: '0.85rem',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveWiki}
-                  disabled={saving}
-                  style={{
-                    padding: '8px 16px', borderRadius: '6px', border: 'none',
-                    background: '#1e3a4c', color: '#4fc3f7', cursor: saving ? 'wait' : 'pointer',
-                    fontSize: '0.85rem', fontWeight: 600,
-                  }}
-                >
-                  {saving ? 'Saving...' : 'Save Wiki'}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div style={{ background: '#0f0f12', borderRadius: '10px', padding: '24px', border: '1px solid #1a1a1a' }}>
-              {processedWiki.trim() ? (
-                <MarkdownContent content={processedWiki} />
-              ) : (
-                <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                  <p style={{ color: '#555', fontSize: '0.95rem', marginBottom: '12px' }}>No wiki content yet.</p>
-                  {isOwner && (
-                    <button
-                      onClick={() => setEditing(true)}
-                      style={{
-                        padding: '8px 18px', borderRadius: '6px', border: '1px solid #2a2a2a',
-                        background: '#141419', color: '#4fc3f7', cursor: 'pointer',
-                        fontSize: '0.85rem', fontWeight: 600,
-                      }}
-                    >
-                      + Write the First Wiki Page
-                    </button>
-                  )}
+          <AnimatePresence mode="wait">
+            {editing ? (
+              <motion.div
+                key="editor"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25 }}
+                style={{ position: 'relative' }}
+              >
+                <div className="card-modern" style={{ padding: '1rem' }}>
+                  <textarea
+                    ref={textareaRef}
+                    value={draftWiki}
+                    onChange={handleTextareaChange}
+                    rows={20}
+                    style={{
+                      width: '100%', padding: '16px', background: 'var(--bg-tertiary)', color: 'var(--text-primary)',
+                      border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem',
+                      lineHeight: 1.6, fontFamily: 'var(--font-mono)', resize: 'vertical',
+                    }}
+                    placeholder="# Welcome to the Wiki&#10;&#10;Write markdown here. Reference POIs with [[poi:poi-id]]."
+                  />
+                  <PoiReferenceHelper
+                    pois={pois}
+                    onInsert={insertPoiRef}
+                    visible={suggestVisible}
+                    query={suggestQuery}
+                  />
                 </div>
-              )}
-            </div>
-          )}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => { setEditing(false); setDraftWiki(model.wikiContent || ''); setSuggestVisible(false) }}
+                    className="btn-ghost"
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.82rem' }}
+                  >
+                    <Undo2 size={14} />
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveWiki}
+                    disabled={saving}
+                    className="btn-primary"
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.82rem' }}
+                  >
+                    <Save size={14} />
+                    {saving ? 'Saving...' : 'Save Wiki'}
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="reader"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25 }}
+                className="card-modern"
+                style={{ padding: '28px' }}
+              >
+                {processedWiki.trim() ? (
+                  <MarkdownContent content={processedWiki} />
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '48px 20px' }}>
+                    <FileText size={36} color="var(--text-muted)" style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.95rem' }}>No wiki content yet.</p>
+                    {isOwner && (
+                      <button
+                        onClick={() => setEditing(true)}
+                        className="btn-primary"
+                        style={{ padding: '0.5rem 1.2rem', fontSize: '0.85rem' }}
+                      >
+                        <Edit3 size={14} />
+                        Write the First Wiki Page
+                      </button>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Auto POI sections */}
           {pois.length > 0 && (
-            <div style={{ marginTop: '32px' }}>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#4fc3f7', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: 0.5 }}
+              style={{ marginTop: '36px' }}
+            >
+              <h2 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--neon-cyan)', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'var(--font-display)', letterSpacing: '0.5px' }}>
+                <MapPin size={18} />
                 Points of Interest
-                <span style={{ fontSize: '0.75rem', color: '#555', fontWeight: 400 }}>({pois.length})</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400, fontFamily: 'var(--font-body)' }}>({pois.length})</span>
               </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 {pois.map((poi, idx) => (
-                  <div
+                  <motion.div
                     key={poi.id}
-                    id={`poi-${poi.id}`}
-                    style={{
-                      background: '#0f0f12', borderRadius: '10px', padding: '18px',
-                      border: '1px solid #1a1a1a',
-                    }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05, duration: 0.35 }}
+                    className="card-modern holo-border"
+                    style={{ padding: '18px' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                       <span style={{
-                        background: '#4fc3f7', color: '#0a0a0a', width: '24px', height: '24px',
+                        background: 'var(--neon-cyan)', color: 'var(--bg-primary)', width: '26px', height: '26px',
                         borderRadius: '50%', fontSize: '12px', fontWeight: 700,
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        fontFamily: 'var(--font-mono)',
                       }}>{idx + 1}</span>
-                      <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#e0e0e0' }}>{poi.title}</h3>
-                      <span style={{ fontSize: '0.7rem', color: '#555', border: '1px solid #2a2a2a', padding: '1px 8px', borderRadius: '10px', textTransform: 'capitalize' }}>{poi.type}</span>
+                      <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{poi.title}</h3>
+                      <span className="tag-minimal" style={{ textTransform: 'capitalize', marginLeft: 'auto' }}>{poi.type}</span>
                     </div>
                     {poi.type === 'nested-model' && poi.content ? (
                       <div>
-                        <p style={{ color: '#888', fontSize: '0.85rem', marginBottom: '10px' }}>This POI links to another model.</p>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '10px' }}>This POI links to another model.</p>
                         <button
                           onClick={() => navigate(`/model/${poi.content}`)}
-                          style={{
-                            padding: '6px 14px', borderRadius: '6px', border: '1px solid #2a2a2a',
-                            background: '#141419', color: '#4fc3f7', cursor: 'pointer',
-                            fontSize: '0.85rem',
-                          }}
+                          className="btn-ghost"
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                         >
+                          <ExternalLink size={12} />
                           Open Nested Model
                         </button>
                       </div>
                     ) : (
-                      <MarkdownContent content={poi.content} style={{ fontSize: '0.85rem' }} />
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: 1.6 }}>
+                        <MarkdownContent content={poi.content} />
+                      </div>
                     )}
-                    <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
+                    <div style={{ marginTop: '12px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                       <button
                         onClick={() => navigate(`/model/${id}?poi=${poi.id}`)}
-                        style={{
-                          padding: '4px 10px', borderRadius: '6px', border: '1px solid #2a2a2a',
-                          background: '#111', color: '#888', cursor: 'pointer',
-                          fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px',
-                        }}
+                        className="btn-ghost"
+                        style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem' }}
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        <Eye size={12} />
                         View in 3D
                       </button>
                       {isOwner && editing && (
-                        <span style={{ fontSize: '0.75rem', color: '#555', display: 'flex', alignItems: 'center' }}>
-                          Ref: <code style={{ background: '#1a1a1a', padding: '1px 4px', borderRadius: '3px', marginLeft: '4px' }}>[[poi:{poi.id}]]</code>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', fontFamily: 'var(--font-mono)' }}>
+                          Ref: <code style={{ background: 'var(--bg-tertiary)', padding: '2px 6px', borderRadius: '4px', marginLeft: '4px', color: 'var(--neon-cyan)' }}>[[poi:{poi.id}]]</code>
                         </span>
                       )}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
 
         {/* Right sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Quick links */}
-          <div style={{ background: '#0f0f12', borderRadius: '10px', padding: '16px', border: '1px solid #1a1a1a' }}>
-            <h4 style={{ color: '#4fc3f7', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Quick Links</h4>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="card-modern"
+            style={{ padding: '18px' }}
+          >
+            <h4 style={{ color: 'var(--neon-cyan)', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'var(--font-mono)' }}>
+              <Globe size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
+              Quick Links
+            </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <Link to={`/model/${id}`} style={{ color: '#ccc', textDecoration: 'none', fontSize: '0.85rem', padding: '6px 10px', borderRadius: '6px', background: '#111', border: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              <Link to={`/model/${id}`} className="btn-ghost" style={{ justifyContent: 'flex-start', padding: '0.5rem 0.7rem', fontSize: '0.8rem' }}>
+                <Eye size={14} />
                 Open 3D Viewer
+                <ChevronRight size={12} style={{ marginLeft: 'auto', opacity: 0.5 }} />
               </Link>
               {model.published && (
-                <Link to={`/model/${id}`} style={{ color: '#ccc', textDecoration: 'none', fontSize: '0.85rem', padding: '6px 10px', borderRadius: '6px', background: '#111', border: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-                  Share Link
-                </Link>
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/model/${id}`
+                    navigator.clipboard.writeText(url).catch(() => {})
+                  }}
+                  className="btn-ghost"
+                  style={{ justifyContent: 'flex-start', padding: '0.5rem 0.7rem', fontSize: '0.8rem' }}
+                >
+                  <Link2 size={14} />
+                  Copy Share Link
+                  <ChevronRight size={12} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                </button>
               )}
             </div>
-          </div>
+          </motion.div>
 
           {/* Graph context */}
-          {(nestedModels.length > 0 || backlinks.length > 0) && (
-            <div style={{ background: '#0f0f12', borderRadius: '10px', padding: '16px', border: '1px solid #1a1a1a' }}>
-              <h4 style={{ color: '#81c784', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Graph Context</h4>
-              {nestedModels.length > 0 && (
-                <div style={{ marginBottom: backlinks.length ? '0.8rem' : 0 }}>
-                  <h5 style={{ color: '#777', fontSize: '0.72rem', marginBottom: '0.4rem' }}>Links Out</h5>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    {nestedModels.map(nested => <Link key={nested.id} to={`/model/${nested.id}`} style={{ color: '#ccc', background: '#111', border: '1px solid #1a1a1a', borderRadius: '6px', padding: '5px 8px', textDecoration: 'none', fontSize: '0.8rem' }}>{nested.title}</Link>)}
+          <AnimatePresence>
+            {(nestedModels.length > 0 || backlinks.length > 0) && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                className="card-modern"
+                style={{ padding: '18px' }}
+              >
+                <h4 style={{ color: 'var(--neon-green)', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'var(--font-mono)' }}>
+                  <Layers size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
+                  Graph Context
+                </h4>
+                {nestedModels.length > 0 && (
+                  <div style={{ marginBottom: backlinks.length ? '0.9rem' : 0 }}>
+                    <h5 style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: 'var(--font-mono)' }}>Links Out</h5>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      {nestedModels.map(nested => (
+                        <Link key={nested.id} to={`/model/${nested.id}`} className="btn-ghost" style={{ justifyContent: 'flex-start', padding: '0.4rem 0.6rem', fontSize: '0.78rem' }}>
+                          <Box size={12} />
+                          {nested.title}
+                          <ChevronRight size={10} style={{ marginLeft: 'auto', opacity: 0.4 }} />
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-              {backlinks.length > 0 && (
-                <div>
-                  <h5 style={{ color: '#777', fontSize: '0.72rem', marginBottom: '0.4rem' }}>Linked From</h5>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    {backlinks.map(link => <Link key={`${link.id}-${link.poiId}`} to={`/model/${link.id}`} style={{ color: '#ccc', background: '#111', border: '1px solid #1a1a1a', borderRadius: '6px', padding: '5px 8px', textDecoration: 'none', fontSize: '0.8rem' }}>{link.title}<span style={{ color: '#555', marginLeft: '0.35rem' }}>via {link.poiTitle}</span></Link>)}
+                )}
+                {backlinks.length > 0 && (
+                  <div>
+                    <h5 style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: 'var(--font-mono)' }}>Linked From</h5>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      {backlinks.map(link => (
+                        <Link key={`${link.id}-${link.poiId}`} to={`/model/${link.id}`} className="btn-ghost" style={{ justifyContent: 'flex-start', padding: '0.4rem 0.6rem', fontSize: '0.78rem' }}>
+                          <Link2 size={12} />
+                          {link.title}
+                          <span style={{ color: 'var(--text-muted)', marginLeft: 'auto', fontSize: '0.7rem' }}>via {link.poiTitle}</span>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* POI quick nav */}
-          {pois.length > 0 && (
-            <div style={{ background: '#0f0f12', borderRadius: '10px', padding: '16px', border: '1px solid #1a1a1a' }}>
-              <h4 style={{ color: '#4fc3f7', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Jump to POI</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                {pois.map((poi, idx) => (
-                  <button
-                    key={poi.id}
-                    onClick={() => document.getElementById(`poi-${poi.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                    style={{
-                      textAlign: 'left', background: 'none', border: 'none',
-                      padding: '4px 8px', color: '#aaa', cursor: 'pointer',
-                      fontSize: '0.8rem', borderRadius: '4px',
-                      display: 'flex', alignItems: 'center', gap: '6px',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = '#1a1a1a'; e.currentTarget.style.color = '#ccc' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#aaa' }}
-                  >
-                    <span style={{ color: '#4fc3f7', fontWeight: 700, fontSize: '0.7rem', minWidth: '16px' }}>{idx + 1}.</span>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{poi.title}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <AnimatePresence>
+            {pois.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+                className="card-modern"
+                style={{ padding: '18px' }}
+              >
+                <h4 style={{ color: 'var(--neon-cyan)', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'var(--font-mono)' }}>
+                  <MapPin size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
+                  Jump to POI
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {pois.map((poi, idx) => (
+                    <button
+                      key={poi.id}
+                      onClick={() => document.getElementById(`poi-${poi.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                      style={{
+                        textAlign: 'left', background: 'none', border: 'none',
+                        padding: '5px 8px', color: 'var(--text-secondary)', cursor: 'pointer',
+                        fontSize: '0.82rem', borderRadius: 'var(--radius-sm)',
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        fontFamily: 'var(--font-body)',
+                        transition: 'all 0.15s ease',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-tertiary)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+                    >
+                      <span style={{ color: 'var(--neon-cyan)', fontWeight: 700, fontSize: '0.7rem', minWidth: '18px', fontFamily: 'var(--font-mono)' }}>{idx + 1}.</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{poi.title}</span>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
