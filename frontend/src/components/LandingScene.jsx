@@ -1,353 +1,290 @@
 import { useRef, useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useEffect, useState } from 'react'
 import { Stars } from '@react-three/drei'
 import * as THREE from 'three'
 
 // ───────────────────────────────────────────
-// Procedural Texture Generators
+// Central 3D Model Hub — wireframe polyhedron representing "the model"
 // ───────────────────────────────────────────
-function createDataTexture(baseColor = '#00f5d4') {
-  const size = 512
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')
+function ModelHub() {
+  const groupRef = useRef()
 
-  // Dark background
-  ctx.fillStyle = '#020204'
-  ctx.fillRect(0, 0, size, size)
-
-  // Grid lines
-  ctx.strokeStyle = baseColor
-  ctx.globalAlpha = 0.15
-  ctx.lineWidth = 1
-  const step = 32
-  for (let i = 0; i <= size; i += step) {
-    ctx.beginPath()
-    ctx.moveTo(i, 0)
-    ctx.lineTo(i, size)
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.moveTo(0, i)
-    ctx.lineTo(size, i)
-    ctx.stroke()
-  }
-
-  // Random circuit nodes
-  ctx.globalAlpha = 0.35
-  for (let i = 0; i < 60; i++) {
-    const x = Math.floor(Math.random() * (size / step)) * step
-    const y = Math.floor(Math.random() * (size / step)) * step
-    const r = 2 + Math.random() * 4
-    ctx.beginPath()
-    ctx.arc(x, y, r, 0, Math.PI * 2)
-    ctx.fillStyle = baseColor
-    ctx.fill()
-
-    // Lines from nodes
-    if (Math.random() > 0.5) {
-      ctx.beginPath()
-      ctx.moveTo(x, y)
-      ctx.lineTo(x + (Math.random() > 0.5 ? step * 2 : -step * 2), y)
-      ctx.strokeStyle = baseColor
-      ctx.lineWidth = 0.8
-      ctx.stroke()
-    }
-    if (Math.random() > 0.5) {
-      ctx.beginPath()
-      ctx.moveTo(x, y)
-      ctx.lineTo(x, y + (Math.random() > 0.5 ? step * 2 : -step * 2))
-      ctx.strokeStyle = baseColor
-      ctx.lineWidth = 0.8
-      ctx.stroke()
-    }
-  }
-
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.wrapS = THREE.RepeatWrapping
-  texture.wrapT = THREE.RepeatWrapping
-  return texture
-}
-
-function createHexTexture(baseColor = '#8b5cf6') {
-  const size = 512
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')
-
-  ctx.fillStyle = '#020204'
-  ctx.fillRect(0, 0, size, size)
-
-  const hexSize = 24
-  const hexW = hexSize * Math.sqrt(3)
-  const hexH = hexSize * 2
-
-  ctx.strokeStyle = baseColor
-  ctx.lineWidth = 1
-  ctx.globalAlpha = 0.2
-
-  for (let row = 0; row < size / hexH + 2; row++) {
-    for (let col = 0; col < size / hexW + 2; col++) {
-      const x = col * hexW + (row % 2) * (hexW / 2)
-      const y = row * (hexH * 0.75)
-      ctx.beginPath()
-      for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i - Math.PI / 6
-        const px = x + hexSize * Math.cos(angle)
-        const py = y + hexSize * Math.sin(angle)
-        if (i === 0) ctx.moveTo(px, py)
-        else ctx.lineTo(px, py)
-      }
-      ctx.closePath()
-      ctx.stroke()
-    }
-  }
-
-  const texture = new THREE.CanvasTexture(canvas)
-  texture.wrapS = THREE.RepeatWrapping
-  texture.wrapT = THREE.RepeatWrapping
-  return texture
-}
-
-// ───────────────────────────────────────────
-// Matrix Rain - full-screen Canvas 2D layer
-// ───────────────────────────────────────────
-function MatrixRain() {
-  const canvasRef = useRef(null)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    let animId
-
-    const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    resize()
-    window.addEventListener('resize', resize)
-
-    const cols = 50
-    const colW = canvas.width / cols
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789零一二三四五六七八九十書籍库数据文件模型'
-    const drops = Array.from({ length: cols }, () => ({
-      y: Math.random() * -canvas.height,
-      speed: 1.5 + Math.random() * 2.5,
-      char: chars[Math.floor(Math.random() * chars.length)],
-      visible: Math.random() > 0.3
-    }))
-
-    const draw = () => {
-      ctx.fillStyle = 'rgba(2,2,4,0.12)'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-      ctx.font = `${Math.max(12, colW * 0.8)}px "JetBrains Mono", monospace`
-      ctx.textAlign = 'center'
-
-      drops.forEach((drop, i) => {
-        if (!drop.visible) {
-          drop.y += drop.speed
-          if (drop.y > canvas.height) drop.y = -30
-          return
-        }
-
-        const x = i * colW + colW / 2
-        const tailLen = 12
-
-        for (let t = 0; t < tailLen; t++) {
-          const ty = drop.y - t * colW
-          if (ty < 0 || ty > canvas.height) continue
-          const alpha = t === 0 ? 1.0 : Math.max(0, (1 - t / tailLen) * 0.5)
-          const isHead = t === 0
-          // Cyan/teal themed instead of pure green
-          ctx.fillStyle = isHead
-            ? `rgba(0,245,212,${alpha})`
-            : `rgba(0,184,212,${alpha * 0.7})`
-          ctx.fillText(drop.char, x, ty)
-        }
-
-        drop.y += drop.speed
-        if (drop.y - tailLen * colW > canvas.height) {
-          drop.y = -Math.random() * 200
-          drop.speed = 1.5 + Math.random() * 2.5
-          drop.char = chars[Math.floor(Math.random() * chars.length)]
-          drop.visible = Math.random() > 0.2
-        }
-      })
-
-      animId = requestAnimationFrame(draw)
-    }
-
-    draw()
-    return () => {
-      cancelAnimationFrame(animId)
-      window.removeEventListener('resize', resize)
-    }
-  }, [])
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime()
+    groupRef.current.rotation.y = t * 0.12
+    groupRef.current.rotation.x = Math.sin(t * 0.08) * 0.08
+    groupRef.current.rotation.z = Math.cos(t * 0.06) * 0.04
+  })
 
   return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: 0,
-        opacity: 0.45,
-      }}
-    />
+    <group ref={groupRef}>
+      {/* Outer wireframe shell */}
+      <mesh>
+        <icosahedronGeometry args={[2.2, 1]} />
+        <meshBasicMaterial color="#00f5d4" transparent opacity={0.08} wireframe />
+      </mesh>
+      {/* Secondary wireframe layer */}
+      <mesh>
+        <dodecahedronGeometry args={[2.0, 0]} />
+        <meshBasicMaterial color="#8b5cf6" transparent opacity={0.06} wireframe />
+      </mesh>
+      {/* Inner core glow */}
+      <mesh>
+        <sphereGeometry args={[0.6, 32, 32]} />
+        <meshBasicMaterial color="#00f5d4" transparent opacity={0.15} />
+      </mesh>
+      {/* Core bright center */}
+      <mesh>
+        <sphereGeometry args={[0.2, 16, 16]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.6} />
+      </mesh>
+      {/* Rotating inner ring */}
+      <RingRings />
+    </group>
+  )
+}
+
+function RingRings() {
+  const ref1 = useRef()
+  const ref2 = useRef()
+  const ref3 = useRef()
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime()
+    ref1.current.rotation.x = t * 0.2
+    ref1.current.rotation.y = t * 0.15
+    ref2.current.rotation.x = -t * 0.25
+    ref2.current.rotation.z = t * 0.1
+    ref3.current.rotation.y = -t * 0.18
+    ref3.current.rotation.z = -t * 0.12
+  })
+
+  return (
+    <>
+      <group ref={ref1}>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[2.8, 0.012, 8, 100]} />
+          <meshBasicMaterial color="#00f5d4" transparent opacity={0.35} />
+        </mesh>
+      </group>
+      <group ref={ref2}>
+        <mesh rotation={[0, Math.PI / 3, Math.PI / 4]}>
+          <torusGeometry args={[3.2, 0.008, 8, 100]} />
+          <meshBasicMaterial color="#8b5cf6" transparent opacity={0.25} />
+        </mesh>
+      </group>
+      <group ref={ref3}>
+        <mesh rotation={[Math.PI / 5, 0, Math.PI / 6]}>
+          <torusGeometry args={[3.6, 0.006, 8, 100]} />
+          <meshBasicMaterial color="#00b8d4" transparent opacity={0.2} />
+        </mesh>
+      </group>
+    </>
   )
 }
 
 // ───────────────────────────────────────────
-// Floating Data Crystals (textured R3F)
+// POI Satellites — glowing markers orbiting the model
 // ───────────────────────────────────────────
-function DataCrystals() {
-  const groupRef = useRef()
+const POI_SATELLITES = [
+  { radius: 4.0, speed: 0.35, yOffset: 1.2, phase: 0, color: '#00f5d4', size: 0.12 },
+  { radius: 4.5, speed: 0.28, yOffset: -0.8, phase: 1.0, color: '#8b5cf6', size: 0.10 },
+  { radius: 5.2, speed: 0.22, yOffset: 1.8, phase: 2.5, color: '#00b8d4', size: 0.14 },
+  { radius: 3.6, speed: 0.40, yOffset: -1.5, phase: 3.8, color: '#00f5d4', size: 0.09 },
+  { radius: 5.8, speed: 0.18, yOffset: 0.4, phase: 5.2, color: '#8b5cf6', size: 0.11 },
+  { radius: 4.2, speed: 0.32, yOffset: -2.0, phase: 1.8, color: '#00b8d4', size: 0.13 },
+  { radius: 6.2, speed: 0.15, yOffset: 2.2, phase: 4.5, color: '#00f5d4', size: 0.08 },
+  { radius: 3.9, speed: 0.38, yOffset: 0.0, phase: 6.1, color: '#8b5cf6', size: 0.10 },
+]
 
-  const [gridTex, hexTex] = useMemo(() => {
-    return [createDataTexture('#00f5d4'), createHexTexture('#8b5cf6')]
+function POISatellites() {
+  const groupRef = useRef()
+  const lineRefs = useRef([])
+
+  const lineGeometries = useMemo(() => {
+    return POI_SATELLITES.map(() => new THREE.BufferGeometry())
   }, [])
 
-  const crystals = useMemo(() => {
-    const arr = []
-    for (let i = 0; i < 14; i++) {
-      const type = i % 3
-      arr.push({
-        type,
-        pos: [
-          (Math.random() - 0.5) * 18,
-          (Math.random() - 0.5) * 12,
-          (Math.random() - 0.5) * 8 - 3,
-        ],
-        rot: [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * 0.2],
-        scale: type === 0 ? [0.6, 0.9, 0.6] : type === 1 ? [0.7, 0.7, 0.7] : [1.2, 0.05, 0.8],
-        speed: 0.15 + Math.random() * 0.35,
-        offset: Math.random() * Math.PI * 2,
-        tex: type === 2 ? gridTex : hexTex,
-        color: type === 2 ? '#00f5d4' : '#8b5cf6',
-      })
-    }
-    return arr
-  }, [gridTex, hexTex])
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime()
+    const center = new THREE.Vector3(0, 0, 0)
+
+    POI_SATELLITES.forEach((poi, i) => {
+      const angle = t * poi.speed + poi.phase
+      const x = Math.cos(angle) * poi.radius
+      const z = Math.sin(angle) * poi.radius
+      const y = poi.yOffset + Math.sin(t * 0.5 + poi.phase) * 0.3
+
+      const satellite = groupRef.current.children[i]
+      if (satellite) {
+        satellite.position.set(x, y, z)
+        satellite.lookAt(center)
+      }
+
+      // Update connection line
+      const line = lineRefs.current[i]
+      if (line) {
+        const positions = new Float32Array([0, 0, 0, x * 0.55, y * 0.55, z * 0.55])
+        line.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+        line.geometry.attributes.position.needsUpdate = true
+      }
+    })
+  })
+
+  return (
+    <>
+      {/* Connection lines from center to each POI */}
+      {POI_SATELLITES.map((poi, i) => (
+        <line
+          key={`line-${i}`}
+          ref={(el) => { lineRefs.current[i] = el }}
+        >
+          <bufferGeometry ref={(el) => { if (el) lineGeometries[i] = el }} />
+          <lineBasicMaterial color={poi.color} transparent opacity={0.25} />
+        </line>
+      ))}
+
+      {/* Satellite markers */}
+      <group ref={groupRef}>
+        {POI_SATELLITES.map((poi, i) => (
+          <group key={i}>
+            {/* Glow halo */}
+            <mesh>
+              <sphereGeometry args={[poi.size * 2.5, 16, 16]} />
+              <meshBasicMaterial color={poi.color} transparent opacity={0.12} />
+            </mesh>
+            {/* Core marker */}
+            <mesh>
+              <sphereGeometry args={[poi.size, 16, 16]} />
+              <meshBasicMaterial color={poi.color} transparent opacity={0.9} />
+            </mesh>
+            {/* Ring halo */}
+            <mesh rotation={[Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[poi.size * 2, poi.size * 2.8, 32]} />
+              <meshBasicMaterial color={poi.color} transparent opacity={0.2} side={THREE.DoubleSide} />
+            </mesh>
+          </group>
+        ))}
+      </group>
+    </>
+  )
+}
+
+// ───────────────────────────────────────────
+// Floating Wiki Cards — holographic data panels
+// ───────────────────────────────────────────
+const WIKI_CARDS = [
+  { pos: [5.5, 2.5, -2], rot: [0, -0.4, 0.05], size: [1.4, 1.0], speed: 0.2, phase: 0, color: '#00f5d4' },
+  { pos: [-5.0, -1.8, 1], rot: [0, 0.5, -0.03], size: [1.2, 0.9], speed: 0.15, phase: 2, color: '#8b5cf6' },
+  { pos: [-4.5, 3.2, -3], rot: [0, 0.3, 0.08], size: [1.0, 1.2], speed: 0.25, phase: 4, color: '#00b8d4' },
+  { pos: [4.0, -3.0, 2], rot: [0, -0.6, -0.05], size: [1.3, 0.8], speed: 0.18, phase: 1.5, color: '#00f5d4' },
+]
+
+function WikiCards() {
+  const groupRef = useRef()
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime()
     groupRef.current.children.forEach((child, i) => {
-      const c = crystals[i]
-      child.position.y = c.pos[1] + Math.sin(t * c.speed + c.offset) * 0.8
-      child.rotation.y = c.rot[1] + t * 0.08 * c.speed
-      child.rotation.x = c.rot[0] + Math.sin(t * 0.4 + c.offset) * 0.05
+      const card = WIKI_CARDS[i]
+      child.position.y = card.pos[1] + Math.sin(t * card.speed + card.phase) * 0.25
+      child.rotation.z = card.rot[2] + Math.sin(t * 0.3 + card.phase) * 0.02
     })
   })
 
   return (
     <group ref={groupRef}>
-      {crystals.map((c, i) => (
-        <group key={i} position={c.pos} rotation={c.rot}>
-          {c.type === 0 && (
-            <mesh>
-              <octahedronGeometry args={[0.5, 0]} />
-              <meshStandardMaterial
-                map={c.tex}
-                color={c.color}
-                roughness={0.3}
-                metalness={0.6}
-                emissive={c.color}
-                emissiveIntensity={0.15}
-                transparent
-                opacity={0.9}
-              />
-            </mesh>
-          )}
-          {c.type === 1 && (
-            <mesh>
-              <icosahedronGeometry args={[0.45, 0]} />
-              <meshStandardMaterial
-                map={c.tex}
-                color={c.color}
-                roughness={0.2}
-                metalness={0.7}
-                emissive={c.color}
-                emissiveIntensity={0.2}
-                transparent
-                opacity={0.85}
-                wireframe={false}
-              />
-            </mesh>
-          )}
-          {c.type === 2 && (
-            <mesh>
-              <planeGeometry args={[1.2, 0.8]} />
-              <meshStandardMaterial
-                map={c.tex}
-                color={c.color}
-                roughness={0.4}
-                metalness={0.5}
-                emissive={c.color}
-                emissiveIntensity={0.1}
-                side={THREE.DoubleSide}
-                transparent
-                opacity={0.75}
-              />
-            </mesh>
-          )}
-          {/* Edge glow */}
-          <mesh scale={[1.02, 1.02, 1.02]}>
-            {c.type === 0 ? <octahedronGeometry args={[0.5, 0]} /> :
-             c.type === 1 ? <icosahedronGeometry args={[0.45, 0]} /> :
-             <planeGeometry args={[1.2, 0.8]} />}
-            <meshBasicMaterial color={c.color} transparent opacity={0.06} wireframe />
+      {WIKI_CARDS.map((card, i) => (
+        <group key={i} position={card.pos} rotation={card.rot}>
+          {/* Card body */}
+          <mesh>
+            <planeGeometry args={card.size} />
+            <meshBasicMaterial color={card.color} transparent opacity={0.06} side={THREE.DoubleSide} />
           </mesh>
+          {/* Card border */}
+          <mesh scale={[1.01, 1.01, 1]}>
+            <planeGeometry args={card.size} />
+            <meshBasicMaterial color={card.color} transparent opacity={0.2} side={THREE.DoubleSide} wireframe />
+          </mesh>
+          {/* Inner line pattern — horizontal lines */}
+          {Array.from({ length: 5 }).map((_, j) => (
+            <mesh key={j} position={[0, -card.size[1] / 2 + (j + 1) * (card.size[1] / 6), 0.001]}>
+              <planeGeometry args={[card.size[0] * 0.7, 0.008]} />
+              <meshBasicMaterial color={card.color} transparent opacity={0.15} side={THREE.DoubleSide} />
+            </mesh>
+          ))}
+          {/* Corner accents */}
+          <CornerAccent x={-card.size[0] / 2} y={card.size[1] / 2} color={card.color} />
+          <CornerAccent x={card.size[0] / 2} y={card.size[1] / 2} color={card.color} rotate />
+          <CornerAccent x={-card.size[0] / 2} y={-card.size[1] / 2} color={card.color} rotate />
+          <CornerAccent x={card.size[0] / 2} y={-card.size[1] / 2} color={card.color} />
         </group>
       ))}
     </group>
   )
 }
 
-// ───────────────────────────────────────────
-// Particle Swirl (cyan / purple themed)
-// ───────────────────────────────────────────
-function ParticleSwirl() {
-  const ref = useRef()
-  const count = 400
+function CornerAccent({ x, y, color, rotate = false }) {
+  return (
+    <group position={[x, y, 0.002]} rotation={[0, 0, rotate ? Math.PI : 0]}>
+      <mesh position={[0.08, 0, 0]}>
+        <planeGeometry args={[0.16, 0.012]} />
+        <meshBasicMaterial color={color} transparent opacity={0.5} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, -0.08, 0]}>
+        <planeGeometry args={[0.012, 0.16]} />
+        <meshBasicMaterial color={color} transparent opacity={0.5} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  )
+}
 
-  const [positions, colors] = useMemo(() => {
+// ───────────────────────────────────────────
+// Grid Floor — subtle holographic ground plane
+// ───────────────────────────────────────────
+function GridFloor() {
+  const gridRef = useRef()
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime()
+    // Subtle pulse of grid opacity
+    const mat = gridRef.current.material
+    mat.opacity = 0.04 + Math.sin(t * 0.5) * 0.015
+  })
+
+  return (
+    <mesh ref={gridRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -5, 0]}>
+      <planeGeometry args={[40, 40]} />
+      <meshBasicMaterial color="#00f5d4" transparent opacity={0.04} />
+    </mesh>
+  )
+}
+
+// ───────────────────────────────────────────
+// Ambient particles — slow drifting data motes
+// ───────────────────────────────────────────
+function DataMotes() {
+  const ref = useRef()
+  const count = 120
+
+  const positions = useMemo(() => {
     const pos = new Float32Array(count * 3)
-    const col = new Float32Array(count * 3)
-    const c1 = new THREE.Color('#00f5d4')
-    const c2 = new THREE.Color('#8b5cf6')
     for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 12
-      const radius = 1.5 + (i / count) * 6
-      const y = ((i / count) * 10) - 5
-      pos[i * 3] = Math.cos(angle) * radius
-      pos[i * 3 + 1] = y
-      pos[i * 3 + 2] = Math.sin(angle) * radius
-      const mix = Math.random()
-      const color = c1.clone().lerp(c2, mix)
-      col[i * 3] = color.r
-      col[i * 3 + 1] = color.g
-      col[i * 3 + 2] = color.b
+      pos[i * 3] = (Math.random() - 0.5) * 24
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 16
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 16
     }
-    return [pos, col]
+    return pos
   }, [])
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime()
     const pos = ref.current.geometry.attributes.position.array
     for (let i = 0; i < count; i++) {
-      const baseAngle = (i / count) * Math.PI * 12
-      const radius = 1.5 + (i / count) * 6
-      const phase = t * 0.4 + baseAngle
-      pos[i * 3] = Math.cos(phase) * radius
-      pos[i * 3 + 1] = Math.sin(t * 0.3 + i * 0.05) * 0.5 + ((i / count) * 8) - 4
-      pos[i * 3 + 2] = Math.sin(phase) * radius
+      pos[i * 3 + 1] += Math.sin(t * 0.2 + i) * 0.002
+      // Wrap around
+      if (pos[i * 3 + 1] > 8) pos[i * 3 + 1] = -8
+      if (pos[i * 3 + 1] < -8) pos[i * 3 + 1] = 8
     }
     ref.current.geometry.attributes.position.needsUpdate = true
   })
@@ -356,88 +293,59 @@ function ParticleSwirl() {
     <points ref={ref}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.06} vertexColors transparent opacity={0.9} sizeAttenuation />
+      <pointsMaterial size={0.04} color="#00f5d4" transparent opacity={0.5} sizeAttenuation />
     </points>
   )
 }
 
 // ───────────────────────────────────────────
-// Central Archive Core (rotating cylinder)
-// ───────────────────────────────────────────
-function ArchiveCore() {
-  const ref = useRef()
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    ref.current.rotation.y = t * 0.2
-    ref.current.rotation.z = Math.sin(t * 0.3) * 0.05
-  })
-
-  return (
-    <group ref={ref} position={[0, 0, -4]}>
-      <mesh>
-        <cylinderGeometry args={[1.2, 1.2, 3.5, 32, 1, true]} />
-        <meshBasicMaterial color="#00f5d4" transparent opacity={0.06} side={THREE.DoubleSide} wireframe />
-      </mesh>
-      <mesh>
-        <cylinderGeometry args={[1.25, 1.25, 3.6, 32, 1, true]} />
-        <meshBasicMaterial color="#8b5cf6" transparent opacity={0.04} side={THREE.DoubleSide} wireframe />
-      </mesh>
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1.5, 0.015, 8, 64]} />
-        <meshBasicMaterial color="#00f5d4" transparent opacity={0.4} />
-      </mesh>
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 1.3, 0]}>
-        <torusGeometry args={[1.2, 0.01, 8, 64]} />
-        <meshBasicMaterial color="#8b5cf6" transparent opacity={0.3} />
-      </mesh>
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -1.3, 0]}>
-        <torusGeometry args={[1.2, 0.01, 8, 64]} />
-        <meshBasicMaterial color="#8b5cf6" transparent opacity={0.3} />
-      </mesh>
-    </group>
-  )
-}
-
-// ───────────────────────────────────────────
-// Ambient Lights
+// Scene Lighting
 // ───────────────────────────────────────────
 function SceneLights() {
   return (
     <>
-      <pointLight position={[-5, 4, 2]} color="#00f5d4" intensity={1.0} distance={18} decay={2} />
-      <pointLight position={[5, -3, 3]} color="#8b5cf6" intensity={0.8} distance={14} decay={2} />
-      <pointLight position={[0, 5, 5]} color="#00b8d4" intensity={0.5} distance={20} decay={2} />
-      <ambientLight intensity={0.12} color="#aaccff" />
+      <ambientLight intensity={0.15} color="#aaccff" />
+      <pointLight position={[6, 4, 4]} color="#00f5d4" intensity={1.2} distance={20} decay={2} />
+      <pointLight position={[-6, -2, 4]} color="#8b5cf6" intensity={0.9} distance={18} decay={2} />
+      <pointLight position={[0, 6, -4]} color="#00b8d4" intensity={0.5} distance={22} decay={2} />
     </>
   )
 }
 
 // ───────────────────────────────────────────
-// Main Scene export
+// Main Scene
 // ───────────────────────────────────────────
 export default function LandingScene() {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', background: '#020204' }}>
-      {/* Matrix Rain background layer */}
-      <MatrixRain />
-
-      {/* R3F scene on top */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
+      <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
         <Canvas
-          camera={{ position: [0, 0, 9], fov: 55 }}
+          camera={{ position: [0, 1.5, 10], fov: 50 }}
           gl={{ antialias: true, alpha: true }}
           style={{ background: 'transparent' }}
         >
-          <fog attach="fog" args={['#020204', 12, 28]} />
+          <fog attach="fog" args={['#020204', 14, 30]} />
           <SceneLights />
-          <Stars radius={60} depth={40} count={1500} factor={3} saturation={0} fade speed={0.5} />
-          <ArchiveCore />
-          <DataCrystals />
-          <ParticleSwirl />
+          <Stars radius={70} depth={50} count={800} factor={3} saturation={0} fade speed={0.3} />
+          <ModelHub />
+          <POISatellites />
+          <WikiCards />
+          <GridFloor />
+          <DataMotes />
         </Canvas>
       </div>
+
+      {/* Vignette overlay for depth */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'radial-gradient(ellipse 70% 60% at 50% 45%, transparent 30%, #020204 100%)',
+          zIndex: 1,
+          pointerEvents: 'none',
+        }}
+      />
 
       {/* Bottom fade */}
       <div
@@ -446,7 +354,7 @@ export default function LandingScene() {
           bottom: 0,
           left: 0,
           right: 0,
-          height: 200,
+          height: 180,
           background: 'linear-gradient(to top, var(--bg-primary), transparent)',
           zIndex: 2,
           pointerEvents: 'none',
