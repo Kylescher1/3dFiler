@@ -6,11 +6,11 @@ import {
   Hexagon, ArrowDown, ArrowRight
 } from 'lucide-react'
 
-// ── Staggered Word Reveal ──
-function RevealText({ children, className = '', delay = 0, as: Tag = 'div' }) {
+// ── Reuse animation helpers ──
+function RevealText({ children, delay = 0, as: Tag = 'div', style = {} }) {
   const words = children.split(' ')
   return (
-    <Tag className={className}>
+    <Tag style={style}>
       {words.map((word, i) => (
         <span key={i} style={{ display: 'inline-block', overflow: 'hidden', marginRight: '0.3em' }}>
           <motion.span
@@ -28,14 +28,14 @@ function RevealText({ children, className = '', delay = 0, as: Tag = 'div' }) {
   )
 }
 
-function FadeUp({ children, delay = 0, className = '' }) {
+function FadeUp({ children, delay = 0, style = {} }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
+      style={style}
     >
       {children}
     </motion.div>
@@ -54,7 +54,7 @@ function LineReveal({ delay = 0 }) {
   )
 }
 
-// ── Section Divider (Cutaway) ──
+// ── Cutaway divider ──
 function Cutaway({ color = '#ffffff' }) {
   return (
     <div style={{ height: 0, position: 'relative', zIndex: 5 }}>
@@ -65,6 +65,7 @@ function Cutaway({ color = '#ffffff' }) {
   )
 }
 
+// ── Feature card ──
 function FeatureCard({ icon: Icon, title, desc, index }) {
   return (
     <motion.div
@@ -90,23 +91,53 @@ function FeatureCard({ icon: Icon, title, desc, index }) {
       />
       <Icon size={28} color="var(--primary)" strokeWidth={1.5} style={{ marginBottom: '1.5rem' }} />
       <h3 style={{
-        fontFamily: 'var(--font-display)',
-        fontSize: '1.1rem',
-        fontWeight: 700,
-        letterSpacing: '1px',
-        textTransform: 'uppercase',
-        color: 'var(--text-primary)',
-        marginBottom: '0.75rem'
+        fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 700,
+        letterSpacing: '1px', textTransform: 'uppercase',
+        color: 'var(--text-primary)', marginBottom: '0.75rem'
       }}>
         {title}
       </h3>
-      <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.65 }}>
-        {desc}
-      </p>
+      <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.65 }}>{desc}</p>
     </motion.div>
   )
 }
 
+// ── Animated counter stat ──
+function AnimatedStat({ value, label, delay = 0 }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+      style={{ textAlign: 'center' }}
+    >
+      <div style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
+        fontWeight: 800,
+        color: '#fff',
+        lineHeight: 1,
+        letterSpacing: '2px'
+      }}>
+        {value}
+      </div>
+      <div style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '0.65rem',
+        color: '#888',
+        letterSpacing: '2px',
+        textTransform: 'uppercase',
+        marginTop: '0.5rem'
+      }}>
+        {label}
+      </div>
+    </motion.div>
+  )
+}
+
+// ═══════════════════════════════════════════
+// MAIN
+// ═══════════════════════════════════════════
 export default function Home() {
   const [recent, setRecent] = useState([])
   const heroRef = useRef(null)
@@ -123,9 +154,7 @@ export default function Home() {
 
   return (
     <div>
-      {/* ═══════════════════════════════════════════
-          HERO — Dark, editorial, massive type
-          ═══════════════════════════════════════════ */}
+      {/* ═══════ HERO ═══════ */}
       <div ref={heroRef} style={{
         position: 'relative',
         minHeight: '100vh',
@@ -136,9 +165,9 @@ export default function Home() {
         padding: '0 4vw',
         overflow: 'hidden'
       }}>
-        {/* ── Background geometric graphics ── */}
+        {/* ── Background graphics layer ── */}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1 }}>
-          {/* 1. Dot grid */}
+          {/* Dot grid */}
           <div style={{
             position: 'absolute', inset: 0,
             backgroundImage: 'radial-gradient(circle, rgba(185,28,28,0.12) 1px, transparent 1px)',
@@ -146,13 +175,29 @@ export default function Home() {
             opacity: 0.4
           }} />
 
-          {/* 2. Large wireframe icosahedron — right side */}
-          <svg style={{ position: 'absolute', right: '-5%', top: '10%', width: '45vw', height: '45vw', opacity: 0.15 }} viewBox="0 0 400 400" fill="none">
+          {/* Enormous ghost "3D" behind everything */}
+          <div style={{
+            position: 'absolute',
+            left: '50%',
+            top: '40%',
+            transform: 'translate(-50%, -50%)',
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(20rem, 45vw, 55rem)',
+            fontWeight: 900,
+            color: 'rgba(255,255,255,0.015)',
+            lineHeight: 1,
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            userSelect: 'none'
+          }}>
+            3D
+          </div>
+
+          {/* Large wireframe icosahedron — right side */}
+          <svg style={{ position: 'absolute', right: '-5%', top: '10%', width: '45vw', height: '45vw', opacity: 0.12 }} viewBox="0 0 400 400" fill="none">
             <g stroke="#b91c1c" strokeWidth="0.8">
-              {/* Outer ring */}
               <circle cx="200" cy="200" r="180" strokeDasharray="4 8" opacity="0.5" />
               <circle cx="200" cy="200" r="140" strokeDasharray="2 6" opacity="0.3" />
-              {/* Icosahedron wireframe approximation */}
               <polygon points="200,40 340,130 340,270 200,360 60,270 60,130" />
               <polygon points="200,40 340,130 200,200 60,130" />
               <polygon points="200,360 340,270 200,200 60,270" />
@@ -162,231 +207,308 @@ export default function Home() {
               <line x1="200" y1="360" x2="200" y2="200" />
               <line x1="60" y1="270" x2="200" y2="200" />
               <line x1="60" y1="130" x2="200" y2="200" />
-              {/* Inner star */}
               <polygon points="200,100 280,160 250,250 150,250 120,160" opacity="0.6" />
             </g>
           </svg>
 
-          {/* 3. Floating wiki-card rectangles with connection lines — upper right */}
-          <svg style={{ position: 'absolute', right: '8%', top: '15%', width: 320, height: 280, opacity: 0.2 }} viewBox="0 0 320 280" fill="none">
-            {/* Card 1 */}
-            <rect x="40" y="20" width="120" height="80" rx="4" stroke="#b91c1c" strokeWidth="1" />
-            <line x1="55" y1="45" x2="145" y2="45" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
-            <line x1="55" y1="60" x2="120" y2="60" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
-            <line x1="55" y1="75" x2="100" y2="75" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
-            {/* Card 2 */}
-            <rect x="160" y="100" width="100" height="70" rx="4" stroke="#b91c1c" strokeWidth="1" />
-            <line x1="175" y1="125" x2="240" y2="125" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
-            <line x1="175" y1="140" x2="220" y2="140" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
-            {/* Card 3 */}
-            <rect x="80" y="170" width="110" height="65" rx="4" stroke="#b91c1c" strokeWidth="1" />
-            <line x1="95" y1="195" x2="170" y2="195" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
-            <line x1="95" y1="210" x2="150" y2="210" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
-            {/* Connection lines between cards */}
-            <line x1="100" y1="100" x2="180" y2="115" stroke="#b91c1c" strokeWidth="0.6" strokeDasharray="4 4" />
-            <line x1="210" y1="170" x2="160" y2="190" stroke="#b91c1c" strokeWidth="0.6" strokeDasharray="4 4" />
-            <line x1="135" y1="235" x2="110" y2="250" stroke="#b91c1c" strokeWidth="0.6" strokeDasharray="4 4" />
-            {/* POI dots at connection points */}
-            <circle cx="100" cy="100" r="3" fill="#b91c1c" />
-            <circle cx="180" cy="115" r="3" fill="#b91c1c" />
-            <circle cx="210" cy="170" r="3" fill="#b91c1c" />
-            <circle cx="160" cy="190" r="3" fill="#b91c1c" />
-            <circle cx="135" cy="235" r="3" fill="#b91c1c" />
+          {/* Floating wiki-card rectangles with connection lines — upper middle-right */}
+          <svg style={{ position: 'absolute', right: '12%', top: '18%', width: 280, height: 240, opacity: 0.15 }} viewBox="0 0 320 280" fill="none">
+            <rect x="40" y="20" width="110" height="70" rx="4" stroke="#b91c1c" strokeWidth="1" />
+            <line x1="55" y1="40" x2="135" y2="40" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            <line x1="55" y1="55" x2="110" y2="55" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            <line x1="55" y1="70" x2="95" y2="70" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            <rect x="170" y="90" width="90" height="60" rx="4" stroke="#b91c1c" strokeWidth="1" />
+            <line x1="185" y1="110" x2="245" y2="110" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            <line x1="185" y1="125" x2="230" y2="125" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            <rect x="90" y="170" width="100" height="55" rx="4" stroke="#b91c1c" strokeWidth="1" />
+            <line x1="105" y1="190" x2="175" y2="190" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            <line x1="105" y1="205" x2="160" y2="205" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            <line x1="95" y1="90" x2="175" y2="110" stroke="#b91c1c" strokeWidth="0.6" strokeDasharray="4 4" />
+            <line x1="210" y1="150" x2="170" y2="180" stroke="#b91c1c" strokeWidth="0.6" strokeDasharray="4 4" />
+            <circle cx="95" cy="90" r="3" fill="#b91c1c" />
+            <circle cx="175" cy="110" r="3" fill="#b91c1c" />
+            <circle cx="210" cy="150" r="3" fill="#b91c1c" />
+            <circle cx="170" cy="180" r="3" fill="#b91c1c" />
           </svg>
 
-          {/* 4. Concentric hexagon rings — left side */}
-          <svg style={{ position: 'absolute', left: '-3%', bottom: '5%', width: '35vw', height: '35vw', opacity: 0.1 }} viewBox="0 0 400 400" fill="none">
+          {/* Concentric hexagon rings — left side */}
+          <svg style={{ position: 'absolute', left: '-3%', bottom: '5%', width: '35vw', height: '35vw', opacity: 0.08 }} viewBox="0 0 400 400" fill="none">
             <g stroke="#b91c1c" strokeWidth="1">
               <polygon points="200,20 370,110 370,290 200,380 30,290 30,110" opacity="0.6" />
               <polygon points="200,60 330,130 330,270 200,340 70,270 70,130" opacity="0.4" />
               <polygon points="200,100 290,150 290,250 200,300 110,250 110,150" opacity="0.3" />
               <polygon points="200,140 250,170 250,230 200,260 150,230 150,170" opacity="0.2" />
-              {/* Radial spokes */}
               <line x1="200" y1="20" x2="200" y2="380" opacity="0.15" />
               <line x1="30" y1="110" x2="370" y2="290" opacity="0.15" />
               <line x1="370" y1="110" x2="30" y2="290" opacity="0.15" />
             </g>
           </svg>
 
-          {/* 5. Angular corner brackets — top-left & bottom-right */}
+          {/* Corner brackets */}
           <svg style={{ position: 'absolute', left: '4vw', top: '3rem', width: 80, height: 80, opacity: 0.25 }} viewBox="0 0 80 80" fill="none" stroke="#b91c1c" strokeWidth="1.5">
             <polyline points="0,30 0,0 30,0" />
           </svg>
           <svg style={{ position: 'absolute', right: '4vw', bottom: '6rem', width: 80, height: 80, opacity: 0.25 }} viewBox="0 0 80 80" fill="none" stroke="#b91c1c" strokeWidth="1.5">
             <polyline points="80,50 80,80 50,80" />
           </svg>
-
-          {/* 6. Horizontal measurement ticks — bottom edge */}
-          <div style={{ position: 'absolute', bottom: '3rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 40, opacity: 0.15 }}>
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} style={{ width: 1, height: i % 4 === 0 ? 20 : 10, background: '#b91c1c' }} />
-            ))}
-          </div>
-
-          {/* 7. Vertical data column — far right edge */}
-          <div style={{ position: 'absolute', right: '2vw', top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 12, opacity: 0.12, alignItems: 'center' }}>
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} style={{ width: i % 3 === 0 ? 24 : 12, height: 2, background: '#b91c1c', borderRadius: 1 }} />
-            ))}
-          </div>
         </div>
 
-        <motion.div style={{ opacity: heroOpacity, y: heroY, position: 'relative', zIndex: 2, maxWidth: 1200 }}>
-          {/* Eyebrow */}
-          <FadeUp delay={0.2}>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              marginBottom: '3rem'
-            }}>
-              <div style={{ width: 40, height: 1, background: 'var(--primary)' }} />
-              <span style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.7rem',
-                color: '#888',
-                letterSpacing: '3px',
-                textTransform: 'uppercase'
+        {/* ── Main two-column content ── */}
+        <motion.div
+          style={{ opacity: heroOpacity, y: heroY, position: 'relative', zIndex: 2, maxWidth: 1300, width: '100%' }}
+        >
+          {/* ── LEFT: Brand content ── */}
+          <div style={{ maxWidth: 620, marginBottom: '4rem' }}>
+            {/* Eyebrow */}
+            <FadeUp delay={0.2}>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.75rem',
+                marginBottom: '2.5rem'
               }}>
-                3D Wiki Knowledge Base
+                <div style={{ width: 40, height: 1, background: 'var(--primary)' }} />
+                <span style={{
+                  fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: '#888',
+                  letterSpacing: '3px', textTransform: 'uppercase'
+                }}>
+                  3D Wiki Knowledge Base
+                </span>
+              </div>
+            </FadeUp>
+
+            {/* Massive headline */}
+            <div style={{ marginBottom: '2.5rem' }}>
+              <RevealText
+                as="h1"
+                delay={0.3}
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 'clamp(2.2rem, 5.5vw, 5rem)',
+                  fontWeight: 800,
+                  lineHeight: 1.05,
+                  letterSpacing: '3px',
+                  color: '#ffffff',
+                  textTransform: 'uppercase'
+                }}
+              >
+                Upload Annotate Wiki
+              </RevealText>
+            </div>
+
+            {/* Description */}
+            <FadeUp delay={0.8}>
+              <p style={{
+                fontSize: 'clamp(1rem, 1.5vw, 1.25rem)',
+                color: '#999',
+                maxWidth: 500,
+                lineHeight: 1.7,
+                marginBottom: '2.5rem',
+                fontWeight: 300
+              }}>
+                Turn 3D models into interactive knowledge bases.
+                Drop points of interest, write wiki pages, and link spatial data.
+              </p>
+            </FadeUp>
+
+            {/* CTAs */}
+            <FadeUp delay={1.0}>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <Link to="/search" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.6rem',
+                  padding: '1rem 2rem', background: 'var(--primary)', color: '#fff',
+                  fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '2px',
+                  textTransform: 'uppercase', textDecoration: 'none', fontWeight: 600
+                }}>
+                  Explore Models
+                  <ArrowRight size={14} />
+                </Link>
+                <Link to="/upload" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.6rem',
+                  padding: '1rem 2rem', background: 'transparent', color: '#fff',
+                  fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '2px',
+                  textTransform: 'uppercase', textDecoration: 'none', fontWeight: 600,
+                  border: '1px solid rgba(255,255,255,0.2)'
+                }}>
+                  Upload Model
+                </Link>
+              </div>
+            </FadeUp>
+          </div>
+
+          {/* ── RIGHT: Product showcase box ── */}
+          <motion.div
+            initial={{ opacity: 0, x: 60 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.9, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            viewport={{ once: true }}
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 'clamp(320px, 38vw, 520px)',
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 'var(--radius-md)',
+              padding: '2.5rem',
+              backdropFilter: 'blur(4px)'
+            }}
+          >
+            {/* Box label */}
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+              marginBottom: '2rem'
+            }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)', boxShadow: '0 0 8px rgba(185,28,28,0.6)' }} />
+              <span style={{
+                fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: '#666',
+                letterSpacing: '2px', textTransform: 'uppercase'
+              }}>
+                Supported Formats
               </span>
             </div>
-          </FadeUp>
 
-          {/* Massive headline */}
-          <div style={{ marginBottom: '2.5rem' }}>
-            <RevealText
-              as="h1"
-              delay={0.3}
-              className=""
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(2.5rem, 7vw, 6.5rem)',
-                fontWeight: 800,
-                lineHeight: 1.05,
-                letterSpacing: '3px',
-                color: '#ffffff',
-                textTransform: 'uppercase'
-              }}
-            >
-              Upload Annotate Wiki
-            </RevealText>
-          </div>
-
-          {/* Description */}
-          <FadeUp delay={0.8}>
-            <p style={{
-              fontSize: 'clamp(1rem, 1.5vw, 1.3rem)',
-              color: '#999',
-              maxWidth: 520,
-              lineHeight: 1.7,
-              marginBottom: '3rem',
-              fontWeight: 300
+            {/* Brand mark */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem',
+              marginBottom: '2rem'
             }}>
-              Turn 3D models into interactive knowledge bases.
-              Drop points of interest, write wiki pages, and link spatial data.
-            </p>
-          </FadeUp>
-
-          {/* CTAs */}
-          <FadeUp delay={1.0}>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <Link to="/search" style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                padding: '1rem 2rem',
-                background: 'var(--primary)',
-                color: '#fff',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.75rem',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                textDecoration: 'none',
-                fontWeight: 600,
-                border: 'none',
-                transition: 'all 0.2s'
+              <div style={{
+                width: 80, height: 80, borderRadius: '50%',
+                border: '2px solid rgba(185,28,28,0.35)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                position: 'relative'
               }}>
-                Explore Models
-                <ArrowRight size={14} />
-              </Link>
-              <Link to="/upload" style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                padding: '1rem 2rem',
-                background: 'transparent',
-                color: '#fff',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.75rem',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                textDecoration: 'none',
-                fontWeight: 600,
-                border: '1px solid rgba(255,255,255,0.2)',
-                transition: 'all 0.2s'
-              }}>
-                Upload Model
-              </Link>
+                <div style={{
+                  position: 'absolute', inset: 8, borderRadius: '50%',
+                  border: '1px solid rgba(185,28,28,0.15)'
+                }} />
+                <Hexagon size={36} color="var(--primary)" strokeWidth={1.5} />
+              </div>
+              <div>
+                <div style={{
+                  fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 800,
+                  color: '#fff', letterSpacing: '4px', textTransform: 'uppercase',
+                  lineHeight: 1.1
+                }}>
+                  3D FILER
+                </div>
+                <div style={{
+                  fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: '#666',
+                  letterSpacing: '2px', textTransform: 'uppercase', marginTop: 4
+                }}>
+                  Wiki + POI + Viewer
+                </div>
+              </div>
             </div>
-          </FadeUp>
-        </motion.div>
 
-        {/* Scroll cue */}
-        <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
-          style={{
-            position: 'absolute',
-            bottom: '2.5rem',
-            left: '4vw',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            color: '#555',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.65rem',
-            letterSpacing: '2px',
-            textTransform: 'uppercase',
-            zIndex: 2
-          }}
-        >
-          <ArrowDown size={14} />
-          Scroll
-        </motion.div>
+            {/* Format row */}
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              marginBottom: '1.5rem', paddingBottom: '1.5rem',
+              borderBottom: '1px solid rgba(255,255,255,0.06)'
+            }}>
+              {['GLB', 'GLTF', 'OBJ', 'FBX', 'STL'].map((fmt, i) => (
+                <span key={fmt} style={{
+                  fontFamily: 'var(--font-mono)', fontSize: '0.75rem',
+                  color: i === 0 ? 'var(--primary)' : '#888',
+                  fontWeight: i === 0 ? 700 : 400,
+                  letterSpacing: '1px'
+                }}>
+                  {fmt}
+                </span>
+              ))}
+            </div>
 
-        {/* Large decorative number */}
-        <div style={{
-          position: 'absolute',
-          bottom: '1rem',
-          right: '4vw',
-          fontFamily: 'var(--font-display)',
-          fontSize: 'clamp(8rem, 20vw, 16rem)',
-          fontWeight: 900,
-          color: 'rgba(255,255,255,0.02)',
-          lineHeight: 1,
-          pointerEvents: 'none',
-          zIndex: 1
-        }}>
-          3D
-        </div>
+            {/* Stats row */}
+            <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+              {[
+                { n: '5+', l: 'Model Formats' },
+                { n: '∞', l: 'Wiki Pages' },
+                { n: '3D', l: 'Spatial POIs' }
+              ].map((s) => (
+                <div key={s.l} style={{ textAlign: 'center' }}>
+                  <div style={{
+                    fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 800,
+                    color: '#fff', letterSpacing: '1px'
+                  }}>
+                    {s.n}
+                  </div>
+                  <div style={{
+                    fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#666',
+                    letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: 4
+                  }}>
+                    {s.l}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* ── BOTTOM: Rotating badge & stats strip ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 1.2 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '3rem',
+              flexWrap: 'wrap',
+              marginTop: '3rem'
+            }}
+          >
+            {/* Spinning badge */}
+            <div style={{
+              width: 100, height: 100, borderRadius: '50%',
+              border: '1px solid rgba(185,28,28,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              position: 'relative', flexShrink: 0
+            }}>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                style={{ position: 'absolute', inset: -6 }}
+              >
+                <svg viewBox="0 0 120 120" width={112} height={112}>
+                  <defs>
+                    <path id="circlePath" d="M 60,60 m -50,0 a 50,50 0 1,1 100,0 a 50,50 0 1,1 -100,0" />
+                  </defs>
+                  <text fill="rgba(185,28,28,0.5)" fontSize="9" fontFamily="var(--font-mono)" letterSpacing="4" textTransform="uppercase">
+                    <textPath xlinkHref="#circlePath">
+                      3D WIKI KNOWLEDGE BASE • SPATIAL ANNOTATION •
+                    </textPath>
+                  </text>
+                </svg>
+              </motion.div>
+              <Hexagon size={28} color="var(--primary)" strokeWidth={1.5} />
+            </div>
+
+            {/* Stats */}
+            <AnimatedStat value="5+" label="3D Formats" delay={1.3} />
+            <AnimatedStat value="∞" label="Wiki Pages" delay={1.4} />
+            <AnimatedStat value="3D" label="POI System" delay={1.5} />
+
+            {/* Arrow down */}
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ repeat: Infinity, duration: 2.5 }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem', color: '#555', marginLeft: 'auto' }}
+            >
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', letterSpacing: '2px', textTransform: 'uppercase' }}>Scroll</span>
+              <ArrowDown size={14} />
+            </motion.div>
+          </motion.div>
+        </motion.div>
       </div>
 
       <Cutaway color="#ffffff" />
 
-      {/* ═══════════════════════════════════════════
-          WHAT IS 3D FILER — White editorial section
-          ═══════════════════════════════════════════ */}
+      {/* ═══════ WHAT IS 3D FILER ═══════ */}
       <section style={{ padding: '8rem 4vw', background: '#ffffff', position: 'relative', overflow: 'hidden' }}>
         <FadeUp>
           <span style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.7rem',
-            color: 'var(--primary)',
-            letterSpacing: '3px',
-            textTransform: 'uppercase',
-            display: 'block',
-            marginBottom: '2rem'
+            fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--primary)',
+            letterSpacing: '3px', textTransform: 'uppercase', display: 'block', marginBottom: '2rem'
           }}>
             // What is 3D Filer
           </span>
@@ -426,7 +548,7 @@ export default function Home() {
               },
               {
                 title: 'Linked Knowledge',
-                body: 'Every POI connects to wiki articles with markdown support, auto-generated tables of contents, and bidirectional backlink tracking.'
+                body: 'Every POI connects to wiki articles with markdown support, auto-generated TOCs, and bidirectional backlink tracking.'
               },
               {
                 title: 'Nested Navigation',
@@ -436,21 +558,13 @@ export default function Home() {
               <FadeUp key={item.title} delay={0.2 + i * 0.15}>
                 <div>
                   <div style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    color: 'var(--primary)',
-                    letterSpacing: '2px',
-                    textTransform: 'uppercase',
+                    fontFamily: 'var(--font-display)', fontSize: '0.8rem', fontWeight: 700,
+                    color: 'var(--primary)', letterSpacing: '2px', textTransform: 'uppercase',
                     marginBottom: '1rem'
                   }}>
                     {item.title}
                   </div>
-                  <p style={{
-                    fontSize: '0.95rem',
-                    color: '#555',
-                    lineHeight: 1.7
-                  }}>
+                  <p style={{ fontSize: '0.95rem', color: '#555', lineHeight: 1.7 }}>
                     {item.body}
                   </p>
                 </div>
@@ -462,19 +576,12 @@ export default function Home() {
 
       <Cutaway color="#111111" />
 
-      {/* ═══════════════════════════════════════════
-          HOW IT WORKS — Dark, numbered steps
-          ═══════════════════════════════════════════ */}
+      {/* ═══════ HOW IT WORKS ═══════ */}
       <section style={{ padding: '8rem 4vw', background: '#111111', position: 'relative' }}>
         <FadeUp>
           <span style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.7rem',
-            color: 'var(--primary)',
-            letterSpacing: '3px',
-            textTransform: 'uppercase',
-            display: 'block',
-            marginBottom: '4rem'
+            fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--primary)',
+            letterSpacing: '3px', textTransform: 'uppercase', display: 'block', marginBottom: '4rem'
           }}>
             // Workflow
           </span>
@@ -548,20 +655,13 @@ export default function Home() {
 
       <Cutaway color="#ffffff" />
 
-      {/* ═══════════════════════════════════════════
-          FEATURES — White grid
-          ═══════════════════════════════════════════ */}
+      {/* ═══════ FEATURES ═══════ */}
       <section style={{ padding: '8rem 4vw', background: '#ffffff' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <FadeUp>
             <span style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.7rem',
-              color: 'var(--primary)',
-              letterSpacing: '3px',
-              textTransform: 'uppercase',
-              display: 'block',
-              marginBottom: '1.5rem'
+              fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--primary)',
+              letterSpacing: '3px', textTransform: 'uppercase', display: 'block', marginBottom: '1.5rem'
             }}>
               // Capabilities
             </span>
@@ -600,9 +700,7 @@ export default function Home() {
 
       <Cutaway color="#111111" />
 
-      {/* ═══════════════════════════════════════════
-          CTA — Dark band
-          ═══════════════════════════════════════════ */}
+      {/* ═══════ CTA ═══════ */}
       <section style={{ padding: '8rem 4vw', background: '#111111', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{
           position: 'absolute',
@@ -670,9 +768,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════
-          FOOTER — Minimal
-          ═══════════════════════════════════════════ */}
+      {/* ═══════ FOOTER ═══════ */}
       <footer style={{
         padding: '2.5rem 4vw',
         background: '#0a0a0a',
