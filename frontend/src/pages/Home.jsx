@@ -136,14 +136,100 @@ export default function Home() {
         padding: '0 4vw',
         overflow: 'hidden'
       }}>
-        {/* Subtle grid overlay */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: 'linear-gradient(rgba(185,28,28,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(185,28,28,0.03) 1px, transparent 1px)',
-          backgroundSize: '80px 80px',
-          pointerEvents: 'none'
-        }} />
+        {/* ── Background geometric graphics ── */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1 }}>
+          {/* 1. Dot grid */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: 'radial-gradient(circle, rgba(185,28,28,0.12) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+            opacity: 0.4
+          }} />
+
+          {/* 2. Large wireframe icosahedron — right side */}
+          <svg style={{ position: 'absolute', right: '-5%', top: '10%', width: '45vw', height: '45vw', opacity: 0.15 }} viewBox="0 0 400 400" fill="none">
+            <g stroke="#b91c1c" strokeWidth="0.8">
+              {/* Outer ring */}
+              <circle cx="200" cy="200" r="180" strokeDasharray="4 8" opacity="0.5" />
+              <circle cx="200" cy="200" r="140" strokeDasharray="2 6" opacity="0.3" />
+              {/* Icosahedron wireframe approximation */}
+              <polygon points="200,40 340,130 340,270 200,360 60,270 60,130" />
+              <polygon points="200,40 340,130 200,200 60,130" />
+              <polygon points="200,360 340,270 200,200 60,270" />
+              <line x1="200" y1="40" x2="200" y2="200" />
+              <line x1="340" y1="130" x2="200" y2="200" />
+              <line x1="340" y1="270" x2="200" y2="200" />
+              <line x1="200" y1="360" x2="200" y2="200" />
+              <line x1="60" y1="270" x2="200" y2="200" />
+              <line x1="60" y1="130" x2="200" y2="200" />
+              {/* Inner star */}
+              <polygon points="200,100 280,160 250,250 150,250 120,160" opacity="0.6" />
+            </g>
+          </svg>
+
+          {/* 3. Floating wiki-card rectangles with connection lines — upper right */}
+          <svg style={{ position: 'absolute', right: '8%', top: '15%', width: 320, height: 280, opacity: 0.2 }} viewBox="0 0 320 280" fill="none">
+            {/* Card 1 */}
+            <rect x="40" y="20" width="120" height="80" rx="4" stroke="#b91c1c" strokeWidth="1" />
+            <line x1="55" y1="45" x2="145" y2="45" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            <line x1="55" y1="60" x2="120" y2="60" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            <line x1="55" y1="75" x2="100" y2="75" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            {/* Card 2 */}
+            <rect x="160" y="100" width="100" height="70" rx="4" stroke="#b91c1c" strokeWidth="1" />
+            <line x1="175" y1="125" x2="240" y2="125" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            <line x1="175" y1="140" x2="220" y2="140" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            {/* Card 3 */}
+            <rect x="80" y="170" width="110" height="65" rx="4" stroke="#b91c1c" strokeWidth="1" />
+            <line x1="95" y1="195" x2="170" y2="195" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            <line x1="95" y1="210" x2="150" y2="210" stroke="#b91c1c" strokeWidth="0.5" opacity="0.5" />
+            {/* Connection lines between cards */}
+            <line x1="100" y1="100" x2="180" y2="115" stroke="#b91c1c" strokeWidth="0.6" strokeDasharray="4 4" />
+            <line x1="210" y1="170" x2="160" y2="190" stroke="#b91c1c" strokeWidth="0.6" strokeDasharray="4 4" />
+            <line x1="135" y1="235" x2="110" y2="250" stroke="#b91c1c" strokeWidth="0.6" strokeDasharray="4 4" />
+            {/* POI dots at connection points */}
+            <circle cx="100" cy="100" r="3" fill="#b91c1c" />
+            <circle cx="180" cy="115" r="3" fill="#b91c1c" />
+            <circle cx="210" cy="170" r="3" fill="#b91c1c" />
+            <circle cx="160" cy="190" r="3" fill="#b91c1c" />
+            <circle cx="135" cy="235" r="3" fill="#b91c1c" />
+          </svg>
+
+          {/* 4. Concentric hexagon rings — left side */}
+          <svg style={{ position: 'absolute', left: '-3%', bottom: '5%', width: '35vw', height: '35vw', opacity: 0.1 }} viewBox="0 0 400 400" fill="none">
+            <g stroke="#b91c1c" strokeWidth="1">
+              <polygon points="200,20 370,110 370,290 200,380 30,290 30,110" opacity="0.6" />
+              <polygon points="200,60 330,130 330,270 200,340 70,270 70,130" opacity="0.4" />
+              <polygon points="200,100 290,150 290,250 200,300 110,250 110,150" opacity="0.3" />
+              <polygon points="200,140 250,170 250,230 200,260 150,230 150,170" opacity="0.2" />
+              {/* Radial spokes */}
+              <line x1="200" y1="20" x2="200" y2="380" opacity="0.15" />
+              <line x1="30" y1="110" x2="370" y2="290" opacity="0.15" />
+              <line x1="370" y1="110" x2="30" y2="290" opacity="0.15" />
+            </g>
+          </svg>
+
+          {/* 5. Angular corner brackets — top-left & bottom-right */}
+          <svg style={{ position: 'absolute', left: '4vw', top: '3rem', width: 80, height: 80, opacity: 0.25 }} viewBox="0 0 80 80" fill="none" stroke="#b91c1c" strokeWidth="1.5">
+            <polyline points="0,30 0,0 30,0" />
+          </svg>
+          <svg style={{ position: 'absolute', right: '4vw', bottom: '6rem', width: 80, height: 80, opacity: 0.25 }} viewBox="0 0 80 80" fill="none" stroke="#b91c1c" strokeWidth="1.5">
+            <polyline points="80,50 80,80 50,80" />
+          </svg>
+
+          {/* 6. Horizontal measurement ticks — bottom edge */}
+          <div style={{ position: 'absolute', bottom: '3rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 40, opacity: 0.15 }}>
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} style={{ width: 1, height: i % 4 === 0 ? 20 : 10, background: '#b91c1c' }} />
+            ))}
+          </div>
+
+          {/* 7. Vertical data column — far right edge */}
+          <div style={{ position: 'absolute', right: '2vw', top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 12, opacity: 0.12, alignItems: 'center' }}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} style={{ width: i % 3 === 0 ? 24 : 12, height: 2, background: '#b91c1c', borderRadius: 1 }} />
+            ))}
+          </div>
+        </div>
 
         <motion.div style={{ opacity: heroOpacity, y: heroY, position: 'relative', zIndex: 2, maxWidth: 1200 }}>
           {/* Eyebrow */}
