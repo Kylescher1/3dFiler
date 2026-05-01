@@ -849,9 +849,9 @@ function ModelViewer() {
             )}
             {addingPoi && (
               <PoiForm
-                title=""
-                content=""
-                type="text"
+                title={poiForm.title}
+                content={poiForm.content}
+                type={poiForm.type}
                 onTitleChange={(v) => setPoiForm(p => ({ ...p, title: v }))}
                 onContentChange={(v) => setPoiForm(p => ({ ...p, content: v }))}
                 onTypeChange={(v) => setPoiForm(p => ({ ...p, type: v }))}
