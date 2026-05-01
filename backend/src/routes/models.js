@@ -217,6 +217,17 @@ router.post('/', requireAuth, upload.single('model'), async (req, res, next) => 
     const title = String(req.body.title || req.file.originalname).trim().slice(0, 120);
     const description = String(req.body.description || '').trim().slice(0, 4000);
 
+    let viewerSettings = '{}';
+    try {
+      const raw = req.body.viewerSettings;
+      if (raw) {
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        viewerSettings = JSON.stringify(parsed);
+      }
+    } catch {
+      viewerSettings = '{}';
+    }
+
     const model = await prisma.model.create({
       data: {
         userId: req.user.userId,
@@ -226,6 +237,7 @@ router.post('/', requireAuth, upload.single('model'), async (req, res, next) => 
         size: req.file.size,
         title,
         description,
+        viewerSettings,
         tags: buildTagConnect(tagNames)
       },
       include: { tags: true, pois: true }
@@ -467,6 +479,15 @@ router.patch('/:id', requireAuth, async (req, res) => {
     ...(description !== undefined && { description: String(description).trim().slice(0, 4000) }),
     ...(wikiContent !== undefined && { wikiContent: String(wikiContent).slice(0, 100000) }),
   };
+
+  if (req.body.viewerSettings !== undefined) {
+    try {
+      const parsed = typeof req.body.viewerSettings === 'string' ? JSON.parse(req.body.viewerSettings) : req.body.viewerSettings;
+      updateData.viewerSettings = JSON.stringify(parsed);
+    } catch {
+      updateData.viewerSettings = '{}';
+    }
+  }
 
   if (req.body.tags !== undefined) updateData.tags = { set: [] };
 

@@ -34,6 +34,7 @@ model Model {
   nestedIn     POI[]   @relation("NestedModel")
   tags         Tag[]
   wikiContent  String   @default("")
+  viewerSettings String?  @default("{}")
 
   @@index([userId])
   @@index([published])

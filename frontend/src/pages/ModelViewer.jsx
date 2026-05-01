@@ -113,15 +113,40 @@ function CameraFocus({ controlsRef, targetRef, trigger, onDone }) {
   return null
 }
 
-function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAddPoi, modelRef, showGrid, wireframe, autoRotate, controlsRef, focusTrigger, onFocusDone, onModelReady }) {
+function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAddPoi, modelRef, showGrid, wireframe, autoRotate, controlsRef, focusTrigger, onFocusDone, onModelReady, showAxes, lightingPreset }) {
+  const lights = {
+    neutral: (
+      <>
+        <ambientLight intensity={0.5} />
+        <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
+        <pointLight position={[-5, 5, -5]} intensity={0.4} />
+        <pointLight position={[0, -5, 0]} intensity={0.2} />
+      </>
+    ),
+    studio: (
+      <>
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[3, 8, 3]} intensity={1.2} castShadow />
+        <directionalLight position={[-3, 4, -3]} intensity={0.4} />
+        <pointLight position={[0, 2, 0]} intensity={0.3} />
+      </>
+    ),
+    dramatic: (
+      <>
+        <ambientLight intensity={0.2} />
+        <directionalLight position={[5, 10, 2]} intensity={1.5} castShadow />
+        <pointLight position={[-4, 2, -4]} intensity={0.3} color="#ffaa77" />
+        <pointLight position={[0, -3, 0]} intensity={0.15} color="#7799ff" />
+      </>
+    )
+  }
+
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
-      <pointLight position={[-5, 5, -5]} intensity={0.4} />
-      <pointLight position={[0, -5, 0]} intensity={0.2} />
+      {lights[lightingPreset] || lights.neutral}
       <OrbitControls ref={controlsRef} makeDefault enableDamping dampingFactor={0.08} autoRotate={autoRotate} autoRotateSpeed={1.2} minDistance={0.5} maxDistance={50} />
       {showGrid && <Grid args={[20, 20]} position={[0, -0.01, 0]} />}
+      {showAxes && <axesHelper args={[2]} />}
       <ClickPlane onClick={onAddPoi} modelRef={modelRef} />
       <group>
         {modelUrl ? (
@@ -222,7 +247,9 @@ function ModelViewer() {
   const [showGrid, setShowGrid] = useState(true)
   const [wireframe, setWireframe] = useState(false)
   const [autoRotate, setAutoRotate] = useState(false)
-  const [bgDark, setBgDark] = useState(true)
+  const [bgColor, setBgColor] = useState('#111111')
+  const [showAxes, setShowAxes] = useState(false)
+  const [lightingPreset, setLightingPreset] = useState('neutral')
   const [focusTrigger, setFocusTrigger] = useState(0)
   const initialFocusPendingRef = useRef(true)
   const [showPoiList, setShowPoiList] = useState(true)
@@ -260,6 +287,14 @@ function ModelViewer() {
         })())
         setPois((data.pois || []).map(normalizePoi))
         setBacklinks(data.backlinks || [])
+        // Apply stored viewer settings
+        let vs = {}
+        try { vs = JSON.parse(data.viewerSettings || '{}') } catch { vs = {} }
+        if (typeof vs.showGrid === 'boolean') setShowGrid(vs.showGrid)
+        if (typeof vs.autoRotate === 'boolean') setAutoRotate(vs.autoRotate)
+        if (typeof vs.showAxes === 'boolean') setShowAxes(vs.showAxes)
+        if (vs.backgroundColor) setBgColor(vs.backgroundColor)
+        if (vs.lightingPreset) setLightingPreset(vs.lightingPreset)
         // Breadcrumbs: append current model to trail, avoiding loops
         const trail = JSON.parse(sessionStorage.getItem('modelBreadcrumbs') || '[]')
         const existingIdx = trail.findIndex(b => b.id === data.id)
@@ -322,7 +357,7 @@ function ModelViewer() {
           handleScreenshot()
           break
         case 'b':
-          setBgDark((v) => !v)
+          setBgColor((c) => c === '#111111' ? '#e8e8e8' : '#111111')
           break
         case 'h':
           setShowHelp((v) => !v)
@@ -482,7 +517,7 @@ function ModelViewer() {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: bgDark ? 'var(--bg-primary)' : '#e8e8e8', zIndex: 100 }}>
+    <div style={{ position: 'fixed', inset: 0, background: bgColor, zIndex: 100 }}>
       {/* Screenshot flash */}
       {flash && (
         <div style={{ position: 'fixed', inset: 0, background: 'white', opacity: 0.3, pointerEvents: 'none', zIndex: 9999, animation: 'flashOut 0.3s ease forwards' }} />
@@ -491,8 +526,8 @@ function ModelViewer() {
       {/* Full viewport canvas */}
       <div ref={canvasContainerRef} style={{ position: 'absolute', inset: 0 }}>
         <Canvas camera={{ position: [4, 4, 4], fov: 50 }} style={{ width: '100%', height: '100%' }} gl={{ preserveDrawingBuffer: true }}>
-          <color attach="background" args={[bgDark ? 'var(--bg-primary)' : '#e8e8e8']} />
-          <SceneContent modelUrl={modelUrl} extension={extension} pois={pois} selectedPoi={selectedPoi} onPoiClick={handlePoiClick} onAddPoi={handleAddPoi} modelRef={modelRef} showGrid={showGrid} wireframe={wireframe} autoRotate={autoRotate} controlsRef={controlsRef} focusTrigger={focusTrigger} onFocusDone={handleFocusDone} onModelReady={handleModelReady} />
+          <color attach="background" args={[bgColor]} />
+          <SceneContent modelUrl={modelUrl} extension={extension} pois={pois} selectedPoi={selectedPoi} onPoiClick={handlePoiClick} onAddPoi={handleAddPoi} modelRef={modelRef} showGrid={showGrid} wireframe={wireframe} autoRotate={autoRotate} controlsRef={controlsRef} focusTrigger={focusTrigger} onFocusDone={handleFocusDone} onModelReady={handleModelReady} showAxes={showAxes} lightingPreset={lightingPreset} />
         </Canvas>
       </div>
 
@@ -516,7 +551,7 @@ function ModelViewer() {
               { icon: controlIcons.grid, onClick: () => setShowGrid(!showGrid), active: showGrid, title: 'Grid' },
               { icon: controlIcons.wireframe, onClick: () => setWireframe(!wireframe), active: wireframe, title: 'Wireframe' },
               { icon: controlIcons.rotate, onClick: () => setAutoRotate(!autoRotate), active: autoRotate, title: 'Auto-Rotate' },
-              { icon: controlIcons.bg, onClick: () => setBgDark(!bgDark), active: bgDark, title: 'Background' },
+              { icon: controlIcons.bg, onClick: () => setBgColor(bgColor === '#111111' ? '#e8e8e8' : '#111111'), active: bgColor === '#111111', title: 'Background' },
             ].map((c, i) => (
               <button key={i} onClick={c.onClick} title={c.title} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.active ? '#fee2e2' : 'transparent', border: 'none', borderRadius: '6px', color: c.active ? 'var(--primary)' : '#888888', cursor: 'pointer' }} onMouseEnter={e => { if (!c.active) e.currentTarget.style.background = 'rgba(0,0,0,0.06)' }} onMouseLeave={e => { if (!c.active) e.currentTarget.style.background = 'transparent' }}>{c.icon}</button>
             ))}
