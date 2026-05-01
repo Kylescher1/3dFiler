@@ -1,30 +1,121 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import {
   Link as LinkIcon, Box, MapPin, FileText, Globe, Cpu, Layers, Share2, Zap, Upload,
-  Hexagon, ChevronDown
+  Hexagon, ArrowDown, ArrowRight
 } from 'lucide-react'
 
-function FeatureCard({ icon: Icon, title, desc }) {
+// ── Staggered Word Reveal ──
+function RevealText({ children, className = '', delay = 0, as: Tag = 'div' }) {
+  const words = children.split(' ')
   return (
-    <div className="card-modern" style={{ padding: '1.75rem', textAlign: 'left', borderLeft: '3px solid var(--primary)' }}>
-      <div style={{
-        width: 44, height: 44, borderRadius: 'var(--radius-sm)',
-        background: 'rgba(185, 28, 28, 0.08)', border: '1px solid var(--border-accent)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem'
-      }}>
-        <Icon size={22} color="var(--primary)" strokeWidth={2} />
-      </div>
-      <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-        {title}
-      </h3>
-      <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.65 }}>{desc}</p>
+    <Tag className={className}>
+      {words.map((word, i) => (
+        <span key={i} style={{ display: 'inline-block', overflow: 'hidden', marginRight: '0.3em' }}>
+          <motion.span
+            initial={{ y: '100%' }}
+            whileInView={{ y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.5, delay: delay + i * 0.06, ease: [0.22, 1, 0.36, 1] }}
+            style={{ display: 'inline-block' }}
+          >
+            {word}
+          </motion.span>
+        </span>
+      ))}
+    </Tag>
+  )
+}
+
+function FadeUp({ children, delay = 0, className = '' }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+function LineReveal({ delay = 0 }) {
+  return (
+    <motion.div
+      initial={{ scaleX: 0 }}
+      whileInView={{ scaleX: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
+      style={{ height: 1, background: 'var(--primary)', transformOrigin: 'left' }}
+    />
+  )
+}
+
+// ── Section Divider (Cutaway) ──
+function Cutaway({ color = '#ffffff' }) {
+  return (
+    <div style={{ height: 0, position: 'relative', zIndex: 5 }}>
+      <svg viewBox="0 0 1440 60" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 60, marginTop: -1 }}>
+        <polygon fill={color} points="0,60 1440,60 1440,0 0,60" />
+      </svg>
     </div>
   )
 }
 
-function Home() {
+function FeatureCard({ icon: Icon, title, desc, index }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 60 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.6, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -6 }}
+      style={{
+        padding: '2.5rem',
+        border: '1px solid var(--border-subtle)',
+        background: 'var(--bg-card)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+    >
+      <motion.div
+        initial={{ scaleX: 0 }}
+        whileInView={{ scaleX: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: index * 0.1 + 0.3 }}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'var(--primary)', transformOrigin: 'left' }}
+      />
+      <Icon size={28} color="var(--primary)" strokeWidth={1.5} style={{ marginBottom: '1.5rem' }} />
+      <h3 style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: '1.1rem',
+        fontWeight: 700,
+        letterSpacing: '1px',
+        textTransform: 'uppercase',
+        color: 'var(--text-primary)',
+        marginBottom: '0.75rem'
+      }}>
+        {title}
+      </h3>
+      <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.65 }}>
+        {desc}
+      </p>
+    </motion.div>
+  )
+}
+
+export default function Home() {
   const [recent, setRecent] = useState([])
+  const heroRef = useRef(null)
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ['start start', 'end start']
+  })
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0])
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 150])
 
   useEffect(() => {
     setRecent(JSON.parse(localStorage.getItem('recentModels') || '[]'))
@@ -32,280 +123,503 @@ function Home() {
 
   return (
     <div>
-      {/* ── HERO ── */}
-      <div style={{
+      {/* ═══════════════════════════════════════════
+          HERO — Dark, editorial, massive type
+          ═══════════════════════════════════════════ */}
+      <div ref={heroRef} style={{
         position: 'relative',
-        minHeight: '92vh',
+        minHeight: '100vh',
+        background: '#111111',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
-        padding: '2rem',
-        background: '#ffffff',
+        padding: '0 4vw',
         overflow: 'hidden'
       }}>
-        {/* Decorative top bar */}
+        {/* Subtle grid overlay */}
         <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 4,
-          background: 'linear-gradient(90deg, transparent, var(--primary), transparent)'
-        }} />
-
-        {/* Subtle background pattern */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'radial-gradient(circle at 20% 30%, rgba(185,28,28,0.04) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(185,28,28,0.03) 0%, transparent 50%)',
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: 'linear-gradient(rgba(185,28,28,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(185,28,28,0.03) 1px, transparent 1px)',
+          backgroundSize: '80px 80px',
           pointerEvents: 'none'
         }} />
 
-        {/* Brand badge */}
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '0.6rem',
-          padding: '0.45rem 1.2rem', borderRadius: '999px',
-          border: '1.5px solid var(--border-accent)',
-          background: 'rgba(185, 28, 28, 0.04)',
-          marginBottom: '2rem'
-        }}>
-          <Hexagon size={16} color="var(--primary)" strokeWidth={2.5} />
-          <span style={{
-            fontFamily: 'var(--font-display)', fontSize: '0.8rem', fontWeight: 700,
-            color: 'var(--primary)', letterSpacing: '3px', textTransform: 'uppercase'
-          }}>
-            3D Filer
-          </span>
-          <span style={{ width: 1, height: 14, background: 'var(--border-accent)' }} />
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--text-muted)',
-            letterSpacing: '1px', textTransform: 'uppercase'
-          }}>
-            Knowledge Base Platform
-          </span>
-        </div>
+        <motion.div style={{ opacity: heroOpacity, y: heroY, position: 'relative', zIndex: 2, maxWidth: 1200 }}>
+          {/* Eyebrow */}
+          <FadeUp delay={0.2}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              marginBottom: '3rem'
+            }}>
+              <div style={{ width: 40, height: 1, background: 'var(--primary)' }} />
+              <span style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.7rem',
+                color: '#888',
+                letterSpacing: '3px',
+                textTransform: 'uppercase'
+              }}>
+                3D Wiki Knowledge Base
+              </span>
+            </div>
+          </FadeUp>
 
-        {/* Main headline */}
-        <h1 style={{
+          {/* Massive headline */}
+          <div style={{ marginBottom: '2.5rem' }}>
+            <RevealText
+              as="h1"
+              delay={0.3}
+              className=""
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 'clamp(2.5rem, 7vw, 6.5rem)',
+                fontWeight: 800,
+                lineHeight: 1.05,
+                letterSpacing: '3px',
+                color: '#ffffff',
+                textTransform: 'uppercase'
+              }}
+            >
+              Upload Annotate Wiki
+            </RevealText>
+          </div>
+
+          {/* Description */}
+          <FadeUp delay={0.8}>
+            <p style={{
+              fontSize: 'clamp(1rem, 1.5vw, 1.3rem)',
+              color: '#999',
+              maxWidth: 520,
+              lineHeight: 1.7,
+              marginBottom: '3rem',
+              fontWeight: 300
+            }}>
+              Turn 3D models into interactive knowledge bases.
+              Drop points of interest, write wiki pages, and link spatial data.
+            </p>
+          </FadeUp>
+
+          {/* CTAs */}
+          <FadeUp delay={1.0}>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <Link to="/search" style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                padding: '1rem 2rem',
+                background: 'var(--primary)',
+                color: '#fff',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.75rem',
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                fontWeight: 600,
+                border: 'none',
+                transition: 'all 0.2s'
+              }}>
+                Explore Models
+                <ArrowRight size={14} />
+              </Link>
+              <Link to="/upload" style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                padding: '1rem 2rem',
+                background: 'transparent',
+                color: '#fff',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.75rem',
+                letterSpacing: '2px',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                fontWeight: 600,
+                border: '1px solid rgba(255,255,255,0.2)',
+                transition: 'all 0.2s'
+              }}>
+                Upload Model
+              </Link>
+            </div>
+          </FadeUp>
+        </motion.div>
+
+        {/* Scroll cue */}
+        <motion.div
+          animate={{ y: [0, 10, 0] }}
+          transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
+          style={{
+            position: 'absolute',
+            bottom: '2.5rem',
+            left: '4vw',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            color: '#555',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.65rem',
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
+            zIndex: 2
+          }}
+        >
+          <ArrowDown size={14} />
+          Scroll
+        </motion.div>
+
+        {/* Large decorative number */}
+        <div style={{
+          position: 'absolute',
+          bottom: '1rem',
+          right: '4vw',
           fontFamily: 'var(--font-display)',
-          fontSize: 'clamp(2.8rem, 7vw, 5.5rem)',
-          fontWeight: 800,
-          lineHeight: 1.05,
-          letterSpacing: '2px',
-          color: 'var(--text-primary)',
-          marginBottom: '1.25rem',
-          maxWidth: '900px'
+          fontSize: 'clamp(8rem, 20vw, 16rem)',
+          fontWeight: 900,
+          color: 'rgba(255,255,255,0.02)',
+          lineHeight: 1,
+          pointerEvents: 'none',
+          zIndex: 1
         }}>
-          ANNOTATE YOUR
-          <br />
-          <span style={{ color: 'var(--primary)' }}>3D REALITY</span>
-        </h1>
-
-        {/* Subheadline */}
-        <p style={{
-          fontSize: 'clamp(1rem, 1.4vw, 1.25rem)',
-          color: 'var(--text-secondary)',
-          maxWidth: '580px',
-          margin: '0 auto 2.5rem',
-          lineHeight: 1.7
-        }}>
-          Upload 3D models, place interactive points of interest directly on geometry,
-          and build searchable wiki pages. The mission control for spatial knowledge.
-        </p>
-
-        {/* CTA Buttons */}
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '3.5rem' }}>
-          <Link to="/search" className="btn-primary" style={{ padding: '0.85rem 1.8rem', fontSize: '0.9rem' }}>
-            <Globe size={18} />
-            Explore Models
-            <LinkIcon size={14} />
-          </Link>
-          <Link to="/upload" className="btn-ghost" style={{ padding: '0.85rem 1.8rem', fontSize: '0.9rem' }}>
-            <Upload size={18} />
-            Upload Model
-          </Link>
-        </div>
-
-        {/* Scroll indicator */}
-        <div style={{
-          position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem',
-          color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.65rem',
-          letterSpacing: '1px', textTransform: 'uppercase'
-        }}>
-          <span>Scroll</span>
-          <ChevronDown size={18} />
+          3D
         </div>
       </div>
 
-      {/* ── FEATURES ── */}
-      <section style={{ padding: '6rem 2rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--primary)',
-            textTransform: 'uppercase', letterSpacing: '2px'
-          }}>// Capabilities</span>
-          <h2 style={{
-            fontFamily: 'var(--font-display)', fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
-            fontWeight: 700, marginTop: '0.75rem', marginBottom: '0.5rem'
-          }}>
-            Mission Control Features
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', maxWidth: '500px', margin: '0 auto', fontSize: '0.95rem' }}>
-            Everything you need to build interactive 3D knowledge bases.
-          </p>
-        </div>
+      <Cutaway color="#ffffff" />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
-          <FeatureCard icon={Box} title="Multi-Format 3D Viewer" desc="Native support for GLB, GLTF, OBJ, FBX, and STL. Auto-center, auto-scale, and one-click camera focus." />
-          <FeatureCard icon={MapPin} title="Spatial POI System" desc="Double-click anywhere on your model to drop points of interest. Link them to wiki articles and nested models." />
-          <FeatureCard icon={FileText} title="Markdown Wiki Pages" desc="Every model gets a dedicated wiki page with markdown support, auto-generated tables of contents, and backlink tracking." />
-          <FeatureCard icon={Layers} title="Nested Model Navigation" desc="Create hyperlinked 3D experiences. Jump from one model to another through POIs with breadcrumb trails." />
-          <FeatureCard icon={Cpu} title="Keyboard Shortcuts" desc="Power-user controls: focus, reset, wireframe toggle, auto-rotate, screenshots, and POI navigation with single keys." />
-          <FeatureCard icon={Share2} title="Publish & Share" desc="Publish models publicly, generate share links, and explore the community's 3D knowledge graph." />
+      {/* ═══════════════════════════════════════════
+          WHAT IS 3D FILER — White editorial section
+          ═══════════════════════════════════════════ */}
+      <section style={{ padding: '8rem 4vw', background: '#ffffff', position: 'relative', overflow: 'hidden' }}>
+        <FadeUp>
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.7rem',
+            color: 'var(--primary)',
+            letterSpacing: '3px',
+            textTransform: 'uppercase',
+            display: 'block',
+            marginBottom: '2rem'
+          }}>
+            // What is 3D Filer
+          </span>
+        </FadeUp>
+
+        <div style={{ maxWidth: 1200 }}>
+          <RevealText
+            as="h2"
+            delay={0}
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'clamp(1.8rem, 4.5vw, 3.5rem)',
+              fontWeight: 800,
+              lineHeight: 1.15,
+              letterSpacing: '2px',
+              color: '#111',
+              textTransform: 'uppercase',
+              marginBottom: '3rem',
+              maxWidth: 900
+            }}
+          >
+            A wiki knowledge base built on top of 3D geometry
+          </RevealText>
+
+          <LineReveal delay={0.3} />
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '3rem',
+            marginTop: '3rem'
+          }}>
+            {[
+              {
+                title: 'Spatial Annotation',
+                body: 'Double-click anywhere on a 3D model to drop a point of interest. Add titles, rich content, and link to other models or wiki pages.'
+              },
+              {
+                title: 'Linked Knowledge',
+                body: 'Every POI connects to wiki articles with markdown support, auto-generated tables of contents, and bidirectional backlink tracking.'
+              },
+              {
+                title: 'Nested Navigation',
+                body: 'Jump between models through spatial links. Build explorable 3D knowledge graphs with full breadcrumb trails.'
+              }
+            ].map((item, i) => (
+              <FadeUp key={item.title} delay={0.2 + i * 0.15}>
+                <div>
+                  <div style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    color: 'var(--primary)',
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    marginBottom: '1rem'
+                  }}>
+                    {item.title}
+                  </div>
+                  <p style={{
+                    fontSize: '0.95rem',
+                    color: '#555',
+                    lineHeight: 1.7
+                  }}>
+                    {item.body}
+                  </p>
+                </div>
+              </FadeUp>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
-      <section style={{ padding: '5rem 2rem', maxWidth: '1000px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--primary)',
-            textTransform: 'uppercase', letterSpacing: '2px'
-          }}>// Workflow</span>
-          <h2 style={{
-            fontFamily: 'var(--font-display)', fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
-            fontWeight: 700, marginTop: '0.75rem'
-          }}>
-            Three-Step Deployment
-          </h2>
-        </div>
+      <Cutaway color="#111111" />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem' }}>
+      {/* ═══════════════════════════════════════════
+          HOW IT WORKS — Dark, numbered steps
+          ═══════════════════════════════════════════ */}
+      <section style={{ padding: '8rem 4vw', background: '#111111', position: 'relative' }}>
+        <FadeUp>
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.7rem',
+            color: 'var(--primary)',
+            letterSpacing: '3px',
+            textTransform: 'uppercase',
+            display: 'block',
+            marginBottom: '4rem'
+          }}>
+            // Workflow
+          </span>
+        </FadeUp>
+
+        <div style={{ maxWidth: 1200, display: 'flex', flexDirection: 'column', gap: '4rem' }}>
           {[
-            { step: '01', title: 'Upload', desc: 'Drag and drop your 3D model. Supported formats auto-detect.' },
-            { step: '02', title: 'Annotate', desc: 'Double-click on the geometry to place POIs with titles, content, and nested links.' },
-            { step: '03', title: 'Publish', desc: 'Toggle public visibility, write wiki articles, and share your model link.' },
-          ].map((item) => (
-            <div key={item.step} style={{
-              textAlign: 'center', padding: '2.5rem 2rem',
-              border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)',
-              background: 'var(--bg-card)', position: 'relative', overflow: 'hidden'
-            }}>
+            {
+              num: '01',
+              title: 'Upload',
+              desc: 'Drag and drop GLB, GLTF, OBJ, FBX, or STL files. Formats auto-detect and models auto-center in the viewer.'
+            },
+            {
+              num: '02',
+              title: 'Annotate',
+              desc: 'Place POIs directly on geometry. Write markdown content, choose colors, and set visibility. Every annotation is queryable.'
+            },
+            {
+              num: '03',
+              title: 'Publish',
+              desc: 'Toggle public visibility, generate share links, and explore the community knowledge graph. Your 3D data becomes searchable.'
+            }
+          ].map((step, i) => (
+            <motion.div
+              key={step.num}
+              initial={{ opacity: 0, x: i % 2 === 0 ? -60 : 60 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-80px' }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'clamp(80px, 12vw, 140px) 1fr',
+                gap: '2rem',
+                alignItems: 'start'
+              }}
+            >
               <div style={{
-                fontFamily: 'var(--font-display)', fontSize: '4rem', fontWeight: 800,
-                color: 'rgba(185, 28, 28, 0.08)', position: 'absolute',
-                top: '0.5rem', left: '1rem', lineHeight: 1
+                fontFamily: 'var(--font-display)',
+                fontSize: 'clamp(3rem, 6vw, 5rem)',
+                fontWeight: 900,
+                color: 'rgba(185,28,28,0.25)',
+                lineHeight: 1
               }}>
-                {item.step}
+                {step.num}
               </div>
-              <Zap size={28} color="var(--primary)" style={{ marginBottom: '1rem', opacity: 0.9 }} strokeWidth={2} />
-              <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-                {item.title}
-              </h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                {item.desc}
-              </p>
-            </div>
+              <div>
+                <h3 style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 'clamp(1.2rem, 2.5vw, 1.8rem)',
+                  fontWeight: 700,
+                  color: '#fff',
+                  letterSpacing: '2px',
+                  textTransform: 'uppercase',
+                  marginBottom: '0.75rem'
+                }}>
+                  {step.title}
+                </h3>
+                <p style={{
+                  fontSize: '0.95rem',
+                  color: '#888',
+                  lineHeight: 1.7,
+                  maxWidth: 500
+                }}>
+                  {step.desc}
+                </p>
+              </div>
+            </motion.div>
           ))}
         </div>
       </section>
 
-      {/* ── RECENTLY VIEWED ── */}
-      {recent.length > 0 && (
-        <section style={{ padding: '4rem 2rem', maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ marginBottom: '1.5rem' }}>
+      <Cutaway color="#ffffff" />
+
+      {/* ═══════════════════════════════════════════
+          FEATURES — White grid
+          ═══════════════════════════════════════════ */}
+      <section style={{ padding: '8rem 4vw', background: '#ffffff' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <FadeUp>
             <span style={{
-              fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--primary)',
-              textTransform: 'uppercase', letterSpacing: '2px'
-            }}>// Recent Activity</span>
-            <h2 style={{
-              fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700, marginTop: '0.5rem'
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.7rem',
+              color: 'var(--primary)',
+              letterSpacing: '3px',
+              textTransform: 'uppercase',
+              display: 'block',
+              marginBottom: '1.5rem'
             }}>
-              Previously Viewed
-            </h2>
-          </div>
+              // Capabilities
+            </span>
+          </FadeUp>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
-            {recent.map((m) => (
-              <Link key={m.id} to={`/model/${m.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="card-modern" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{
-                    width: 44, height: 44, borderRadius: 'var(--radius-sm)',
-                    background: 'var(--bg-tertiary)', border: '1px solid var(--border-medium)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                  }}>
-                    <Box size={20} color="var(--primary)" />
-                  </div>
-                  <div style={{ overflow: 'hidden' }}>
-                    <div style={{
-                      fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.9rem',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                    }}>
-                      {m.title}
-                    </div>
-                    <div style={{
-                      fontSize: '0.7rem', color: 'var(--text-muted)',
-                      fontFamily: 'var(--font-mono)', textTransform: 'uppercase'
-                    }}>
-                      {m.extension}
-                    </div>
-                  </div>
-                  <LinkIcon size={16} color="var(--text-muted)" style={{ marginLeft: 'auto', flexShrink: 0 }} />
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+          <RevealText
+            as="h2"
+            delay={0}
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'clamp(1.8rem, 4vw, 3rem)',
+              fontWeight: 800,
+              letterSpacing: '2px',
+              color: '#111',
+              textTransform: 'uppercase',
+              marginBottom: '4rem'
+            }}
+          >
+            Everything You Need
+          </RevealText>
 
-      {/* ── CTA ── */}
-      <section style={{ padding: '6rem 2rem', textAlign: 'center' }}>
-        <div style={{
-          maxWidth: '640px', margin: '0 auto', padding: '3.5rem 2.5rem',
-          border: '1.5px solid var(--border-accent)', borderRadius: 'var(--radius-lg)',
-          background: 'linear-gradient(135deg, rgba(185,28,28,0.04), rgba(0,0,0,0.02))',
-          position: 'relative', overflow: 'hidden'
-        }}>
           <div style={{
-            position: 'absolute', top: 0, left: 0, right: 0, height: 2,
-            background: 'linear-gradient(90deg, transparent, var(--primary), transparent)'
-          }} />
-          <Hexagon size={36} color="var(--primary)" strokeWidth={1.5} style={{ marginBottom: '1rem', opacity: 0.9 }} />
-          <h2 style={{
-            fontFamily: 'var(--font-display)', fontSize: 'clamp(1.3rem, 3vw, 2rem)',
-            fontWeight: 700, marginBottom: '0.75rem'
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: '1.5rem'
           }}>
-            Ready to Launch?
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.75rem', fontSize: '0.95rem' }}>
-            Start building your 3D knowledge base today. Upload your first model and see the difference.
-          </p>
-          <Link to="/upload" className="btn-primary" style={{ padding: '0.9rem 2.2rem', fontSize: '0.95rem' }}>
-            <Zap size={18} />
-            Begin Mission
-          </Link>
+            <FeatureCard icon={Box} title="Multi-Format 3D Viewer" desc="Native GLB, GLTF, OBJ, FBX, and STL support. Auto-center, auto-scale, and one-click camera focus." index={0} />
+            <FeatureCard icon={MapPin} title="Spatial POI System" desc="Drop points of interest anywhere on geometry. Link to wiki articles and nested models." index={1} />
+            <FeatureCard icon={FileText} title="Markdown Wiki Pages" desc="Rich markdown support, auto-generated TOCs, and full backlink tracking per model." index={2} />
+            <FeatureCard icon={Layers} title="Nested Model Navigation" desc="Hyperlinked 3D experiences. Jump between models through POIs with breadcrumbs." index={3} />
+            <FeatureCard icon={Cpu} title="Keyboard Shortcuts" desc="Focus, reset, wireframe, auto-rotate, screenshots, and POI navigation with single keys." index={4} />
+            <FeatureCard icon={Share2} title="Publish & Explore" desc="Public visibility toggles, share links, and a searchable community knowledge graph." index={5} />
+          </div>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer style={{ padding: '2.5rem 2rem', textAlign: 'center', borderTop: '1px solid var(--border-subtle)' }}>
+      <Cutaway color="#111111" />
+
+      {/* ═══════════════════════════════════════════
+          CTA — Dark band
+          ═══════════════════════════════════════════ */}
+      <section style={{ padding: '8rem 4vw', background: '#111111', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem'
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          fontFamily: 'var(--font-display)',
+          fontSize: 'clamp(6rem, 15vw, 14rem)',
+          fontWeight: 900,
+          color: 'rgba(255,255,255,0.015)',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+          letterSpacing: '10px'
         }}>
-          <Hexagon size={16} color="var(--text-muted)" />
+          3D Filer
+        </div>
+
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 600, margin: '0 auto' }}>
+          <FadeUp>
+            <Hexagon size={40} color="var(--primary)" strokeWidth={1.2} style={{ marginBottom: '2rem', opacity: 0.9 }} />
+          </FadeUp>
+
+          <RevealText
+            as="h2"
+            delay={0.1}
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'clamp(1.5rem, 3.5vw, 2.5rem)',
+              fontWeight: 800,
+              letterSpacing: '2px',
+              color: '#fff',
+              textTransform: 'uppercase',
+              marginBottom: '1.25rem'
+            }}
+          >
+            Start Building Your 3D Wiki
+          </RevealText>
+
+          <FadeUp delay={0.4}>
+            <p style={{ fontSize: '1rem', color: '#888', marginBottom: '2.5rem', lineHeight: 1.7 }}>
+              Upload your first model and turn spatial data into searchable knowledge.
+            </p>
+          </FadeUp>
+
+          <FadeUp delay={0.5}>
+            <Link to="/upload" style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              padding: '1.1rem 2.5rem',
+              background: 'var(--primary)',
+              color: '#fff',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.75rem',
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+              fontWeight: 600
+            }}>
+              <Zap size={16} />
+              Begin
+            </Link>
+          </FadeUp>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          FOOTER — Minimal
+          ═══════════════════════════════════════════ */}
+      <footer style={{
+        padding: '2.5rem 4vw',
+        background: '#0a0a0a',
+        borderTop: '1px solid rgba(255,255,255,0.06)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '1rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <Hexagon size={14} color="#555" strokeWidth={2} />
           <span style={{
-            fontFamily: 'var(--font-display)', fontSize: '0.85rem', fontWeight: 700,
-            color: 'var(--text-muted)', letterSpacing: '2px', textTransform: 'uppercase'
+            fontFamily: 'var(--font-display)',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            color: '#555',
+            letterSpacing: '2px',
+            textTransform: 'uppercase'
           }}>
             3D Filer
           </span>
         </div>
         <p style={{
-          fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--text-muted)', letterSpacing: '1px'
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.6rem',
+          color: '#444',
+          letterSpacing: '1px',
+          textTransform: 'uppercase'
         }}>
-          3D WIKI KNOWLEDGE BASE // BUILT FOR SPATIAL LEARNING
+          3D Wiki Knowledge Base Platform
         </p>
       </footer>
     </div>
   )
 }
-
-export default Home
