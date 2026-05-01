@@ -1,19 +1,27 @@
 import { useState, useRef } from 'react'
+import * as THREE from 'three'
 import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 
-export function POIMarker({ position, title, onClick, selected, index }) {
+export function POIMarker({ position, title, onClick, selected, index, modelRef }) {
   const [hovered, setHovered] = useState(false)
   const groupRef = useRef()
   const markerRef = useRef()
+  const refDist = useRef(7)
 
   const showLabel = selected || hovered
   const color = selected ? '#b91c1c' : hovered ? '#dc2626' : '#b91c1c'
 
   useFrame(({ camera }) => {
     if (groupRef.current && markerRef.current) {
+      if (modelRef?.current && refDist.current === 7) {
+        const box = new THREE.Box3().setFromObject(modelRef.current)
+        const size = box.getSize(new THREE.Vector3())
+        const maxDim = Math.max(size.x, size.y, size.z)
+        refDist.current = Math.max(maxDim * 1.5, 2)
+      }
       const dist = camera.position.distanceTo(groupRef.current.position)
-      const s = Math.max(0.6, Math.min(2.0, dist / 7))
+      const s = Math.max(0.6, Math.min(2.0, dist / refDist.current))
       markerRef.current.style.transform = `scale(${s})`
     }
   })

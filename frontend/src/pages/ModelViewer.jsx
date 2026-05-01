@@ -217,7 +217,7 @@ function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAd
       <CameraFocus controlsRef={controlsRef} targetRef={modelRef} trigger={focusTrigger} onDone={onFocusDone} />
       <CameraToView controlsRef={controlsRef} targetView={cameraTargetView} onDone={onCameraViewDone} />
       {pois.map((poi, idx) => (
-        <POIMarker key={poi.id} index={idx + 1} position={poi.position} title={poi.title} selected={selectedPoi?.id === poi.id} onClick={() => onPoiClick(poi)} />
+        <POIMarker key={poi.id} index={idx + 1} position={poi.position} title={poi.title} selected={selectedPoi?.id === poi.id} onClick={() => onPoiClick(poi)} modelRef={modelRef} />
       ))}
     </>
   )
