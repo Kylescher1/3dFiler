@@ -11,10 +11,17 @@ import ModelHeader from '../components/ModelHeader'
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
 function normalizePoi(poi) {
-  if (poi.positionX !== undefined) {
-    return { ...poi, position: { x: poi.positionX, y: poi.positionY, z: poi.positionZ } }
+  const base = poi.positionX !== undefined
+    ? { ...poi, position: { x: poi.positionX, y: poi.positionY, z: poi.positionZ } }
+    : poi
+  if (base.cameraView) {
+    try {
+      const view = JSON.parse(base.cameraView)
+      if (view.position) base.cameraPosition = view.position
+      if (view.target) base.cameraTarget = view.target
+    } catch {}
   }
-  return poi
+  return base
 }
 
 function formatBytes(bytes) {
@@ -32,7 +39,7 @@ function MetaRow({ label, value }) {
   )
 }
 
-function ClickPlane({ onClick, modelRef }) {
+function ClickPlane({ onClick, modelRef, controlsRef }) {
   const { camera, gl } = useThree()
   const raycaster = useRef(new THREE.Raycaster())
   const mouse = useRef(new THREE.Vector2())
@@ -48,11 +55,18 @@ function ClickPlane({ onClick, modelRef }) {
       if (modelRef.current) targets.push(modelRef.current)
       if (planeRef.current) targets.push(planeRef.current)
       const intersects = raycaster.current.intersectObjects(targets, true)
-      if (intersects.length > 0) onClick(intersects[0].point)
+      if (intersects.length > 0) {
+        const target = controlsRef.current?.target?.clone() || new THREE.Vector3()
+        onClick({
+          point: intersects[0].point,
+          cameraPosition: camera.position.clone(),
+          cameraTarget: target,
+        })
+      }
     }
     gl.domElement.addEventListener('dblclick', handler)
     return () => gl.domElement.removeEventListener('dblclick', handler)
-  }, [camera, gl, onClick, modelRef])
+  }, [camera, gl, onClick, modelRef, controlsRef])
 
   return (
     <mesh ref={planeRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} visible={false}>
@@ -113,7 +127,40 @@ function CameraFocus({ controlsRef, targetRef, trigger, onDone }) {
   return null
 }
 
-function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAddPoi, modelRef, showGrid, wireframe, autoRotate, controlsRef, focusTrigger, onFocusDone, onModelReady, showAxes, lightingPreset, sunIntensity, sunRotation }) {
+function CameraToView({ controlsRef, targetView, onDone }) {
+  const { camera } = useThree()
+  const animating = useRef(false)
+
+  useEffect(() => {
+    if (!targetView || !controlsRef.current || animating.current) return
+    animating.current = true
+    const startPos = camera.position.clone()
+    const startTarget = controlsRef.current.target.clone()
+    const endPos = new THREE.Vector3(...targetView.position)
+    const endTarget = new THREE.Vector3(...targetView.target)
+    let t = 0
+    const animate = () => {
+      t += 0.04
+      if (t >= 1) {
+        camera.position.copy(endPos)
+        controlsRef.current.target.copy(endTarget)
+        controlsRef.current.update()
+        animating.current = false
+        onDone?.()
+        return
+      }
+      const ease = 1 - Math.pow(1 - t, 3)
+      camera.position.lerpVectors(startPos, endPos, ease)
+      controlsRef.current.target.lerpVectors(startTarget, endTarget, ease)
+      controlsRef.current.update()
+      requestAnimationFrame(animate)
+    }
+    animate()
+  }, [targetView, controlsRef, camera, onDone])
+  return null
+}
+
+function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAddPoi, modelRef, showGrid, wireframe, autoRotate, controlsRef, focusTrigger, onFocusDone, onModelReady, showAxes, lightingPreset, sunIntensity, sunRotation, cameraTargetView, onCameraViewDone }) {
   function rotateY([x, y, z], angleDeg) {
     const rad = (angleDeg * Math.PI) / 180
     return [x * Math.cos(rad) - z * Math.sin(rad), y, x * Math.sin(rad) + z * Math.cos(rad)]
@@ -158,7 +205,7 @@ function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAd
       <OrbitControls ref={controlsRef} makeDefault enableDamping dampingFactor={0.08} autoRotate={autoRotate} autoRotateSpeed={1.2} minDistance={0.5} maxDistance={50} />
       {showGrid && <Grid args={[20, 20]} position={[0, -0.01, 0]} />}
       {showAxes && <axesHelper args={[2]} />}
-      <ClickPlane onClick={onAddPoi} modelRef={modelRef} />
+      <ClickPlane onClick={onAddPoi} modelRef={modelRef} controlsRef={controlsRef} />
       <group>
         {modelUrl ? (
           <ModelRenderer key={modelUrl} url={modelUrl} extension={extension} onReady={onModelReady} />
@@ -168,6 +215,7 @@ function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAd
       </group>
       <WireframeToggle modelRef={modelRef} wireframe={wireframe} />
       <CameraFocus controlsRef={controlsRef} targetRef={modelRef} trigger={focusTrigger} onDone={onFocusDone} />
+      <CameraToView controlsRef={controlsRef} targetView={cameraTargetView} onDone={onCameraViewDone} />
       {pois.map((poi, idx) => (
         <POIMarker key={poi.id} index={idx + 1} position={poi.position} title={poi.title} selected={selectedPoi?.id === poi.id} onClick={() => onPoiClick(poi)} />
       ))}
@@ -367,6 +415,7 @@ function ModelViewer() {
   const [showSettingsPanel, setShowSettingsPanel] = useState(false)
   const [settingsSaving, setSettingsSaving] = useState(false)
   const [draftSettings, setDraftSettings] = useState({ showGrid: true, showAxes: false, autoRotate: false, lightingPreset: 'neutral', backgroundColor: '#111111', sunIntensity: 1, sunRotation: 45 })
+  const [cameraTargetView, setCameraTargetView] = useState(null)
   const controlsRef = useRef()
   const modelRef = useRef(null)
   const canvasContainerRef = useRef(null)
@@ -382,6 +431,7 @@ function ModelViewer() {
     setIsOwner(false)
     setFocusTrigger(0)
     setShowSettingsPanel(false)
+    setCameraTargetView(null)
     modelRef.current = null
     initialFocusPendingRef.current = true
 
@@ -461,9 +511,11 @@ function ModelViewer() {
           setShowSettingsPanel(false)
           break
         case 'f':
+          setCameraTargetView(null)
           setFocusTrigger((n) => n + 1)
           break
         case 'r':
+          setCameraTargetView(null)
           if (controlsRef.current) { controlsRef.current.reset(); controlsRef.current.target.set(0, 0, 0); controlsRef.current.update() }
           break
         case 'g':
@@ -523,8 +575,14 @@ function ModelViewer() {
     }
   }, [])
 
-  const handleAddPoi = useCallback((point) => {
-    setAddingPoi({ x: point.x, y: point.y, z: point.z })
+  const handleAddPoi = useCallback((payload) => {
+    setAddingPoi({
+      x: payload.point.x,
+      y: payload.point.y,
+      z: payload.point.z,
+      cameraPosition: payload.cameraPosition,
+      cameraTarget: payload.cameraTarget,
+    })
     setEditingPoi(null)
     setSelectedPoi(null)
     setPoiForm({ title: '', content: '', type: 'text' })
@@ -534,7 +592,14 @@ function ModelViewer() {
     setSelectedPoi(poi)
     setEditingPoi(null)
     setAddingPoi(null)
-    setFocusTrigger((n) => n + 1)
+    if (poi.cameraPosition && poi.cameraTarget) {
+      setCameraTargetView({
+        position: [poi.cameraPosition.x, poi.cameraPosition.y, poi.cameraPosition.z],
+        target: [poi.cameraTarget.x, poi.cameraTarget.y, poi.cameraTarget.z],
+      })
+    } else {
+      setFocusTrigger((n) => n + 1)
+    }
   }, [])
 
   const submitPoi = async () => {
@@ -546,7 +611,11 @@ function ModelViewer() {
         title: poiForm.title,
         content: poiForm.content,
         type: poiForm.type,
-        nestedModelId: poiForm.type === 'nested-model' ? poiForm.content : null
+        nestedModelId: poiForm.type === 'nested-model' ? poiForm.content : null,
+        cameraView: addingPoi.cameraPosition ? JSON.stringify({
+          position: addingPoi.cameraPosition,
+          target: addingPoi.cameraTarget,
+        }) : undefined,
       })
     })
     const data = await res.json()
@@ -686,7 +755,7 @@ function ModelViewer() {
       <div ref={canvasContainerRef} style={{ position: 'absolute', inset: 0 }}>
         <Canvas camera={{ position: [4, 4, 4], fov: 50 }} style={{ width: '100%', height: '100%' }} gl={{ preserveDrawingBuffer: true }}>
           <color attach="background" args={[bgColor]} />
-          <SceneContent modelUrl={modelUrl} extension={extension} pois={pois} selectedPoi={selectedPoi} onPoiClick={handlePoiClick} onAddPoi={handleAddPoi} modelRef={modelRef} showGrid={showGrid} wireframe={wireframe} autoRotate={autoRotate} controlsRef={controlsRef} focusTrigger={focusTrigger} onFocusDone={handleFocusDone} onModelReady={handleModelReady} showAxes={showAxes} lightingPreset={lightingPreset} sunIntensity={sunIntensity} sunRotation={sunRotation} />
+          <SceneContent modelUrl={modelUrl} extension={extension} pois={pois} selectedPoi={selectedPoi} onPoiClick={handlePoiClick} onAddPoi={handleAddPoi} modelRef={modelRef} showGrid={showGrid} wireframe={wireframe} autoRotate={autoRotate} controlsRef={controlsRef} focusTrigger={focusTrigger} onFocusDone={handleFocusDone} onModelReady={handleModelReady} showAxes={showAxes} lightingPreset={lightingPreset} sunIntensity={sunIntensity} sunRotation={sunRotation} cameraTargetView={cameraTargetView} onCameraViewDone={() => setCameraTargetView(null)} />
         </Canvas>
       </div>
 

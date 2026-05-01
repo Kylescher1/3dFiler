@@ -58,6 +58,7 @@ model POI {
   positionX      Float    @default(0)
   positionY      Float    @default(0)
   positionZ      Float    @default(0)
+  cameraView     String   @default("{}")
   createdAt      DateTime @default(now())
   order          Int      @default(0)
 

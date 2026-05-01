@@ -68,6 +68,7 @@ router.post('/', requireAuth, async (req, res) => {
       positionX: Number(position?.x ?? 0),
       positionY: Number(position?.y ?? 0),
       positionZ: Number(position?.z ?? 0),
+      cameraView: String(req.body.cameraView || '{}'),
       order: nextOrder
     }
   });
@@ -103,6 +104,7 @@ router.patch('/:id', requireAuth, async (req, res) => {
     data.positionZ = Number(req.body.position.z ?? poi.positionZ);
   }
   if (req.body.order !== undefined) data.order = Number(req.body.order);
+  if (req.body.cameraView !== undefined) data.cameraView = String(req.body.cameraView);
 
   const updated = await prisma.pOI.update({
     where: { id: req.params.id },
