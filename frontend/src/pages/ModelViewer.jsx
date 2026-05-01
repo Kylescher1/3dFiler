@@ -339,7 +339,7 @@ function SettingsPanel({ settings, onChange, onSave, onCancel, saving, isOwner }
         <input
           type="range"
           min={0}
-          max={3}
+          max={10}
           step={0.1}
           value={settings.sunIntensity}
           onChange={e => onChange({ ...settings, sunIntensity: parseFloat(e.target.value) })}
@@ -831,7 +831,7 @@ function ModelViewer() {
 
       {/* Wiki sidebar */}
       {showWikiSidebar && (
-        <div style={{ position: 'absolute', top: 80, right: 16, bottom: 16, width: 300, overflow: 'auto', zIndex: 20 }}>
+        <div style={{ position: 'absolute', top: 80, right: 16, bottom: 16, width: 360, overflow: 'auto', zIndex: 20 }}>
           <div style={{ ...panelStyle, padding: '1rem', marginBottom: '0.75rem' }}>
             <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M13 2v8h8v2h-8v8h-2v-8H3v-2h8V2z"/></svg>

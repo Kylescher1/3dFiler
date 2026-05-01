@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
-import { Html, useFrame } from '@react-three/drei'
+import { Html } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
 
 export function POIMarker({ position, title, onClick, selected, index }) {
   const [hovered, setHovered] = useState(false)
@@ -12,7 +13,7 @@ export function POIMarker({ position, title, onClick, selected, index }) {
   useFrame(({ camera }) => {
     if (groupRef.current && markerRef.current) {
       const dist = camera.position.distanceTo(groupRef.current.position)
-      const s = Math.max(0.35, Math.min(2.0, dist / 7))
+      const s = Math.max(0.6, Math.min(2.0, dist / 7))
       markerRef.current.style.transform = `scale(${s})`
     }
   })

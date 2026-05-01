@@ -84,7 +84,7 @@ function ViewerSettingsPanel({ settings, onChange }) {
           <input
             type="range"
             min={0}
-            max={3}
+            max={10}
             step={0.1}
             value={settings.sunIntensity}
             onChange={e => onChange({ ...settings, sunIntensity: parseFloat(e.target.value) })}
