@@ -226,6 +226,67 @@ const controlIcons = {
   bg: (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3a9 9 0 000 18 9 9 0 000-18zm0 16a7 7 0 110-14 7 7 0 010 14z"/></svg>
   ),
+  settings: (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84a.484.484 0 00-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.488.488 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.27.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 118.4 12 3.596 3.596 0 0112 15.6z"/></svg>
+  ),
+}
+
+function SettingsPanel({ settings, onChange, onSave, onCancel, saving, isOwner }) {
+  if (!isOwner) return null
+  const presets = [
+    { key: 'neutral', label: 'Neutral' },
+    { key: 'studio', label: 'Studio' },
+    { key: 'dramatic', label: 'Dramatic' }
+  ]
+  const toggle = (key) => onChange({ ...settings, [key]: !settings[key] })
+  return (
+    <div style={{ minWidth: 240, padding: '0.6rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginBottom: '0.6rem' }}>
+        {[
+          { key: 'showGrid', label: 'Grid' },
+          { key: 'showAxes', label: 'Axes' },
+          { key: 'autoRotate', label: 'Auto-Rotate' },
+        ].map(({ key, label }) => (
+          <button key={key} type="button" onClick={() => toggle(key)} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', padding: '0.4rem 0.3rem',
+            border: `1px solid ${settings[key] ? 'var(--primary)' : 'var(--border-subtle)'}`,
+            background: settings[key] ? 'rgba(185,28,28,0.08)' : 'transparent',
+            borderRadius: 'var(--radius-sm)', color: settings[key] ? 'var(--primary)' : 'var(--text-secondary)',
+            fontSize: '0.72rem', cursor: 'pointer', transition: 'all 0.2s'
+          }}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: '0.3rem', marginBottom: '0.6rem' }}>
+        {presets.map(({ key, label }) => (
+          <button key={key} type="button" onClick={() => onChange({ ...settings, lightingPreset: key })} style={{
+            flex: 1, padding: '0.35rem 0.2rem', borderRadius: 'var(--radius-sm)', fontSize: '0.68rem',
+            border: `1px solid ${settings.lightingPreset === key ? 'var(--primary)' : 'var(--border-subtle)'}`,
+            background: settings.lightingPreset === key ? 'rgba(185,28,28,0.08)' : 'transparent',
+            color: settings.lightingPreset === key ? 'var(--primary)' : 'var(--text-secondary)',
+            cursor: 'pointer', transition: 'all 0.2s'
+          }}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
+        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Background</span>
+        <input
+          type="color"
+          value={settings.backgroundColor}
+          onChange={e => onChange({ ...settings, backgroundColor: e.target.value })}
+          style={{ width: 28, height: 20, border: 'none', borderRadius: 3, cursor: 'pointer', background: 'none' }}
+        />
+        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{settings.backgroundColor}</span>
+      </div>
+      <div style={{ display: 'flex', gap: '0.4rem' }}>
+        <button onClick={onCancel} style={{ flex: 1, padding: '0.4rem', fontSize: '0.72rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
+        <button onClick={onSave} disabled={saving} style={{ flex: 1, padding: '0.4rem', fontSize: '0.72rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--primary)', background: 'var(--primary)', color: 'var(--bg-primary)', cursor: 'pointer' }}>{saving ? 'Saving...' : 'Save'}</button>
+      </div>
+    </div>
+  )
 }
 
 function ModelViewer() {
@@ -258,6 +319,9 @@ function ModelViewer() {
   const [showWikiSidebar, setShowWikiSidebar] = useState(true)
   const [isOwner, setIsOwner] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false)
+  const [settingsSaving, setSettingsSaving] = useState(false)
+  const [draftSettings, setDraftSettings] = useState({ showGrid: true, showAxes: false, autoRotate: false, lightingPreset: 'neutral', backgroundColor: '#111111' })
   const controlsRef = useRef()
   const modelRef = useRef(null)
   const canvasContainerRef = useRef(null)
@@ -272,6 +336,7 @@ function ModelViewer() {
     setPoiForm({ title: '', content: '', type: 'text' })
     setIsOwner(false)
     setFocusTrigger(0)
+    setShowSettingsPanel(false)
     modelRef.current = null
     initialFocusPendingRef.current = true
 
@@ -295,6 +360,13 @@ function ModelViewer() {
         if (typeof vs.showAxes === 'boolean') setShowAxes(vs.showAxes)
         if (vs.backgroundColor) setBgColor(vs.backgroundColor)
         if (vs.lightingPreset) setLightingPreset(vs.lightingPreset)
+        setDraftSettings({
+          showGrid: typeof vs.showGrid === 'boolean' ? vs.showGrid : true,
+          showAxes: typeof vs.showAxes === 'boolean' ? vs.showAxes : false,
+          autoRotate: typeof vs.autoRotate === 'boolean' ? vs.autoRotate : false,
+          lightingPreset: vs.lightingPreset || 'neutral',
+          backgroundColor: vs.backgroundColor || '#111111'
+        })
         // Breadcrumbs: append current model to trail, avoiding loops
         const trail = JSON.parse(sessionStorage.getItem('modelBreadcrumbs') || '[]')
         const existingIdx = trail.findIndex(b => b.id === data.id)
@@ -337,6 +409,7 @@ function ModelViewer() {
           setSelectedPoi(null)
           setPoiForm({ title: '', content: '', type: 'text' })
           setShowHelp(false)
+          setShowSettingsPanel(false)
           break
         case 'f':
           setFocusTrigger((n) => n + 1)
@@ -493,6 +566,39 @@ function ModelViewer() {
 
   const handleFocus = () => setFocusTrigger((n) => n + 1)
 
+  const handleSaveSettings = async () => {
+    if (!isOwner) return
+    setSettingsSaving(true)
+    const res = await fetch(`${API}/models/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ viewerSettings: JSON.stringify(draftSettings) })
+    })
+    if (res.ok) {
+      // Apply immediately
+      setShowGrid(draftSettings.showGrid)
+      setShowAxes(draftSettings.showAxes)
+      setAutoRotate(draftSettings.autoRotate)
+      setLightingPreset(draftSettings.lightingPreset)
+      setBgColor(draftSettings.backgroundColor)
+      setModel(prev => ({ ...prev, viewerSettings: JSON.stringify(draftSettings) }))
+      setShowSettingsPanel(false)
+    }
+    setSettingsSaving(false)
+  }
+
+  const handleOpenSettings = () => {
+    // Reset draft to current active settings
+    setDraftSettings({
+      showGrid,
+      showAxes,
+      autoRotate,
+      lightingPreset,
+      backgroundColor: bgColor,
+    })
+    setShowSettingsPanel(v => !v)
+  }
+
   if (error) return (
     <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', color: 'var(--danger)', zIndex: 100 }}>
       {error}
@@ -563,11 +669,37 @@ function ModelViewer() {
               <button key={i} onClick={c.onClick} title={c.title} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#888888', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.06)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>{c.icon}</button>
             ))}
             <div style={{ width: '1px', background: 'rgba(0,0,0,0.06)', margin: '4px 2px' }} />
+            {isOwner && (
+              <button
+                onClick={handleOpenSettings}
+                title="Viewer Settings"
+                style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: showSettingsPanel ? '#fee2e2' : 'transparent', border: 'none', borderRadius: '6px', color: showSettingsPanel ? 'var(--primary)' : '#888888', cursor: 'pointer' }}
+                onMouseEnter={e => { if (!showSettingsPanel) e.currentTarget.style.background = 'rgba(0,0,0,0.06)' }}
+                onMouseLeave={e => { if (!showSettingsPanel) e.currentTarget.style.background = 'transparent' }}
+              >
+                {controlIcons.settings}
+              </button>
+            )}
             <button onClick={() => setShowWikiSidebar(v => !v)} title="Toggle Wiki Sidebar" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: showWikiSidebar ? '#fee2e2' : 'transparent', border: 'none', borderRadius: '6px', color: showWikiSidebar ? 'var(--primary)' : '#888888', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }} onMouseEnter={e => { if (!showWikiSidebar) e.currentTarget.style.background = 'rgba(0,0,0,0.06)' }} onMouseLeave={e => { if (!showWikiSidebar) e.currentTarget.style.background = 'transparent' }}>W</button>
             <button onClick={() => setShowHelp(true)} title="Keyboard Shortcuts (H)" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#888888', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.06)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>?</button>
           </div>
         )}
       />
+
+      {/* Settings dropdown panel */}
+      {showSettingsPanel && isOwner && (
+        <div style={{ position: 'absolute', top: 56, right: 16, zIndex: 30, ...panelStyle, padding: 0 }}>
+          <SettingsPanel
+            settings={draftSettings}
+            onChange={setDraftSettings}
+            onSave={handleSaveSettings}
+            onCancel={() => setShowSettingsPanel(false)}
+            saving={settingsSaving}
+            isOwner={isOwner}
+          />
+        </div>
+      )}
+
       {/* Format warning */}
       {!isSupported && (
         <div style={{ position: 'absolute', top: 68, left: '50%', transform: 'translateX(-50%)', zIndex: 20, ...panelStyle, padding: '8px 14px', background: '#fef2f2' }}>
@@ -575,290 +707,193 @@ function ModelViewer() {
         </div>
       )}
 
-      {/* Left metadata + wiki + backlinks panel */}
-      <div style={{ position: 'absolute', top: 64, left: 12, zIndex: 20, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <button
-          onClick={() => setShowMeta(!showMeta)}
-          style={{ pointerEvents: 'auto', ...panelStyle, padding: '6px 10px', color: '#888888', fontSize: '0.75rem', cursor: 'pointer', background: overlayBg, display: 'flex', alignItems: 'center', gap: '6px' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-          Info
-        </button>
-        {showMeta && (
-          <div style={{ pointerEvents: 'auto', ...panelStyle, padding: '12px', width: '200px' }}>
-            <h4 style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Model Info</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <MetaRow label="Format" value={extension?.toUpperCase() || 'Unknown'} />
-              <MetaRow label="Size" value={formatBytes(model.size)} />
-              <MetaRow label="Uploaded" value={new Date(model.createdAt).toLocaleDateString()} />
-              <MetaRow label="POIs" value={pois.length} />
-              <MetaRow label="Status" value={model.published ? 'Published' : 'Private'} />
-              {(model.tags || []).length > 0 && (
-                <div style={{ marginTop: '0.4rem' }}>
-                  <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                    {model.tags.map(t => (
-                      <span key={t.id} style={{ fontSize: '0.7rem', color: 'var(--primary)', background: '#fef2f2', padding: '2px 8px', borderRadius: '10px', border: '1px solid #fee2e2' }}>
-                        {t.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {pois.length > 0 && (
-                <div style={{ marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e5e5e5' }}>
-                  <h5 style={{ color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600, marginBottom: '0.3rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Contents</h5>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                    {pois.map((poi, idx) => (
-                      <button
-                        key={poi.id}
-                        onClick={() => handlePoiClick(poi)}
-                        style={{ textAlign: 'left', background: 'none', border: 'none', padding: 0, color: '#888888', cursor: 'pointer', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                      >
-                        <span style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '0.65rem', minWidth: '14px' }}>{idx + 1}.</span>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{poi.title}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {model.description && (
-                <div style={{ marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e5e5e5' }}>
-                  <h5 style={{ color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600, marginBottom: '0.3rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Description</h5>
-                  <div style={{ maxHeight: '160px', overflowY: 'auto' }}>
-                    <MarkdownContent content={model.description} style={{ fontSize: '0.78rem' }} />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-        {showWikiSidebar && isOwner && (
-          <div style={{ pointerEvents: 'auto', ...panelStyle, padding: '12px', width: '320px', maxHeight: '56vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
-              <h4 style={{ color: '#dc2626', fontSize: '0.86rem', margin: 0 }}>Wiki Sidebar</h4>
-              <button onClick={() => navigate(`/model/${id}/wiki`)} className="btn btn-secondary" style={{ padding: '0.24rem 0.55rem', fontSize: '0.68rem' }}>Open wiki</button>
-            </div>
+      {/* Wiki sidebar */}
+      {showWikiSidebar && (
+        <div style={{ position: 'absolute', top: 80, right: 16, bottom: 16, width: 300, overflow: 'auto', zIndex: 20 }}>
+          <div style={{ ...panelStyle, padding: '1rem', marginBottom: '0.75rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M13 2v8h8v2h-8v8h-2v-8H3v-2h8V2z"/></svg>
+              Wiki
+            </h3>
             {model.wikiContent ? (
-              <MarkdownContent content={model.wikiContent} style={{ fontSize: '0.8rem', lineHeight: 1.55 }} />
+              <div style={{ maxHeight: '40vh', overflow: 'auto' }}>
+                <MarkdownContent content={model.wikiContent} />
+              </div>
             ) : (
-              <p style={{ color: '#777', fontSize: '0.78rem' }}>No wiki content yet. Add wiki notes to enrich this model.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>No wiki yet. <Link to={`/model/${id}/wiki`} style={{ color: 'var(--primary)' }}>Write one</Link>.</p>
             )}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Backlinks */}
-        {backlinks.length > 0 && (
-          <div style={{ pointerEvents: 'auto', ...panelStyle, padding: '12px', width: '200px' }}>
-            <h4 style={{ color: '#81c784', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Linked From</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              {backlinks.map(bl => (
+      {/* Left side panel */}
+      {showPoiList && (
+        <div style={{ position: 'absolute', top: 80, left: 16, bottom: 16, overflow: 'hidden', zIndex: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', ...panelStyle, padding: '1rem' }}>
+            {/* Title */}
+            <h3 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              Points of Interest
+              <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: '0.5rem' }}>({pois.length})</span>
+            </h3>
+
+            {/* List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', maxHeight: 'calc(100vh - 240px)', overflow: 'auto' }}>
+              {pois.length === 0 && (
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', padding: '1rem 0' }}>Double-click on the model to add a point of interest.</p>
+              )}
+              {pois.map((poi, idx) => (
                 <button
-                  key={bl.id}
-                  onClick={() => navigate(`/model/${bl.id}`)}
-                  style={{ textAlign: 'left', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0, fontSize: '0.8rem' }}
+                  key={poi.id}
+                  onClick={() => handlePoiClick(poi)}
+                  style={{
+                    textAlign: 'left',
+                    background: selectedPoi?.id === poi.id ? 'var(--primary)' : 'rgba(0,0,0,0.02)',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '6px 10px',
+                    cursor: 'pointer',
+                    color: selectedPoi?.id === poi.id ? 'white' : 'var(--text-primary)',
+                    transition: 'all 0.2s ease',
+                    fontSize: '0.78rem',
+                    fontWeight: 500,
+                  }}
+                  onMouseEnter={e => { if (selectedPoi?.id !== poi.id) e.currentTarget.style.background = 'var(--primary)'; if (selectedPoi?.id !== poi.id) e.currentTarget.style.color = 'white' }}
+                  onMouseLeave={e => { if (selectedPoi?.id !== poi.id) e.currentTarget.style.background = 'rgba(0,0,0,0.02)'; if (selectedPoi?.id !== poi.id) e.currentTarget.style.color = 'var(--text-primary)' }}
                 >
-                  <span style={{ color: '#81c784' }}>{bl.title}</span>
-                  {bl.poiTitle && <span style={{ color: '#555', fontSize: '0.7rem', marginLeft: '0.4rem' }}>via {bl.poiTitle}</span>}
+                  <span style={{ color: selectedPoi?.id === poi.id ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)', fontSize: '0.65rem', marginRight: '0.3rem' }}>{idx + 1}.</span>
+                  {poi.title}
                 </button>
               ))}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Right sidebar - POI list */}
-      <div style={{ position: 'absolute', top: 64, right: 12, bottom: 48, width: 260, zIndex: 20, display: 'flex', flexDirection: 'column', gap: '8px', pointerEvents: 'none' }}>
-        {/* Toggle button */}
-        <button
-          onClick={() => setShowPoiList(!showPoiList)}
-          style={{ pointerEvents: 'auto', alignSelf: 'flex-end', ...panelStyle, padding: '6px 10px', color: '#888888', fontSize: '0.75rem', cursor: 'pointer', background: overlayBg, display: 'flex', alignItems: 'center', gap: '6px' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={showPoiList ? 'M18 15l-6-6-6 6' : 'M6 9l6 6 6-6'} /></svg>
-          POIs ({pois.length})
-        </button>
-
-        {showPoiList && (
-          <div style={{ pointerEvents: 'auto', ...panelStyle, padding: '12px', flex: 1, overflowY: 'auto', minHeight: 0 }}>
-            <h3 style={{ color: 'var(--primary)', marginBottom: '0.25rem', fontSize: '0.9rem', fontWeight: 600 }}>Points of Interest</h3>
-            {pois.length > 1 && <p style={{ color: '#888888', fontSize: '0.7rem', marginBottom: '0.65rem' }}>Drag to reorder wiki sections. Press N/P to move through selected POIs.</p>}
-            {pois.length === 0 ? (
-              <p style={{ color: '#888888', fontSize: '0.8rem' }}>No POIs yet. Double-click on the model to add one. Drag POIs later to turn them into ordered wiki sections.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {pois.map((poi, idx) => (
-                  <div
-                    key={poi.id}
-                    draggable
-                    onDragStart={(e) => { e.dataTransfer.setData('text/plain', idx); e.dataTransfer.effectAllowed = 'move' }}
-                    onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
-                    onDrop={(e) => {
-                      e.preventDefault()
-                      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10)
-                      if (fromIdx === idx) return
-                      setPois((prev) => {
-                        const next = [...prev]
-                        const [moved] = next.splice(fromIdx, 1)
-                        next.splice(idx, 0, moved)
-                        fetch(`${API}/pois/reorder`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                          body: JSON.stringify({ modelId: id, poiIds: next.map(p => p.id) })
-                        })
-                          .then(r => r.ok ? r.json() : next)
-                          .then(data => { if (Array.isArray(data)) setPois(data.map(normalizePoi)) })
-                          .catch(() => {})
-                        return next
-                      })
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      padding: '0.4rem 0.5rem',
-                      background: selectedPoi?.id === poi.id ? '#fee2e2' : 'var(--bg-tertiary)',
-                      border: '1px solid #e5e5e5',
-                      borderRadius: '4px',
-                      cursor: 'grab',
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    <span style={{
-                      background: 'var(--primary)', color: 'var(--bg-primary)', width: '18px', height: '18px', borderRadius: '50%',
-                      fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                    }}>{idx + 1}</span>
-                    <button
-                      onClick={() => handlePoiClick(poi)}
-                      style={{ textAlign: 'left', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', flex: 1, padding: 0, fontSize: '0.8rem' }}
-                    >
-                      <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{poi.title}</span>
-                      <span style={{ color: '#888888', fontSize: '0.7rem', marginLeft: '0.4rem' }}>{poi.type}</span>
-                    </button>
+      {/* POI detail / form panel */}
+      {(selectedPoi || addingPoi || editingPoi) && (
+        <div style={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', width: 320, zIndex: 20 }}>
+          <div style={{ ...panelStyle, padding: '1rem' }}>
+            {selectedPoi && !editingPoi && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedPoi.title}</h3>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.04)', padding: '2px 6px', borderRadius: '4px' }}>{selectedPoi.type}</span>
+                </div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: 1.5, maxHeight: '30vh', overflow: 'auto' }}>
+                  {selectedPoi.type === 'nested-model' && selectedPoi.content ? (
+                    <button onClick={() => navigate(`/model/${selectedPoi.content}`)} className="btn" style={{ width: '100%' }}>Open Nested Model</button>
+                  ) : (
+                    <MarkdownContent content={selectedPoi.content} />
+                  )}
+                </div>
+                {isOwner && (
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                    <button onClick={() => startEditPoi(selectedPoi)} style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem', borderRadius: '6px', border: '1px solid #e5e5e5', background: 'white', cursor: 'pointer' }}>Edit</button>
+                    <button onClick={deletePoi} style={{ flex: 1, padding: '0.5rem', fontSize: '0.8rem', borderRadius: '6px', border: '1px solid #fca5a5', background: '#fef2f2', color: '#b91c1c', cursor: 'pointer' }}>Delete</button>
                   </div>
-                ))}
+                )}
               </div>
             )}
-          </div>
-        )}
-      </div>
-
-
-      {/* Related Models sidebar */}
-      <div style={{ position: 'absolute', top: 64, right: 284, zIndex: 20, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {relatedModels.length > 0 && (
-          <>
-            <button
-              onClick={() => setShowRelated(!showRelated)}
-              style={{ pointerEvents: 'auto', alignSelf: 'flex-end', ...panelStyle, padding: '6px 10px', color: '#888888', fontSize: '0.75rem', cursor: 'pointer', background: overlayBg, display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d={showRelated ? 'M18 15l-6-6-6 6' : 'M6 9l6 6 6-6'} /></svg>
-              See Also ({relatedModels.length})
-            </button>
-            {showRelated && (
-              <div style={{ pointerEvents: 'auto', ...panelStyle, padding: '12px', width: '200px' }}>
-                <h4 style={{ color: '#ffb74d', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Related Models</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  {relatedModels.map(rm => (
-                    <button
-                      key={rm.id}
-                      onClick={() => navigate(`/model/${rm.id}`)}
-                      style={{ textAlign: 'left', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 0, fontSize: '0.8rem' }}
-                    >
-                      <span style={{ color: '#ffb74d' }}>{rm.title}</span>
-                      {rm.sharedTagCount > 0 && <span style={{ color: '#555', fontSize: '0.7rem', marginLeft: '0.4rem' }}>{rm.sharedTagCount} shared tag{rm.sharedTagCount === 1 ? '' : 's'}</span>}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            {addingPoi && (
+              <PoiForm
+                title=""
+                content=""
+                type="text"
+                onTitleChange={(v) => setPoiForm(p => ({ ...p, title: v }))}
+                onContentChange={(v) => setPoiForm(p => ({ ...p, content: v }))}
+                onTypeChange={(v) => setPoiForm(p => ({ ...p, type: v }))}
+                onSave={submitPoi}
+                onCancel={() => setAddingPoi(null)}
+                myModels={myModels}
+                currentModelId={id}
+              />
             )}
-          </>
-        )}
-      </div>
-
-      {/* Bottom hint */}
-      <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 20, background: 'rgba(255,255,255,0.92)', padding: '4px 14px', borderRadius: '20px', fontSize: '0.7rem', color: '#555', pointerEvents: 'none', letterSpacing: '0.3px', border: '1px solid rgba(0,0,0,0.06)' }}>
-        Double-click to add a point of interest
-      </div>
-
-      {/* POI Detail Modal */}
-      {selectedPoi && !addingPoi && !editingPoi && (
-        <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)' }} onClick={() => setSelectedPoi(null)}>
-          <div style={{ background: '#ffffff', border: '1px solid #e5e5e5', borderRadius: '14px', padding: '28px', width: '460px', maxWidth: '90vw', boxShadow: '0 24px 80px rgba(0,0,0,0.12)', position: 'relative', zIndex: 1 }} onClick={e => e.stopPropagation()}>
-            <button onClick={() => setSelectedPoi(null)} style={{ position: 'absolute', top: '12px', right: '14px', background: 'none', border: 'none', color: '#888888', fontSize: '1.2rem', cursor: 'pointer' }}>&times;</button>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-              <h2 style={{ color: 'var(--text-primary)', fontSize: '1.25rem', margin: 0, fontWeight: 600 }}>{selectedPoi.title}</h2>
-              <span style={{ color: '#888888', fontSize: '0.7rem', border: '1px solid #e5e5e5', padding: '2px 8px', borderRadius: '12px', textTransform: 'capitalize' }}>{selectedPoi.type}</span>
-            </div>
-
-            {selectedPoi.type === 'nested-model' && selectedPoi.content ? (
-              <div style={{ marginBottom: '16px' }}>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '12px' }}>This POI links to another model.</p>
-                <button onClick={() => navigate(`/model/${selectedPoi.content}`)} className="btn" style={{ padding: '0.5rem 1rem' }}>
-                  Open Nested Model
-                </button>
-              </div>
-            ) : (
-              <div style={{ background: '#0f0f12', borderRadius: '8px', padding: '14px', marginBottom: '16px', maxHeight: '280px', overflowY: 'auto' }}>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{selectedPoi.content}</p>
-              </div>
+            {editingPoi && (
+              <PoiForm
+                title={poiForm.title}
+                content={poiForm.content}
+                type={poiForm.type}
+                onTitleChange={(v) => setPoiForm(p => ({ ...p, title: v }))}
+                onContentChange={(v) => setPoiForm(p => ({ ...p, content: v }))}
+                onTypeChange={(v) => setPoiForm(p => ({ ...p, type: v }))}
+                onSave={saveEditPoi}
+                onCancel={() => { setEditingPoi(null); setPoiForm({ title: '', content: '', type: 'text' }) }}
+                onDelete={deletePoi}
+                deleteLabel="Delete"
+                myModels={myModels}
+                currentModelId={id}
+              />
             )}
-
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button onClick={() => startEditPoi(selectedPoi)} className="btn btn-secondary" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }}>Edit</button>
-              <button onClick={deletePoi} className="btn btn-secondary" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem', background: '#fef2f2', borderColor: '#fca5a5', color: '#b91c1c' }}>Delete</button>
-            </div>
           </div>
         </div>
       )}
 
-      {/* POI Form Modal */}
-      {(addingPoi || editingPoi) && (
-        <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)' }} onClick={() => { setAddingPoi(null); setEditingPoi(null) }}>
-          <div style={{ background: '#ffffff', border: '1px solid #e5e5e5', borderRadius: '14px', padding: '24px', width: '400px', maxWidth: '90vw', boxShadow: '0 24px 80px rgba(0,0,0,0.12)', position: 'relative', zIndex: 1 }} onClick={e => e.stopPropagation()}>
-            <PoiForm
-              title={poiForm.title}
-              content={poiForm.content}
-              type={poiForm.type}
-              myModels={myModels}
-              currentModelId={id}
-              onTitleChange={(v) => setPoiForm((f) => ({ ...f, title: v }))}
-              onContentChange={(v) => setPoiForm((f) => ({ ...f, content: v }))}
-              onTypeChange={(v) => setPoiForm((f) => ({ ...f, type: v }))}
-              onSave={addingPoi ? submitPoi : saveEditPoi}
-              onCancel={() => { setAddingPoi(null); setEditingPoi(null); setPoiForm({ title: '', content: '', type: 'text' }) }}
-              onDelete={editingPoi ? deletePoi : undefined}
-              deleteLabel="Delete"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Keyboard Shortcuts Help Modal */}
+      {/* Help modal */}
       {showHelp && (
-        <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(3px)' }} onClick={() => setShowHelp(false)}>
-          <div style={{ background: '#ffffff', border: '1px solid #e5e5e5', borderRadius: '14px', padding: '28px', width: '360px', maxWidth: '90vw', boxShadow: '0 24px 80px rgba(0,0,0,0.12)', position: 'relative', zIndex: 1 }} onClick={e => e.stopPropagation()}>
-            <button onClick={() => setShowHelp(false)} style={{ position: 'absolute', top: '12px', right: '14px', background: 'none', border: 'none', color: '#888888', fontSize: '1.2rem', cursor: 'pointer' }}>&times;</button>
-            <h3 style={{ color: 'var(--primary)', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 600 }}>Keyboard Shortcuts</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', zIndex: 9999 }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-medium)', borderRadius: 'var(--radius-lg)', padding: '1.5rem', maxWidth: 420, width: '90%' }}>
+            <h2 style={{ margin: '0 0 1rem', fontSize: '1.1rem', fontWeight: 600 }}>Keyboard Shortcuts</h2>
+            <div style={{ display: 'grid', gap: '0.5rem', fontSize: '0.85rem' }}>
               {[
-                ['F', 'Focus / Center Camera'],
-                ['R', 'Reset View'],
-                ['G', 'Toggle Grid'],
-                ['W', 'Toggle Wireframe'],
-                ['A', 'Toggle Auto-Rotate'],
-                ['B', 'Toggle Background'],
-                ['S', 'Take Screenshot'],
-                ['1-9', 'Select POI by number'],
-                ['N / P', 'Next / previous POI'],
-                ['Esc', 'Close panels / modals'],
-                ['H', 'Toggle this help'],
-              ].map(([key, desc]) => (
-                <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>{desc}</span>
-                  <kbd style={{ background: '#f0f0f2', border: '1px solid #e5e5e5', borderRadius: '4px', padding: '2px 8px', color: 'var(--primary)', fontFamily: 'monospace', fontSize: '0.8rem' }}>{key}</kbd>
+                ['F', 'Focus model'],
+                ['R', 'Reset camera'],
+                ['G', 'Toggle grid'],
+                ['W', 'Toggle wireframe'],
+                ['A', 'Toggle auto-rotate'],
+                ['S', 'Screenshot'],
+                ['B', 'Toggle background'],
+                ['N / P', 'Next / Previous POI'],
+                ['1-9', 'Select POI'],
+                ['H', 'Toggle help'],
+                ['Esc', 'Close / Deselect'],
+              ].map(([k, d]) => (
+                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary)', background: 'rgba(185,28,28,0.08)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem' }}>{k}</span>
+                  <span>{d}</span>
                 </div>
               ))}
             </div>
+            <button onClick={() => setShowHelp(false)} style={{ marginTop: '1rem', width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #e5e5e5', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom controls */}
+      <div style={{ position: 'absolute', bottom: 16, right: 16, zIndex: 20, display: 'flex', gap: '0.5rem' }}>
+        {relatedModels.length > 0 && (
+          <button onClick={() => setShowRelated(v => !v)} style={{ ...panelStyle, padding: '8px 14px', fontSize: '0.78rem', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(255,255,255,0.96)' }}>
+            Related Models ({relatedModels.length})
+          </button>
+        )}
+        <button onClick={() => setShowMeta(v => !v)} style={{ ...panelStyle, padding: '8px 14px', fontSize: '0.78rem', cursor: 'pointer', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.96)' }}>
+          {showMeta ? 'Hide' : 'Show'} Metadata
+        </button>
+      </div>
+
+      {/* Metadata panel */}
+      {showMeta && (
+        <div style={{ position: 'absolute', bottom: 60, right: 16, zIndex: 20, ...panelStyle, padding: '1rem', width: 260 }}>
+          <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600 }}>Metadata</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+            <MetaRow label="Format" value={extension?.toUpperCase()} />
+            <MetaRow label="Size" value={formatBytes(model.size)} />
+            <MetaRow label="Points of Interest" value={pois.length} />
+            <MetaRow label="Published" value={model.published ? 'Yes' : 'No'} />
+          </div>
+        </div>
+      )}
+
+      {/* Related models panel */}
+      {showRelated && relatedModels.length > 0 && (
+        <div style={{ position: 'absolute', bottom: 60, right: 16, zIndex: 20, ...panelStyle, padding: '1rem', width: 300, maxHeight: 300, overflow: 'auto' }}>
+          <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600 }}>Related Models</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {relatedModels.map((m) => (
+              <Link key={m.id} to={`/model/${m.id}`} style={{ display: 'block', padding: '0.5rem', borderRadius: '6px', textDecoration: 'none', color: 'var(--text-primary)', background: 'rgba(0,0,0,0.02)', fontSize: '0.8rem' }}>
+                <div style={{ fontWeight: 600 }}>{m.title}</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>{m.sharedTags?.length > 0 && `${m.sharedTags.length} shared tag${m.sharedTags.length > 1 ? 's' : ''}`}{m.sharedTerms?.length > 0 && ` · ${m.sharedTerms.length} term${m.sharedTerms.length > 1 ? 's' : ''}`}</div>
+              </Link>
+            ))}
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Edit3, Eye, Link2, MapPin, FileText, ChevronRight, Box, ExternalLink, Globe, Layers, Save, Undo2, Settings, Grid3X3, Sun, Moon, RotateCw, Palette } from 'lucide-react'
+import { Edit3, Eye, Link2, MapPin, FileText, ChevronRight, Box, ExternalLink, Globe, Layers, Save, Undo2 } from 'lucide-react'
 import MarkdownContent from '../components/MarkdownContent'
 import ModelHeader from '../components/ModelHeader'
 
@@ -87,9 +87,7 @@ function ModelWiki() {
   const [error, setError] = useState('')
   const [isOwner, setIsOwner] = useState(false)
   const [editing, setEditing] = useState(false)
-  const [editingSettings, setEditingSettings] = useState(false)
   const [draftWiki, setDraftWiki] = useState('')
-  const [draftSettings, setDraftSettings] = useState({ showGrid: true, showAxes: false, autoRotate: false, lightingPreset: 'neutral', backgroundColor: '#111111' })
   const [saving, setSaving] = useState(false)
   const [suggestVisible, setSuggestVisible] = useState(false)
   const [suggestQuery, setSuggestQuery] = useState('')
@@ -111,15 +109,6 @@ function ModelWiki() {
         setModel(data)
         setPois((data.pois || []).map(normalizePoi))
         setDraftWiki(data.wikiContent || '')
-        let vs = {}
-        try { vs = JSON.parse(data.viewerSettings || '{}') } catch { vs = {} }
-        setDraftSettings({
-          showGrid: typeof vs.showGrid === 'boolean' ? vs.showGrid : true,
-          showAxes: typeof vs.showAxes === 'boolean' ? vs.showAxes : false,
-          autoRotate: typeof vs.autoRotate === 'boolean' ? vs.autoRotate : false,
-          lightingPreset: vs.lightingPreset || 'neutral',
-          backgroundColor: vs.backgroundColor || '#111111'
-        })
         if (token) {
           try {
             const payload = JSON.parse(atob(token.split('.')[1]))
@@ -142,21 +131,6 @@ function ModelWiki() {
       const data = await res.json()
       setModel(prev => ({ ...prev, wikiContent: data.wikiContent }))
       setEditing(false)
-    }
-    setSaving(false)
-  }
-
-  const saveSettings = async () => {
-    if (!isOwner) return
-    setSaving(true)
-    const res = await fetch(`${API}/models/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ viewerSettings: JSON.stringify(draftSettings) })
-    })
-    if (res.ok) {
-      setModel(prev => ({ ...prev, viewerSettings: JSON.stringify(draftSettings) }))
-      setEditingSettings(false)
     }
     setSaving(false)
   }
@@ -449,113 +423,6 @@ function ModelWiki() {
               )}
             </div>
           </motion.div>
-
-          {/* Viewer Settings */}
-          {isOwner && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: 0.15 }}
-              className="card-modern"
-              style={{ padding: '18px' }}
-            >
-              <h4 style={{ color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', fontFamily: 'var(--font-mono)' }}>
-                <Settings size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
-                Viewer Settings
-              </h4>
-              {!editingSettings ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    <span>Grid Floor</span>
-                    <span style={{ color: draftSettings.showGrid ? 'var(--success)' : 'var(--text-muted)' }}>{draftSettings.showGrid ? 'On' : 'Off'}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    <span>Axes</span>
-                    <span style={{ color: draftSettings.showAxes ? 'var(--success)' : 'var(--text-muted)' }}>{draftSettings.showAxes ? 'On' : 'Off'}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    <span>Auto-Rotate</span>
-                    <span style={{ color: draftSettings.autoRotate ? 'var(--success)' : 'var(--text-muted)' }}>{draftSettings.autoRotate ? 'On' : 'Off'}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    <span>Lighting</span>
-                    <span style={{ textTransform: 'capitalize' }}>{draftSettings.lightingPreset}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    <span>Background</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                      <span style={{ width: 12, height: 12, borderRadius: 3, background: draftSettings.backgroundColor, border: '1px solid var(--border-subtle)', display: 'inline-block' }} />
-                      {draftSettings.backgroundColor}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setEditingSettings(true)}
-                    className="btn-ghost"
-                    style={{ justifyContent: 'center', padding: '0.4rem 0.7rem', fontSize: '0.78rem', marginTop: '0.5rem' }}
-                  >
-                    <Settings size={12} />
-                    Edit Settings
-                  </button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                    {[
-                      { key: 'showGrid', label: 'Grid Floor', icon: Grid3X3 },
-                      { key: 'showAxes', label: 'Axes', icon: Palette },
-                      { key: 'autoRotate', label: 'Auto-Rotate', icon: RotateCw }
-                    ].map(({ key, label, icon: Icon }) => (
-                      <button key={key} type="button" onClick={() => setDraftSettings(s => ({ ...s, [key]: !s[key] }))} style={{
-                        display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem',
-                        border: `1px solid ${draftSettings[key] ? 'var(--primary)' : 'var(--border-subtle)'}`,
-                        background: draftSettings[key] ? 'rgba(185,28,28,0.08)' : 'transparent',
-                        borderRadius: 'var(--radius-sm)', color: draftSettings[key] ? 'var(--primary)' : 'var(--text-secondary)',
-                        fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.2s'
-                      }}>
-                        <Icon size={12} /> {label}
-                      </button>
-                    ))}
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.4rem' }}>
-                    {[
-                      { key: 'neutral', label: 'Neutral', icon: Sun },
-                      { key: 'studio', label: 'Studio', icon: Palette },
-                      { key: 'dramatic', label: 'Dramatic', icon: Moon }
-                    ].map(({ key, label, icon: Icon }) => (
-                      <button key={key} type="button" onClick={() => setDraftSettings(s => ({ ...s, lightingPreset: key }))} style={{
-                        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem',
-                        padding: '0.4rem', borderRadius: 'var(--radius-sm)', fontSize: '0.72rem',
-                        border: `1px solid ${draftSettings.lightingPreset === key ? 'var(--primary)' : 'var(--border-subtle)'}`,
-                        background: draftSettings.lightingPreset === key ? 'rgba(185,28,28,0.08)' : 'transparent',
-                        color: draftSettings.lightingPreset === key ? 'var(--primary)' : 'var(--text-secondary)',
-                        cursor: 'pointer', transition: 'all 0.2s'
-                      }}>
-                        <Icon size={11} /> {label}
-                      </button>
-                    ))}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Background</span>
-                    <input
-                      type="color"
-                      value={draftSettings.backgroundColor}
-                      onChange={e => setDraftSettings(s => ({ ...s, backgroundColor: e.target.value }))}
-                      style={{ width: 32, height: 24, border: 'none', borderRadius: 4, cursor: 'pointer', background: 'none' }}
-                    />
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{draftSettings.backgroundColor}</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.3rem' }}>
-                    <button onClick={() => setEditingSettings(false)} className="btn-ghost" style={{ flex: 1, padding: '0.4rem', fontSize: '0.75rem' }}>
-                      <Undo2 size={12} /> Cancel
-                    </button>
-                    <button onClick={saveSettings} disabled={saving} className="btn-primary" style={{ flex: 1, padding: '0.4rem', fontSize: '0.75rem' }}>
-                      <Save size={12} /> {saving ? 'Saving...' : 'Save'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
 
           {/* Graph context */}
           <AnimatePresence>
