@@ -424,6 +424,7 @@ export default function Home() {
             <AnimatedStat value="∞" label="Wiki Pages" delay={1.6} />
             <AnimatedStat value="3D" label="POI System" delay={1.7} />
           </motion.div>
+      </motion.div>
       </div>
 
       <Cutaway color="#ffffff" />
