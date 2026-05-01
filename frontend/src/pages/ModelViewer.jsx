@@ -113,30 +113,41 @@ function CameraFocus({ controlsRef, targetRef, trigger, onDone }) {
   return null
 }
 
-function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAddPoi, modelRef, showGrid, wireframe, autoRotate, controlsRef, focusTrigger, onFocusDone, onModelReady, showAxes, lightingPreset }) {
+function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAddPoi, modelRef, showGrid, wireframe, autoRotate, controlsRef, focusTrigger, onFocusDone, onModelReady, showAxes, lightingPreset, sunIntensity, sunRotation }) {
+  function rotateY([x, y, z], angleDeg) {
+    const rad = (angleDeg * Math.PI) / 180
+    return [x * Math.cos(rad) - z * Math.sin(rad), y, x * Math.sin(rad) + z * Math.cos(rad)]
+  }
+  const basePositions = {
+    neutral: [5, 10, 5],
+    studio: [3, 8, 3],
+    dramatic: [5, 10, 2]
+  }
+  const mainDirPos = rotateY(basePositions[lightingPreset] || basePositions.neutral, sunRotation)
+  const sI = sunIntensity
   const lights = {
     neutral: (
       <>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
-        <pointLight position={[-5, 5, -5]} intensity={0.4} />
-        <pointLight position={[0, -5, 0]} intensity={0.2} />
+        <ambientLight intensity={0.5 * sI} />
+        <directionalLight position={mainDirPos} intensity={1 * sI} castShadow />
+        <pointLight position={[-5, 5, -5]} intensity={0.4 * sI} />
+        <pointLight position={[0, -5, 0]} intensity={0.2 * sI} />
       </>
     ),
     studio: (
       <>
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[3, 8, 3]} intensity={1.2} castShadow />
-        <directionalLight position={[-3, 4, -3]} intensity={0.4} />
-        <pointLight position={[0, 2, 0]} intensity={0.3} />
+        <ambientLight intensity={0.6 * sI} />
+        <directionalLight position={mainDirPos} intensity={1.2 * sI} castShadow />
+        <directionalLight position={rotateY([-3, 4, -3], sunRotation)} intensity={0.4 * sI} />
+        <pointLight position={[0, 2, 0]} intensity={0.3 * sI} />
       </>
     ),
     dramatic: (
       <>
-        <ambientLight intensity={0.2} />
-        <directionalLight position={[5, 10, 2]} intensity={1.5} castShadow />
-        <pointLight position={[-4, 2, -4]} intensity={0.3} color="#ffaa77" />
-        <pointLight position={[0, -3, 0]} intensity={0.15} color="#7799ff" />
+        <ambientLight intensity={0.2 * sI} />
+        <directionalLight position={mainDirPos} intensity={1.5 * sI} castShadow />
+        <pointLight position={[-4, 2, -4]} intensity={0.3 * sI} color="#ffaa77" />
+        <pointLight position={[0, -3, 0]} intensity={0.15 * sI} color="#7799ff" />
       </>
     )
   }
@@ -271,6 +282,38 @@ function SettingsPanel({ settings, onChange, onSave, onCancel, saving, isOwner }
           </button>
         ))}
       </div>
+      {/* Sun Intensity */}
+      <div style={{ marginBottom: '0.55rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+          <span>Sun Intensity</span>
+          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>{settings.sunIntensity.toFixed(1)}x</span>
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={3}
+          step={0.1}
+          value={settings.sunIntensity}
+          onChange={e => onChange({ ...settings, sunIntensity: parseFloat(e.target.value) })}
+          style={{ width: '100%', cursor: 'pointer' }}
+        />
+      </div>
+      {/* Sun Rotation */}
+      <div style={{ marginBottom: '0.55rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+          <span>Sun Rotation</span>
+          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>{settings.sunRotation}°</span>
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={360}
+          step={5}
+          value={settings.sunRotation}
+          onChange={e => onChange({ ...settings, sunRotation: parseInt(e.target.value, 10) })}
+          style={{ width: '100%', cursor: 'pointer' }}
+        />
+      </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
         <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Background</span>
         <input
@@ -311,6 +354,8 @@ function ModelViewer() {
   const [bgColor, setBgColor] = useState('#111111')
   const [showAxes, setShowAxes] = useState(false)
   const [lightingPreset, setLightingPreset] = useState('neutral')
+  const [sunIntensity, setSunIntensity] = useState(1)
+  const [sunRotation, setSunRotation] = useState(45)
   const [focusTrigger, setFocusTrigger] = useState(0)
   const initialFocusPendingRef = useRef(true)
   const [showPoiList, setShowPoiList] = useState(true)
@@ -321,7 +366,7 @@ function ModelViewer() {
   const [showHelp, setShowHelp] = useState(false)
   const [showSettingsPanel, setShowSettingsPanel] = useState(false)
   const [settingsSaving, setSettingsSaving] = useState(false)
-  const [draftSettings, setDraftSettings] = useState({ showGrid: true, showAxes: false, autoRotate: false, lightingPreset: 'neutral', backgroundColor: '#111111' })
+  const [draftSettings, setDraftSettings] = useState({ showGrid: true, showAxes: false, autoRotate: false, lightingPreset: 'neutral', backgroundColor: '#111111', sunIntensity: 1, sunRotation: 45 })
   const controlsRef = useRef()
   const modelRef = useRef(null)
   const canvasContainerRef = useRef(null)
@@ -360,12 +405,16 @@ function ModelViewer() {
         if (typeof vs.showAxes === 'boolean') setShowAxes(vs.showAxes)
         if (vs.backgroundColor) setBgColor(vs.backgroundColor)
         if (vs.lightingPreset) setLightingPreset(vs.lightingPreset)
+        if (typeof vs.sunIntensity === 'number') setSunIntensity(vs.sunIntensity)
+        if (typeof vs.sunRotation === 'number') setSunRotation(vs.sunRotation)
         setDraftSettings({
           showGrid: typeof vs.showGrid === 'boolean' ? vs.showGrid : true,
           showAxes: typeof vs.showAxes === 'boolean' ? vs.showAxes : false,
           autoRotate: typeof vs.autoRotate === 'boolean' ? vs.autoRotate : false,
           lightingPreset: vs.lightingPreset || 'neutral',
-          backgroundColor: vs.backgroundColor || '#111111'
+          backgroundColor: vs.backgroundColor || '#111111',
+          sunIntensity: typeof vs.sunIntensity === 'number' ? vs.sunIntensity : 1,
+          sunRotation: typeof vs.sunRotation === 'number' ? vs.sunRotation : 45
         })
         // Breadcrumbs: append current model to trail, avoiding loops
         const trail = JSON.parse(sessionStorage.getItem('modelBreadcrumbs') || '[]')
@@ -581,6 +630,8 @@ function ModelViewer() {
       setAutoRotate(draftSettings.autoRotate)
       setLightingPreset(draftSettings.lightingPreset)
       setBgColor(draftSettings.backgroundColor)
+      setSunIntensity(draftSettings.sunIntensity)
+      setSunRotation(draftSettings.sunRotation)
       setModel(prev => ({ ...prev, viewerSettings: JSON.stringify(draftSettings) }))
       setShowSettingsPanel(false)
     }
@@ -595,6 +646,8 @@ function ModelViewer() {
       autoRotate,
       lightingPreset,
       backgroundColor: bgColor,
+      sunIntensity,
+      sunRotation,
     })
     setShowSettingsPanel(v => !v)
   }
@@ -633,7 +686,7 @@ function ModelViewer() {
       <div ref={canvasContainerRef} style={{ position: 'absolute', inset: 0 }}>
         <Canvas camera={{ position: [4, 4, 4], fov: 50 }} style={{ width: '100%', height: '100%' }} gl={{ preserveDrawingBuffer: true }}>
           <color attach="background" args={[bgColor]} />
-          <SceneContent modelUrl={modelUrl} extension={extension} pois={pois} selectedPoi={selectedPoi} onPoiClick={handlePoiClick} onAddPoi={handleAddPoi} modelRef={modelRef} showGrid={showGrid} wireframe={wireframe} autoRotate={autoRotate} controlsRef={controlsRef} focusTrigger={focusTrigger} onFocusDone={handleFocusDone} onModelReady={handleModelReady} showAxes={showAxes} lightingPreset={lightingPreset} />
+          <SceneContent modelUrl={modelUrl} extension={extension} pois={pois} selectedPoi={selectedPoi} onPoiClick={handlePoiClick} onAddPoi={handleAddPoi} modelRef={modelRef} showGrid={showGrid} wireframe={wireframe} autoRotate={autoRotate} controlsRef={controlsRef} focusTrigger={focusTrigger} onFocusDone={handleFocusDone} onModelReady={handleModelReady} showAxes={showAxes} lightingPreset={lightingPreset} sunIntensity={sunIntensity} sunRotation={sunRotation} />
         </Canvas>
       </div>
 

@@ -32,7 +32,6 @@ export function POIMarker({ position, title, onClick, selected, index }) {
             WebkitUserSelect: 'none',
             cursor: 'pointer',
             transition: 'all 0.15s ease',
-            animation: showLabel ? 'poiPulse 1.35s ease-out infinite' : 'none',
           }}
           title={title || 'POI'}
         >

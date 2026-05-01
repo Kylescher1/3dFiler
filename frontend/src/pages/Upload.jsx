@@ -12,7 +12,9 @@ const DEFAULT_VIEWER_SETTINGS = {
   showAxes: false,
   autoRotate: false,
   lightingPreset: 'neutral',
-  backgroundColor: '#111111'
+  backgroundColor: '#111111',
+  sunIntensity: 1,
+  sunRotation: 45
 }
 
 function ViewerSettingsPanel({ settings, onChange }) {
@@ -59,7 +61,7 @@ function ViewerSettingsPanel({ settings, onChange }) {
             <RotateCw size={14} /> Auto-Rotate
           </button>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
           {presets.map(({ key, label, icon: Icon }) => (
             <button key={key} type="button" onClick={() => onChange({ ...settings, lightingPreset: key })} style={{
               flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
@@ -72,6 +74,38 @@ function ViewerSettingsPanel({ settings, onChange }) {
               <Icon size={13} /> {label}
             </button>
           ))}
+        </div>
+        {/* Sun Intensity */}
+        <div style={{ marginBottom: '0.55rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+            <span>Sun Intensity</span>
+            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>{settings.sunIntensity.toFixed(1)}x</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={3}
+            step={0.1}
+            value={settings.sunIntensity}
+            onChange={e => onChange({ ...settings, sunIntensity: parseFloat(e.target.value) })}
+            style={{ width: '100%', cursor: 'pointer' }}
+          />
+        </div>
+        {/* Sun Rotation */}
+        <div style={{ marginBottom: '0.55rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+            <span>Sun Rotation</span>
+            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>{settings.sunRotation}°</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={360}
+            step={5}
+            value={settings.sunRotation}
+            onChange={e => onChange({ ...settings, sunRotation: parseInt(e.target.value, 10) })}
+            style={{ width: '100%', cursor: 'pointer' }}
+          />
         </div>
       </div>
     </div>
