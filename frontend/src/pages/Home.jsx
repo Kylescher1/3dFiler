@@ -396,10 +396,10 @@ export default function Home() {
               </Link>
               <Link to="/upload" style={{
                 display: 'inline-flex', alignItems: 'center', gap: '0.6rem',
-                padding: '1rem 2rem', background: 'transparent', color: 'var(--text-primary)',
+                padding: '1rem 2rem', background: 'transparent', color: '#ffffff',
                 fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '2px',
                 textTransform: 'uppercase', textDecoration: 'none', fontWeight: 600,
-                border: '1px solid rgba(255,255,255,0.2)'
+                border: '1px solid rgba(255,255,255,0.35)'
               }}>
                 Upload Model
               </Link>

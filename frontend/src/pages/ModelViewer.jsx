@@ -288,6 +288,9 @@ const controlIcons = {
   settings: (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84a.484.484 0 00-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.488.488 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.27.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 118.4 12 3.596 3.596 0 0112 15.6z"/></svg>
   ),
+  pivot: (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/><circle cx="12" cy="12" r="2"/></svg>
+  ),
 }
 
 function SettingsPanel({ settings, onChange, onSave, onCancel, saving, isOwner }) {
@@ -816,15 +819,26 @@ function ModelViewer() {
             ))}
             <div style={{ width: '1px', background: 'rgba(0,0,0,0.06)', margin: '4px 2px' }} />
             {isOwner && (
-              <button
-                onClick={handleOpenSettings}
-                title="Viewer Settings"
-                style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: showSettingsPanel ? '#fee2e2' : 'transparent', border: 'none', borderRadius: '6px', color: showSettingsPanel ? 'var(--primary)' : '#888888', cursor: 'pointer' }}
-                onMouseEnter={e => { if (!showSettingsPanel) e.currentTarget.style.background = 'rgba(0,0,0,0.06)' }}
-                onMouseLeave={e => { if (!showSettingsPanel) e.currentTarget.style.background = 'transparent' }}
-              >
-                {controlIcons.settings}
-              </button>
+              <>
+                <button
+                  onClick={() => setPivotMode(v => !v)}
+                  title={pivotMode ? 'Cancel Set Pivot' : 'Set Rotation Pivot'}
+                  style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: pivotMode ? 'var(--primary)' : 'transparent', border: 'none', borderRadius: '6px', color: pivotMode ? '#ffffff' : '#888888', cursor: 'pointer' }}
+                  onMouseEnter={e => { if (!pivotMode) e.currentTarget.style.background = 'rgba(0,0,0,0.06)' }}
+                  onMouseLeave={e => { if (!pivotMode) e.currentTarget.style.background = 'transparent' }}
+                >
+                  {controlIcons.pivot}
+                </button>
+                <button
+                  onClick={handleOpenSettings}
+                  title="Viewer Settings"
+                  style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: showSettingsPanel ? '#fee2e2' : 'transparent', border: 'none', borderRadius: '6px', color: showSettingsPanel ? 'var(--primary)' : '#888888', cursor: 'pointer' }}
+                  onMouseEnter={e => { if (!showSettingsPanel) e.currentTarget.style.background = 'rgba(0,0,0,0.06)' }}
+                  onMouseLeave={e => { if (!showSettingsPanel) e.currentTarget.style.background = 'transparent' }}
+                >
+                  {controlIcons.settings}
+                </button>
+              </>
             )}
             <button onClick={() => setShowWikiSidebar(v => !v)} title="Toggle Wiki Sidebar" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: showWikiSidebar ? '#fee2e2' : 'transparent', border: 'none', borderRadius: '6px', color: showWikiSidebar ? 'var(--primary)' : '#888888', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }} onMouseEnter={e => { if (!showWikiSidebar) e.currentTarget.style.background = 'rgba(0,0,0,0.06)' }} onMouseLeave={e => { if (!showWikiSidebar) e.currentTarget.style.background = 'transparent' }}>W</button>
             <button onClick={() => setShowHelp(true)} title="Keyboard Shortcuts (H)" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '6px', color: '#888888', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.06)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>?</button>
