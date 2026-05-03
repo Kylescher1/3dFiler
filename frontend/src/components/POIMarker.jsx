@@ -1,16 +1,83 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import * as THREE from 'three'
 import { Html } from '@react-three/drei'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 
-export function POIMarker({ position, title, onClick, selected, index, modelRef }) {
+export function POIMarker({ position, title, onClick, onDragEnd, selected, index, modelRef, controlsRef }) {
   const [hovered, setHovered] = useState(false)
+  const [dragging, setDragging] = useState(false)
   const groupRef = useRef()
   const markerRef = useRef()
   const refDist = useRef(7)
+  const dragStartRef = useRef(null)
+  const hasDraggedRef = useRef(false)
+  const { camera, gl } = useThree()
+  const raycaster = useRef(new THREE.Raycaster())
+  const mouse = useRef(new THREE.Vector2())
 
   const showLabel = selected || hovered
   const color = selected ? '#b91c1c' : hovered ? '#dc2626' : '#b91c1c'
+
+  useEffect(() => {
+    if (!dragging) return
+
+    const handleMove = (e) => {
+      const start = dragStartRef.current
+      if (start) {
+        const dx = e.clientX - start.x
+        const dy = e.clientY - start.y
+        if (Math.hypot(dx, dy) > 3) {
+          hasDraggedRef.current = true
+        }
+      }
+
+      const rect = gl.domElement.getBoundingClientRect()
+      mouse.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+      mouse.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.current.setFromCamera(mouse.current, camera)
+      const targets = []
+      if (modelRef?.current) targets.push(modelRef.current)
+      const intersects = raycaster.current.intersectObjects(targets, true)
+      if (intersects.length > 0 && groupRef.current) {
+        const p = intersects[0].point
+        groupRef.current.position.set(p.x, p.y + 0.05, p.z)
+      }
+    }
+
+    const handleUp = () => {
+      setDragging(false)
+      document.body.style.cursor = 'default'
+
+      if (controlsRef?.current) controlsRef.current.enabled = true
+
+      if (hasDraggedRef.current && groupRef.current) {
+        const p = groupRef.current.position
+        onDragEnd?.({ x: p.x, y: p.y - 0.05, z: p.z })
+      } else if (!hasDraggedRef.current) {
+        onClick?.()
+      }
+
+      dragStartRef.current = null
+      hasDraggedRef.current = false
+    }
+
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseup', handleUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseup', handleUp)
+    }
+  }, [dragging, camera, gl, modelRef, onDragEnd, onClick])
+
+  const handleMouseDown = (e) => {
+    e.stopPropagation()
+    e.preventDefault()
+    dragStartRef.current = { x: e.clientX, y: e.clientY }
+    hasDraggedRef.current = false
+    setDragging(true)
+    document.body.style.cursor = 'grabbing'
+    if (controlsRef?.current) controlsRef.current.enabled = false
+  }
 
   useFrame(({ camera }) => {
     if (groupRef.current && markerRef.current) {
@@ -31,57 +98,86 @@ export function POIMarker({ position, title, onClick, selected, index, modelRef 
       <Html center>
         <div
           ref={markerRef}
-          onClick={(e) => { e.stopPropagation(); onClick() }}
-          onMouseEnter={() => { setHovered(true); document.body.style.cursor = 'pointer' }}
-          onMouseLeave={() => { setHovered(false); document.body.style.cursor = 'default' }}
+          onMouseDown={handleMouseDown}
+          onMouseEnter={() => { if (!dragging) { setHovered(true); document.body.style.cursor = 'pointer' } }}
+          onMouseLeave={() => { if (!dragging) { setHovered(false); document.body.style.cursor = 'default' } }}
           style={{
             transformOrigin: 'center center',
-            transition: 'transform 0.08s linear',
+            transition: dragging ? 'none' : 'transform 0.08s linear',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             position: 'relative',
+            cursor: dragging ? 'grabbing' : 'pointer',
           }}
         >
           <div
             style={{
-              width: '28px',
-              height: '28px',
+              width: '38px',
+              height: '38px',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '13px',
-              fontWeight: 700,
+              fontSize: '14px',
+              fontWeight: 800,
               color: '#111',
-              background: selected ? 'rgba(185,28,28,0.15)' : hovered ? 'rgba(185,28,28,0.12)' : 'rgba(240,240,242,0.6)',
-              border: `2px solid ${color}`,
-              boxShadow: hovered || selected ? `0 0 14px ${color}88` : 'none',
+              background: selected ? 'rgba(185,28,28,0.35)' : hovered ? 'rgba(185,28,28,0.25)' : 'rgba(250,250,252,0.9)',
+              border: `3px solid ${color}`,
+              boxShadow: hovered || selected ? `0 0 20px ${color}cc, 0 0 8px ${color}88` : '0 2px 10px rgba(0,0,0,0.25)',
               userSelect: 'none',
               WebkitUserSelect: 'none',
-              cursor: 'pointer',
+              cursor: dragging ? 'grabbing' : 'pointer',
+              position: 'relative',
+              zIndex: 2,
             }}
             title={title || 'POI'}
           >
             {index}
           </div>
+          {/* Outer attention ring */}
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '50px',
+            height: '50px',
+            borderRadius: '50%',
+            border: `2px solid ${color}44`,
+            zIndex: 1,
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '62px',
+            height: '62px',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${color}22 0%, transparent 70%)`,
+            zIndex: 0,
+            pointerEvents: 'none',
+          }} />
           {showLabel && (
             <div style={{
               position: 'absolute',
-              bottom: 'calc(100% + 6px)',
+              bottom: 'calc(100% + 8px)',
               left: '50%',
               transform: 'translateX(-50%)',
               background: 'rgba(255, 255, 255, 0.98)',
               color: '#333333',
-              padding: '4px 12px',
+              padding: '5px 14px',
               borderRadius: '6px',
-              fontSize: '12px',
-              fontWeight: 500,
+              fontSize: '13px',
+              fontWeight: 600,
               whiteSpace: 'nowrap',
-              border: `1px solid ${color}`,
+              border: `1.5px solid ${color}`,
               boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
               letterSpacing: '0.3px',
               pointerEvents: 'none',
+              zIndex: 3,
             }}>
               {title || 'POI'}
             </div>

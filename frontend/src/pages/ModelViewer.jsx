@@ -160,7 +160,7 @@ function CameraToView({ controlsRef, targetView, onDone }) {
   return null
 }
 
-function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAddPoi, modelRef, showGrid, wireframe, autoRotate, controlsRef, focusTrigger, onFocusDone, onModelReady, showAxes, lightingPreset, sunIntensity, sunRotation, cameraTargetView, onCameraViewDone }) {
+function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onPoiDragEnd, onAddPoi, modelRef, showGrid, wireframe, autoRotate, controlsRef, focusTrigger, onFocusDone, onModelReady, showAxes, lightingPreset, sunIntensity, sunRotation, cameraTargetView, onCameraViewDone }) {
   function rotateY([x, y, z], angleDeg) {
     const rad = (angleDeg * Math.PI) / 180
     return [x * Math.cos(rad) - z * Math.sin(rad), y, x * Math.sin(rad) + z * Math.cos(rad)]
@@ -217,7 +217,7 @@ function SceneContent({ modelUrl, extension, pois, selectedPoi, onPoiClick, onAd
       <CameraFocus controlsRef={controlsRef} targetRef={modelRef} trigger={focusTrigger} onDone={onFocusDone} />
       <CameraToView controlsRef={controlsRef} targetView={cameraTargetView} onDone={onCameraViewDone} />
       {pois.map((poi, idx) => (
-        <POIMarker key={poi.id} index={idx + 1} position={poi.position} title={poi.title} selected={selectedPoi?.id === poi.id} onClick={() => onPoiClick(poi)} modelRef={modelRef} />
+        <POIMarker key={poi.id} index={idx + 1} position={poi.position} title={poi.title} selected={selectedPoi?.id === poi.id} onClick={() => onPoiClick(poi)} onDragEnd={(pos) => onPoiDragEnd?.(poi, pos)} modelRef={modelRef} controlsRef={controlsRef} />
       ))}
     </>
   )
@@ -416,6 +416,7 @@ function ModelViewer() {
   const [settingsSaving, setSettingsSaving] = useState(false)
   const [draftSettings, setDraftSettings] = useState({ showGrid: true, showAxes: false, autoRotate: false, lightingPreset: 'neutral', backgroundColor: '#111111', sunIntensity: 1, sunRotation: 45 })
   const [cameraTargetView, setCameraTargetView] = useState(null)
+  const [pivotMode, setPivotMode] = useState(false)
   const controlsRef = useRef()
   const modelRef = useRef(null)
   const canvasContainerRef = useRef(null)
@@ -432,6 +433,7 @@ function ModelViewer() {
     setFocusTrigger(0)
     setShowSettingsPanel(false)
     setCameraTargetView(null)
+    setPivotMode(false)
     modelRef.current = null
     initialFocusPendingRef.current = true
 
@@ -509,6 +511,7 @@ function ModelViewer() {
           setPoiForm({ title: '', content: '', type: 'text' })
           setShowHelp(false)
           setShowSettingsPanel(false)
+          setPivotMode(false)
           break
         case 'f':
           setCameraTargetView(null)
@@ -587,6 +590,27 @@ function ModelViewer() {
     setSelectedPoi(null)
     setPoiForm({ title: '', content: '', type: 'text' })
   }, [])
+
+  const handleSetPivot = useCallback((point) => {
+    if (controlsRef.current) {
+      controlsRef.current.target.set(point.x, point.y, point.z)
+      controlsRef.current.update()
+    }
+    setPivotMode(false)
+  }, [])
+
+  const handlePoiDragEnd = useCallback(async (poi, newPosition) => {
+    if (!isOwner || !token) return
+    const res = await fetch(`${API}/pois/${poi.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ position: newPosition })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setPois((prev) => prev.map((p) => p.id === poi.id ? normalizePoi(data) : p))
+    }
+  }, [isOwner, token])
 
   const handlePoiClick = useCallback((poi) => {
     setSelectedPoi(poi)
@@ -755,7 +779,7 @@ function ModelViewer() {
       <div ref={canvasContainerRef} style={{ position: 'absolute', inset: 0 }}>
         <Canvas camera={{ position: [4, 4, 4], fov: 50 }} style={{ width: '100%', height: '100%' }} gl={{ preserveDrawingBuffer: true }}>
           <color attach="background" args={[bgColor]} />
-          <SceneContent modelUrl={modelUrl} extension={extension} pois={pois} selectedPoi={selectedPoi} onPoiClick={handlePoiClick} onAddPoi={handleAddPoi} modelRef={modelRef} showGrid={showGrid} wireframe={wireframe} autoRotate={autoRotate} controlsRef={controlsRef} focusTrigger={focusTrigger} onFocusDone={handleFocusDone} onModelReady={handleModelReady} showAxes={showAxes} lightingPreset={lightingPreset} sunIntensity={sunIntensity} sunRotation={sunRotation} cameraTargetView={cameraTargetView} onCameraViewDone={() => setCameraTargetView(null)} />
+          <SceneContent modelUrl={modelUrl} extension={extension} pois={pois} selectedPoi={selectedPoi} onPoiClick={handlePoiClick} onPoiDragEnd={handlePoiDragEnd} onAddPoi={handleAddPoi} modelRef={modelRef} showGrid={showGrid} wireframe={wireframe} autoRotate={autoRotate} controlsRef={controlsRef} focusTrigger={focusTrigger} onFocusDone={handleFocusDone} onModelReady={handleModelReady} showAxes={showAxes} lightingPreset={lightingPreset} sunIntensity={sunIntensity} sunRotation={sunRotation} cameraTargetView={cameraTargetView} onCameraViewDone={() => setCameraTargetView(null)} />
         </Canvas>
       </div>
 
@@ -833,8 +857,7 @@ function ModelViewer() {
       {showWikiSidebar && (
         <div style={{ position: 'absolute', top: 80, right: 16, bottom: 16, width: 360, overflow: 'auto', zIndex: 20 }}>
           <div style={{ ...panelStyle, padding: '1rem', marginBottom: '0.75rem' }}>
-            <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M13 2v8h8v2h-8v8h-2v-8H3v-2h8V2z"/></svg>
+            <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               Wiki
             </h3>
             {model.wikiContent ? (
